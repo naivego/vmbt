@@ -13,7 +13,7 @@ import pickle as pk
 from collections import OrderedDict as OD
 from time import localtime, strftime
 import matplotlib
-# matplotlib.use('TkAgg')
+matplotlib.use('TkAgg')
 from matplotlib.finance import candlestick2_ohlc
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
@@ -32,9 +32,9 @@ def plotsdk(stkdf, candk= True, disfactors=None, Symbol='symbol', has2wind = Fal
     mfs = []
     sfs = []
     if has2wind:
-        fig, (ax, ax1) = plt.subplots(2, sharex=True, figsize=(20, 10))
+        fig, (ax, ax1) = plt.subplots(2, sharex=True, figsize=(12, 5))
     else:
-        fig, ax = plt.subplots(1, sharex=True, figsize=(20,8))
+        fig, ax = plt.subplots(1, sharex=True, figsize=(12,5))
 
     #fig, ax = plt.subplots()
     fig.subplots_adjust(bottom=0.2, left=0.05)

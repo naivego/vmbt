@@ -18,9 +18,9 @@ from vnpy.trader.app.ctaStrategy.hdBarLoader import *
 
 
 def showinds( datain = 'mongo'):
-    trdvar = 'RB'
-    period = 'M15'
-    dataStartDate = '2017-03-01'
+    trdvar = 'IF'
+    period = 'd'
+    dataStartDate = '2010-03-01'
     dataEndDate = '2017-06-01'
     DB_Rt_Dir = r'D:\ArcticFox\project\hdf5_database'.replace('\\', '/')
 
@@ -72,7 +72,7 @@ def showinds( datain = 'mongo'):
     # slowd = slowd[-1]
     vada['KD_k'] = slowk
     vada['KD_d'] = slowd
-    plotsdk(vada, Symbol=trdvar, disfactors=['Ma5','Ma10','Ma20','Ma30','Ma60','KD_k', 'KD_d'], has2wind= True)
+    plotsdk(vada, Symbol=trdvar, disfactors=['Ma10','Ma20'], has2wind= 0)
     print 'ok'
 
 
@@ -139,5 +139,5 @@ def showspds( ):
 
 
 if __name__ == '__main__':
-    # showinds(datain = 'hd')  # 'mongo' | hd
-    showspds( )
+    showinds(datain = 'mongo')  # 'mongo' | hd
+    # showspds( )

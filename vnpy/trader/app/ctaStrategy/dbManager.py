@@ -268,9 +268,6 @@ def stdbard(pathdir, savedir, period, vars):
                 if 0:
                     df.index.rename('data', inplace=True)
 
-
-
-
                 df.to_csv(savedir+'/'+file, encoding='gbk')
                 print file, 'ok'
 
@@ -290,11 +287,11 @@ if __name__ == '__main__':
     # ------------------------从csv生成Bar_M并存入mogodb
     #----------------------------------------------------
     if 0:
-        periods = ['M']  # 'd', 'M', 'M30'
+        periods = ['d']  # 'd', 'M', 'M30'
 
-        vars =  ['RB'] # ['V','IF','TA','AU','RB','I','CU']
+        vars = ['J','IF','IC','IH','TA','RB','I','CU']
         for period in periods:
-            domdir = r'D:\lab\Dom' + '/' + period
+            domdir = r'D:\lab\Domnew' + '/' + period
             for var in vars:
                 csvfile = os.path.join(domdir, var + '_' + period + '.csv')
                 df = pd.read_csv(csvfile, index_col=0, encoding='gbk')
@@ -308,25 +305,26 @@ if __name__ == '__main__':
 
 
     # ------------------------从mongodb读取Bar_M并合成多周期bar并入库
-    makebarconfig = {
-        'M45': ['TA', 'RB'], #'V'
-        # 'M80': ['IF'],
-        'M75': ['TA', 'RB'],
-        # 'M111': ['AU'],
-        # 'M115': ['RB'],
-        # 'M125': ['I'],
-        # 'M155': ['CU'],
-    }
-    db_bar_ms= dbm.dbClient['Dom_M'].collection_names()
-    for mkn, vars in makebarconfig.iteritems():
-        for var in vars:
-            if var not in db_bar_ms:
-                print 'error! ', var, ' ont in Dom_M'
-                continue
-            print 'make bar for', var, mkn
-            af = dbm.makeBarFromM(dbname='Dom_M', var=var, startdate='2010-01-01', enddate='2017-06-31', mkn=mkn)
-            dbm.saveDfToMongo('Dom_'+mkn, var, af)
-            af.to_csv(r'D:\lab\Dom\mkbars' + '/' + var+'_'+mkn + '.csv', encoding='gbk')
+    if 0:
+        makebarconfig = {
+            'M45': ['TA', 'RB'], #'V'
+            # 'M80': ['IF'],
+            'M75': ['TA', 'RB'],
+            # 'M111': ['AU'],
+            # 'M115': ['RB'],
+            # 'M125': ['I'],
+            # 'M155': ['CU'],
+        }
+        db_bar_ms= dbm.dbClient['Dom_M'].collection_names()
+        for mkn, vars in makebarconfig.iteritems():
+            for var in vars:
+                if var not in db_bar_ms:
+                    print 'error! ', var, ' ont in Dom_M'
+                    continue
+                print 'make bar for', var, mkn
+                af = dbm.makeBarFromM(dbname='Dom_M', var=var, startdate='2010-01-01', enddate='2017-06-31', mkn=mkn)
+                dbm.saveDfToMongo('Dom_'+mkn, var, af)
+                af.to_csv(r'D:\lab\Dom\mkbars' + '/' + var+'_'+mkn + '.csv', encoding='gbk')
 
     print 'end time: ', datetime.now()
 

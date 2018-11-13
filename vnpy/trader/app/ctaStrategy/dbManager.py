@@ -171,6 +171,23 @@ class DbManager(object):
             # self.dbClient[dbname][var].insert(df.to_dict())
 
 # ----------------------------------------------------------
+    def correctDatas(self):
+        # 自2016年5月3日起，螺纹钢、热轧卷板、石油沥青期货品种的连续交易时间由每周一至周五的21：00至次日1：00调整为21：00至23：00
+        if 1:
+            vars = ['RB', 'HC', 'BU']
+            for var in vars:
+                mycol = self.dbClient['Dom_M'][var]
+                hhs = [' 23:', ' 00:', ' 01:']
+                for hh in hhs:
+                    flt = {"datetime" : {'$gt': "2016-05-03 23:00:00", '$regex': hh}}
+                    self.dbCursor = mycol.find(flt).sort('datetime', pymongo.ASCENDING)
+                    datas = list(self.dbCursor)
+                    if len(datas) > 0:
+                        pass
+                        x = mycol.delete_many(flt)
+                        print(x.deleted_count, " is to be del")
+
+# ----------------------------------------------------------
 def csvtodb():
     dbm = DbManager()
     periods = ['M30']  # 'd', 'M', 'M30'
@@ -286,7 +303,7 @@ if __name__ == '__main__':
 
     # ------------------------从csv生成Bar_M并存入mogodb
     #----------------------------------------------------
-    if 1:
+    if 0:
         periods = ['d', 'M', 'M5', 'M15', 'M30', 'H']
 
         vars = ['J','IF','IC','IH','TA','RB','I','CU']
@@ -326,6 +343,10 @@ if __name__ == '__main__':
                 af = dbm.makeBarFromM(dbname='Dom_M', var=var, startdate='2010-01-01', enddate='2017-06-31', mkn=mkn)
                 dbm.saveDfToMongo('Dom_'+mkn, var, af)
                 af.to_csv(r'D:\lab\Dom\mkbars' + '/' + var+'_'+mkn + '.csv', encoding='gbk')
+
+    if 1:
+        dbm.correctDatas()
+
 
     print 'end time: ', datetime.now()
 

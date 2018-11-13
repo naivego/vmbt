@@ -37,7 +37,7 @@ def plotsdk(stkdf, candk= True, disfactors=None, Symbol='symbol', has2wind = Fal
         fig, ax = plt.subplots(1, sharex=True, figsize=(12,5))
 
     #fig, ax = plt.subplots()
-    fig.subplots_adjust(bottom=0.2, left=0.05)
+    fig.subplots_adjust(bottom=0.05, left=0.03)
     def mydate(x, pos):
         try:
             return xdate[int(x)]

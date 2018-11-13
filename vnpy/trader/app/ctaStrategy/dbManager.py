@@ -286,13 +286,14 @@ if __name__ == '__main__':
 
     # ------------------------从csv生成Bar_M并存入mogodb
     #----------------------------------------------------
-    if 0:
-        periods = ['d']  # 'd', 'M', 'M30'
+    if 1:
+        periods = ['d', 'M', 'M5', 'M15', 'M30', 'H']
 
         vars = ['J','IF','IC','IH','TA','RB','I','CU']
         for period in periods:
             domdir = r'D:\lab\Domnew' + '/' + period
             for var in vars:
+                print 'saveDfToMongo for: ', var, ' period:', period
                 csvfile = os.path.join(domdir, var + '_' + period + '.csv')
                 df = pd.read_csv(csvfile, index_col=0, encoding='gbk')
                 if 0:   # #----剔除集合竞价bar

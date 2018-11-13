@@ -32,7 +32,7 @@ from vnpy.trader.vtGateway import VtOrderData, VtTradeData
 from vnpy.trader.vtFunction import loadMongoSetting
 from vnpy.trader.vtEvent import *
 from vnbt_utils import *
-from hdBarLoader import *
+from barLoader import *
 ########################################################################
 class BacktestingEngine(object):
     """

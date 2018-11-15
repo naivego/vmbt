@@ -320,7 +320,8 @@ if __name__ == '__main__':
                 af['vtSymbol'] = var
                 dbm.saveDfToMongo('Dom_' + period, var, af)
     #----------------------------------------------------
-
+    if 1:
+        dbm.correctDatas()
 
     # ------------------------从mongodb读取Bar_M并合成多周期bar并入库
     if 0:
@@ -344,8 +345,7 @@ if __name__ == '__main__':
                 dbm.saveDfToMongo('Dom_'+mkn, var, af)
                 af.to_csv(r'D:\lab\Dom\mkbars' + '/' + var+'_'+mkn + '.csv', encoding='gbk')
 
-    if 1:
-        dbm.correctDatas()
+
 
 
     print 'end time: ', datetime.now()

@@ -358,6 +358,69 @@ class TSBacktest(object):
         for x in self.Variety_List:
             self.Tick_Size[x] = Tick_Size[x.lower()]
 
+    # ----------------------------------------------------------------------
+
+    def newBar(self, bar):
+        """新的K线"""
+        self.bar = bar
+        self.dt = datetime.strptime(bar.datetime, '%Y-%m-%d %H:%M:%S')
+        # self.crossLimitOrder()  # 先撮合限价单
+        # self.crossStopOrder()  # 再撮合停止单
+        self.strategy.onBar(bar)  # 推送K线到策略中
+        # self.__sendOnBarEvent(bar)  # 推送K线到事件
+
+    # ----------------------------------------------------------------------
+    def newTick(self, tick):
+        """新的Tick"""
+        self.tick = tick
+        self.dt = tick.datetime
+        # self.crossLimitOrder()
+        # self.crossStopOrder()
+        self.strategy.onTick(tick)
+
+    # ----------------------------------------------------------------------
+    def initStrategy(self, strategyClass, setting=None):
+        """
+        初始化策略
+        setting是策略的参数设置，如果使用类中写好的默认设置则可以不传该参数
+        """
+        self.strategy = strategyClass(self, setting)
+        if not self.strategy.name:
+            self.strategy.name = self.strategy.className
+
+        self.strategy.onInit()
+        self.strategy.onStart()
+
+    # ----------------------------------------------------------------------
+    def endOfDay(self, dtm, setp):
+        pass
+        # self.posmkv = 0
+        # self.unsetpnl = 0
+        # if len(self.longPosition) > 0:
+        #     for t in self.longPosition:
+        #         self.posmkv += t.price * abs(t.volume) * self.size
+        #         self.unsetpnl += (setp - t.price) * abs(t.volume) * self.size
+        # if len(self.shortPosition) > 0:
+        #     for t in self.shortPosition:
+        #         self.posmkv -= t.price * abs(t.volume) * self.size
+        #         self.unsetpnl += (-setp + t.price) * abs(t.volume) * self.size
+        # if self.capital > 0:
+        #     self.leverage = self.posmkv / self.capital
+        # else:
+        #     self.leverage = 0
+        #
+        # dse = pd.Series()
+        # dse['Posmkv'] = self.posmkv
+        # dse['Networth'] = (self.capital + self.unsetpnl) / self.initCapital
+        # dse['Margin'] = self.capital - self.avaliable
+        # dse['Margpct'] = (self.capital - self.avaliable) / (self.capital + self.unsetpnl)
+        # dse['Leverage'] = self.posmkv / (self.capital + self.unsetpnl)
+        # dse.name = dtm
+        # self.dailyinf = self.dailyinf.append(dse)
+
+        # ----------------------------------------------------------------------
+
+
     def sendord(self, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, OrdFlg='NB'):
         # print 'sendord:', Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg
         self.LogOrdsnum += 1

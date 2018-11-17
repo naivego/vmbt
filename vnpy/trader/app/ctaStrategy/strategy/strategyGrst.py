@@ -402,7 +402,7 @@ if __name__ == '__main__':
     TS_Config['Remark'] = ''
     TS_Config['Datain'] = 'mongo'
     TS_Config['DB_Rt_Dir'] = r'D:\ArcticFox\project\hdf5_database'.replace('\\', '/')
-    TS_Config['Rt_Dir'] = r'D:\Apollo\vmtb'  # os.getcwd()
+    TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
     TS_Config['Time_Param'] = ['2016-06-01', '2017-06-25']

@@ -141,5 +141,5 @@ def showspds( ):
 
 
 if __name__ == '__main__':
-    showinds(datain = 'hd')  # 'mongo' | hd
+    showinds(datain = 'mongo')  # 'mongo' | hd
     # showspds( )

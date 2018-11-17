@@ -183,7 +183,7 @@ class DbManager(object):
             vars = ['RB', 'HC', 'BU']
             for var in vars:
                 mycol = self.dbClient['Dom_M'][var]
-                flt = {"date" : {'$gte': "2016-05-03"}, "time" : {'$gt': "23:00:00", '$lt': "03:00:00"}}  #'$regex': hh
+                flt = {"date": {'$gt': "2016-05-02"}, '$or': [{"time": {'$gt': "23:00:00"}}, {"time": {'$lt': "03:00:00"}}]}   #'$regex': hh
                 self.dbCursor = mycol.find(flt).sort('datetime', pymongo.ASCENDING)
                 datas = list(self.dbCursor)
                 if len(datas) > 0:
@@ -307,7 +307,7 @@ if __name__ == '__main__':
 
     # ------------------------从csv生成Bar_M并存入mogodb
     #----------------------------------------------------
-    if 1:
+    if 0:
         periods =['M'] # [ 'M', 'M5', 'M15', 'M30', 'H', 'd']
 
         vars =['RB']# ['J','IF','IC','IH','TA','RB','I','CU']

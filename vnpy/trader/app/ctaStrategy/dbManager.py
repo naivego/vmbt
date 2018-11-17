@@ -161,10 +161,16 @@ class DbManager(object):
             collection.insert_one(bar.__dict__)
 
 # ----------------------------------------------------------
-    def saveDfToMongo(self, dbname, var, dfdata, indexcol= 'datetime'):
+    def saveDfToMongo(self, dbname, var, dfdata, indexcol= 'datetime', adddt = True):
         df = dfdata.copy(deep= True)
         if indexcol:
             df[indexcol] = df.index
+        if adddt:
+            if 'date' not in df.columns and 'datetime' in df.columns:
+                df['date'] = [dt.split(' ')[0] for dt in df['datetime']]
+            if 'time' not in df.columns and 'datetime' in df.columns:
+                df['time'] = [dt.split(' ')[1] for dt in df['datetime']]
+
         for i in range(0, df.index.size, 100):
             sdf = df.ix[i:i+100,:]
             self.dbClient[dbname][var].insert(json.loads(sdf.T.to_json(), object_pairs_hook=OrderedDict).values())
@@ -177,15 +183,13 @@ class DbManager(object):
             vars = ['RB', 'HC', 'BU']
             for var in vars:
                 mycol = self.dbClient['Dom_M'][var]
-                hhs = [' 23:', ' 00:', ' 01:']
-                for hh in hhs:
-                    flt = {"datetime" : {'$gt': "2016-05-03 23:00:00", '$regex': hh}}
-                    self.dbCursor = mycol.find(flt).sort('datetime', pymongo.ASCENDING)
-                    datas = list(self.dbCursor)
-                    if len(datas) > 0:
-                        pass
-                        x = mycol.delete_many(flt)
-                        print(x.deleted_count, " is to be del")
+                flt = {"date" : {'$gte': "2016-05-03"}, "time" : {'$gt': "23:00:00", '$lt': "03:00:00"}}  #'$regex': hh
+                self.dbCursor = mycol.find(flt).sort('datetime', pymongo.ASCENDING)
+                datas = list(self.dbCursor)
+                if len(datas) > 0:
+                    pass
+                    x = mycol.delete_many(flt)
+                    print(x.deleted_count, " is to be del")
 
 # ----------------------------------------------------------
 def csvtodb():
@@ -303,10 +307,10 @@ if __name__ == '__main__':
 
     # ------------------------从csv生成Bar_M并存入mogodb
     #----------------------------------------------------
-    if 0:
-        periods = ['d', 'M', 'M5', 'M15', 'M30', 'H']
+    if 1:
+        periods =['M'] # [ 'M', 'M5', 'M15', 'M30', 'H', 'd']
 
-        vars = ['J','IF','IC','IH','TA','RB','I','CU']
+        vars =['RB']# ['J','IF','IC','IH','TA','RB','I','CU']
         for period in periods:
             domdir = r'D:\lab\Domnew' + '/' + period
             for var in vars:
@@ -318,6 +322,7 @@ if __name__ == '__main__':
                 else:
                     af = df
                 af['vtSymbol'] = var
+
                 dbm.saveDfToMongo('Dom_' + period, var, af)
     #----------------------------------------------------
     if 1:
@@ -326,9 +331,11 @@ if __name__ == '__main__':
     # ------------------------从mongodb读取Bar_M并合成多周期bar并入库
     if 0:
         makebarconfig = {
-            'M45': ['TA', 'RB'], #'V'
-            # 'M80': ['IF'],
-            'M75': ['TA', 'RB'],
+            'M15': ['RB'],
+            'M30': ['RB'], #'V'
+            'M60': ['RB'],
+
+            # 'M75': ['TA', 'RB'],
             # 'M111': ['AU'],
             # 'M115': ['RB'],
             # 'M125': ['I'],
@@ -344,8 +351,6 @@ if __name__ == '__main__':
                 af = dbm.makeBarFromM(dbname='Dom_M', var=var, startdate='2010-01-01', enddate='2017-06-31', mkn=mkn)
                 dbm.saveDfToMongo('Dom_'+mkn, var, af)
                 af.to_csv(r'D:\lab\Dom\mkbars' + '/' + var+'_'+mkn + '.csv', encoding='gbk')
-
-
 
 
     print 'end time: ', datetime.now()

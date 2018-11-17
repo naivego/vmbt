@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from time import localtime, strftime
 import csv
 import json
+import logging
 import collections
 import shutil
 from scipy.interpolate import griddata
@@ -217,11 +218,17 @@ def calc_metrics(Networth_Series, Trading_Days_Per_Year=242):
 class TSBacktest(object):
     # ----------------------------------------------------------------------
     # def __init__(self, Var, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_time, sk_atr, sk_ckl, TS_Config):
-    def __init__(self, Var, quotes, sk_ckl, TS_Config):
+    def __init__(self,  TS_Config):  #quotes, sk_ckl,
+        self.Datain = TS_Config['Datain']
         self.Rt_Dir = TS_Config['Rt_Dir']
+        self.DB_Rt_Dir = TS_Config['DB_Rt_Dir']
+        self.Meta_Csv_Dir = self.Rt_Dir + '/vnpy/trader/' + 'CommodityMetaData.csv'
+        self.Host = TS_Config['Host']
         self.Result_Dir = self.Rt_Dir + '/TSBT_results/'
-        self.Var = Var
-        self.Variety_List = [Var]
+        self.Symbol = TS_Config['Symbol']
+        self.Var = self.Symbol
+        self.Variety_List = [self.Symbol]
+        self.MiniT = TS_Config['MiniT']
 
         # self.sk_open = sk_open
         # self.sk_high = sk_high
@@ -231,15 +238,16 @@ class TSBacktest(object):
         # self.sk_time = sk_time
         # self.sk_atr = sk_atr
         # self.sk_ckl = sk_ckl
-        self.quotes = quotes
-        self.sk_open = quotes['open'].values
-        self.sk_high = quotes['high'].values
-        self.sk_low = quotes['low'].values
-        self.sk_close = quotes['close'].values
-        self.sk_volume = quotes['volume'].values
-        self.sk_time = quotes['time'].values
-        self.sk_atr = quotes['ATR'].values
-        self.sk_ckl = sk_ckl
+
+        # self.quotes = quotes
+        # self.sk_open = quotes['open'].values
+        # self.sk_high = quotes['high'].values
+        # self.sk_low = quotes['low'].values
+        # self.sk_close = quotes['close'].values
+        # self.sk_volume = quotes['volume'].values
+        # self.sk_time = quotes['time'].values
+        # self.sk_atr = quotes['ATR'].values
+        # self.sk_ckl = sk_ckl
 
         self.Time_Param = TS_Config['Time_Param']
         self.Start_Date = self.Time_Param[0]
@@ -261,7 +269,6 @@ class TSBacktest(object):
 
         # 回测相关
         self.Trade_Date_DT = None
-        self.Meta_Csv_Dir = self.Rt_Dir + '/CommodityMetaData.csv'
         Init_Capital = TS_Config['Init_Capital']
         self.Init_Capital = TS_Config['Init_Capital']
         self.SlipT = TS_Config['SlipT']
@@ -294,8 +301,7 @@ class TSBacktest(object):
         self.SgnVarLstSdop_Dic = {}  # 各个策略的各个品种最近的开仓信号
         self.SocPos_Dic = {} # 各信号源持仓汇总
 
-        self.Ostpn_Dic = TS_Config['Ostpn_Dic']
-        self.Sgnwt_Dic = TS_Config['Sgnwt_Dic']
+
 
         self.Opid = 0
         self.MktValue = 0
@@ -328,37 +334,50 @@ class TSBacktest(object):
         self.set_margin_rate(Csv_Dir)
         self.set_tick_size(Csv_Dir)
 
-    def set_transaction_rate(self, Csv_Dir, Col_Num=11, Index_Col=0):
-        Transaction_Rate = pd.read_csv(Csv_Dir, index_col=Index_Col).iloc[:, Col_Num]
+    def set_transaction_rate(self, Csv_Dir, Col_Nam='PercentageFee', Index_Col=0):
+        Transaction_Rate = pd.read_csv(Csv_Dir, index_col=Index_Col).loc[:, Col_Nam]
         for x in self.Variety_List:
             self.Transaction_Rate[x] = Transaction_Rate[x.lower()]
 
-    def set_transaction_rate_same_day(self, Csv_Dir, Col_Num=12, Index_Col=0):
-        Transaction_Rate_Same_Day = pd.read_csv(Csv_Dir, index_col=Index_Col).iloc[:, Col_Num]
+    def set_transaction_rate_same_day(self, Csv_Dir, Col_Nam='PercentageFeeSameDay', Index_Col=0):
+        Transaction_Rate_Same_Day = pd.read_csv(Csv_Dir, index_col=Index_Col).loc[:, Col_Nam]
         for x in self.Variety_List:
             self.Transaction_Rate_Same_Day[x] = Transaction_Rate_Same_Day[x.lower()]
 
-    def set_transaction_fee(self, Csv_Dir, Col_Num=10, Index_Col=0):
-        Transaction_Fee = pd.read_csv(Csv_Dir, index_col=Index_Col).iloc[:, Col_Num]
+    def set_transaction_fee(self, Csv_Dir, Col_Nam='FixFee', Index_Col=0):
+        Transaction_Fee = pd.read_csv(Csv_Dir, index_col=Index_Col).loc[:, Col_Nam]
         for x in self.Variety_List:
             self.Transaction_Fee[x] = Transaction_Fee[x.lower()]
 
-    def set_multiplier(self, Csv_Dir, Col_Num=4, Index_Col=0):
-        Multiplier = pd.read_csv(Csv_Dir, index_col=Index_Col).iloc[:, Col_Num]
+    def set_multiplier(self, Csv_Dir, Col_Nam='Multiplier', Index_Col=0):
+        Multiplier = pd.read_csv(Csv_Dir, index_col=Index_Col).loc[:, Col_Nam]
         for x in self.Variety_List:
             self.Multiplier[x] = Multiplier[x.lower()]
 
-    def set_margin_rate(self, Csv_Dir, Col_Num=7, Index_Col=0):
-        Margin_Rate = pd.read_csv(Csv_Dir, index_col=Index_Col).iloc[:, Col_Num]
+    def set_margin_rate(self, Csv_Dir, Col_Nam='LongMarginRate(%)', Index_Col=0):
+        Margin_Rate = pd.read_csv(Csv_Dir, index_col=Index_Col).loc[:, Col_Nam]
         for x in self.Variety_List:
             self.Margin_Rate[x] = Margin_Rate[x.lower()]
 
-    def set_tick_size(self, Csv_Dir, Col_Num=3, Index_Col=0):
-        Tick_Size = pd.read_csv(Csv_Dir, index_col=Index_Col).iloc[:, Col_Num]
+    def set_tick_size(self, Csv_Dir, Col_Nam='TickSize', Index_Col=0):
+        Tick_Size = pd.read_csv(Csv_Dir, index_col=Index_Col).loc[:, Col_Nam]
         for x in self.Variety_List:
             self.Tick_Size[x] = Tick_Size[x.lower()]
-
     # ----------------------------------------------------------------------
+
+
+    def writeCtaLog(self, content):
+        """记录日志"""
+        # log = str(self.dt) + ' ' + content
+        # self.logList.append(log)
+
+        # 写入本地log日志
+        logging.info(content)
+
+    def writeCtaError(self, content):
+        """记录异常"""
+        self.output(content)
+        self.writeCtaLog(content)
 
     def newBar(self, bar):
         """新的K线"""
@@ -996,7 +1015,7 @@ class TSBacktest(object):
         for socna, sgnkops in intedsgn.cmbkops.iteritems():
             for sgnid, koplist in sgnkops.iteritems():
                 for kop in koplist:
-                    var = self.Var
+                    var = self.Symbol
                     sgnna= kop.sgnna
                     sdop = kop.sdop
                     sdsp = kop.sdsp

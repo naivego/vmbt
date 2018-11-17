@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 
 import matplotlib
 
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 from matplotlib.finance import candlestick2_ohlc
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
@@ -273,7 +273,10 @@ def load_Dombar(Var, Period, Time_Param, Datain='mongo', Host='localhost', DB_Rt
     if Datain == 'mongo':
         print 'Load bar from mongodb: ' + Var
         dbClient = pymongo.MongoClient(Host, 27017)
-        dbName = '_'.join(['Dom', Period])
+        if Period=='H':
+            dbName = '_'.join(['Dom', 'M60'])
+        else:
+            dbName = '_'.join(['Dom', Period])
         collection = dbClient[dbName][Var]
         # 载入初始化需要用的数据
         dataStartDate = Time_Param[0]

@@ -116,7 +116,7 @@ class HdmatStrategy(CtaTemplate):
         try:
             Period = setting['vada0']['period']
             self.vada0 = load_Dombar(self.var, Period, Time_Param, ctaEngine.DB_Rt_Dir)
-            plotsdk(self.vada0, Symbol=self.var, disfactors=[''], has2wind=False)
+            plotsdk(self.vada0, symbol=self.var, disfactors=[''], has2wind=False)
         except:
             self.vada0 = None
         # -------------------vada1
@@ -126,7 +126,7 @@ class HdmatStrategy(CtaTemplate):
                 self.var1 = trdvar
             Period = setting['vada1']['period']
             self.vada1 = load_Dombar(self.var1, Period, Time_Param, ctaEngine.DB_Rt_Dir)
-            # plotsdk(self.vada1, Symbol=self.var1, disfactors=[''], has2wind=False)
+            # plotsdk(self.vada1, symbol=self.var1, disfactors=[''], has2wind=False)
         except:
             self.vada1 = None
 
@@ -137,7 +137,7 @@ class HdmatStrategy(CtaTemplate):
                 self.var2 = trdvar
             Period = setting['vada2']['period']
             self.vada2 = load_Dombar(self.var2, Period, Time_Param, ctaEngine.DB_Rt_Dir)
-            # plotsdk(self.vada2, Symbol=self.var2, disfactors=[''], has2wind=False)
+            # plotsdk(self.vada2, symbol=self.var2, disfactors=[''], has2wind=False)
         except:
             self.vada2 = None
 
@@ -148,7 +148,7 @@ class HdmatStrategy(CtaTemplate):
                 self.var3 = trdvar
             Period = setting['vada3']['period']
             self.vada3 = load_Dombar(self.var3, Period, Time_Param, ctaEngine.DB_Rt_Dir)
-            plotsdk(self.vada3, Symbol=self.var3, disfactors=[''], has2wind=False)
+            plotsdk(self.vada3, symbol=self.var3, disfactors=[''], has2wind=False)
         except:
             self.vada3 = None
 

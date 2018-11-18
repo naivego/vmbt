@@ -308,9 +308,8 @@ if __name__ == '__main__':
     # ------------------------从csv生成Bar_M并存入mogodb
     #----------------------------------------------------
     if 0:
-        periods =['M'] # [ 'M', 'M5', 'M15', 'M30', 'H', 'd']
-
-        vars =['RB']# ['J','IF','IC','IH','TA','RB','I','CU']
+        periods = ['M', 'M5', 'M15', 'M30', 'H', 'd']  # ['M'] #
+        vars = ['J','IF','IC','IH','TA','RB','I','CU']  # ['RB']#
         for period in periods:
             domdir = r'D:\lab\Domnew' + '/' + period
             for var in vars:
@@ -325,20 +324,20 @@ if __name__ == '__main__':
 
                 dbm.saveDfToMongo('Dom_' + period, var, af)
     #----------------------------------------------------
-    if 1:
+    if 0:
         dbm.correctDatas()
 
     # ------------------------从mongodb读取Bar_M并合成多周期bar并入库
-    if 0:
+    if 1:
         makebarconfig = {
-            'M15': ['RB'],
-            'M30': ['RB'], #'V'
-            'M60': ['RB'],
+            # 'M15': ['RB'],
+            # 'M30': ['RB'], #'V'
+            # 'M60': ['RB'],
 
             # 'M75': ['TA', 'RB'],
             # 'M111': ['AU'],
             # 'M115': ['RB'],
-            # 'M125': ['I'],
+            'M125': ['RB'],
             # 'M155': ['CU'],
         }
         db_bar_ms= dbm.dbClient['Dom_M'].collection_names()

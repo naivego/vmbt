@@ -15,10 +15,13 @@ import pymongo
 from datetime import datetime, timedelta
 
 import matplotlib
+
 # matplotlib.use('Qt4Agg')
 matplotlib.use('TkAgg')
+
 # from matplotlib.finance import candlestick2_ohlc
-from mpl_finance import candlestick2_ohlc
+from mpl_finance import candlestick2_ohlc   #若不存在得安装 mpl_finance
+
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
@@ -255,7 +258,6 @@ def laod_DomDatas():
                 skdata.rename(columns=recol, inplace=True)
                 if 0:
                     skdata['time'] = skdata.index
-                    plotsdk(skdata, Symbol=var, disfactors=[])
                 print var, 'ok'
             # ----剔除集合竞价bar
             if 1 and period != 'd':

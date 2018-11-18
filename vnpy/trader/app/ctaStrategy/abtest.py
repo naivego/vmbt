@@ -230,6 +230,7 @@ class TSBacktest(object):
         self.Variety_List = [self.Symbol]
         self.MiniT = TS_Config['MiniT']
 
+        self.Mida = None
         # self.sk_open = sk_open
         # self.sk_high = sk_high
         # self.sk_low = sk_low
@@ -365,7 +366,11 @@ class TSBacktest(object):
             self.Tick_Size[x] = Tick_Size[x.lower()]
     # ----------------------------------------------------------------------
 
+    def putStrategyEvent(self, name):
+        """发送策略更新事件，回测中忽略"""
+        pass
 
+    # ----------------------------------------------------------------------
     def writeCtaLog(self, content):
         """记录日志"""
         # log = str(self.dt) + ' ' + content
@@ -720,6 +725,26 @@ class TSBacktest(object):
 
         self.LongEnt_Df = pd.DataFrame([[0, 0, 0]], index=self.Variety_List, columns=['entnum', 'size', 'mktvalue'])
         self.ShortEnt_Df = pd.DataFrame([[0, 0, 0]], index=self.Variety_List, columns=['entnum', 'size', 'mktvalue'])
+
+        if type(self.Mida) == type(None):
+            print 'Mida is None'
+            return
+
+        self.sk_open = self.Mida['open'].values
+        self.sk_high = self.Mida['high'].values
+        self.sk_low = self.Mida['low'].values
+        self.sk_close = self.Mida['close'].values
+        self.sk_volume = self.Mida['volume'].values
+        self.sk_time = self.Mida['time'].values
+
+
+    def runBacktesting(self):
+        self.initbacktest()
+
+
+
+
+
 
     def sgntotrd(self, ski, intedsgn):
         # --撮合市价单

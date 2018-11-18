@@ -3999,9 +3999,13 @@ class Grst_Factor(object):
                 nrstsa.getrst()
                 self.uprstsas[crtrstna][rstna] = nrstsa
 
+    # -----------------------------------------------------------
     def updt_newbar(self):
         pass
-    def grst_init(self, faset = {}, btest = False, btconfig = None, subrst = None, tdkopset = None):
+
+    # -----------------------------------------------------------
+    def grst_init(self, setting = {}, btconfig = {}):
+
         self.crtski = 0
         self.mosi = 0 # 记录Mrst的当前sk相对subrst最新sk偏移的数目
         skbgi = 20  # 起始点
@@ -4022,8 +4026,9 @@ class Grst_Factor(object):
         else:
             self.sk_sudc = np.array([])
             # ----------------------------------------------
-        self.faset = faset
-        self.subrst = subrst
+        self.faset = setting['mfaset']
+        self.tdkopset = setting['tdkopset']
+
         self.sk_ckl = []  # 与ck同步，由元组（ckli,cksdh,cksdl）构成的队列，记录当前的sk链所包括的sk数目和实体部分的区间
         self.ckls = []  # 与ckl线段列表，由列表[cklbi,cklei,cklbp,cklep,cklsd]构成,记录线段的起点位置、终点位置、起点价格、终点价格、长度
         self.sk_cklsm = []  # 在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls)
@@ -4133,19 +4138,8 @@ class Grst_Factor(object):
         self.sk_sgn = []
 
         self.skatsel = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
-        if self.subrst:
-            self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
-        else:
-            self.skatetl = None
 
-            # *******************************************************************
-        # ----------------回测相关模块----------------------------------------
-        if btest:
-            self.tdkopset = tdkopset
-            self.TS_Config = btconfig
-            self.TSBT = TSBacktest(self.Var, self.quotes, self.sk_ckl, btconfig)
-            self.TSBT.initbacktest()
-            # self.intedsgn = Intsgnbs(self.rstdir, self.skatsel, self.skatetl, self.suplines, self.reslines, self.sadlines, self.uprstsas, self.dwrstsas, subrst=self.subrst)
+        self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
 
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:

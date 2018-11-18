@@ -18,7 +18,7 @@ from vnpy.trader.app.ctaStrategy.barLoader import *
 def showinds( datain = 'mongo'):
     trdvar = 'RB'
     period = 'M15'
-    dataStartDate = '2016-06-01'
+    dataStartDate = '2017-01-01'
     dataEndDate = '2017-06-01'
     DB_Rt_Dir = r'D:\ArcticFox\project\hdf5_database'.replace('\\', '/')
 

@@ -11,7 +11,7 @@ class Barda(object):
         self.var = var
         self.period = period
         self.dat = pd.DataFrame()
-        self.crtidx = 'xx'
+        self.crtidx = 'init'
         self.crtnum = 0
         self.crtbar = pd.Series()
         self.newsta = 0

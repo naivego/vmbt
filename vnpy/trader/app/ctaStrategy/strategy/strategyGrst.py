@@ -80,15 +80,14 @@ class GrstStrategy(CtaTemplate):
         self.symbol = trdvar
         self.vtSymbol = trdvar
         Time_Param = ctaEngine.Time_Param
-        # -------------------vada0
+        # -------------------Mida
         self.var = trdvar
         try:
             Period = ctaEngine.MiniT
-            self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-
-            plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
+            ctaEngine.Mida = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
+            plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False)
         except:
-            self.vada0 = None
+            ctaEngine.Mida = None
         # -------------------vada1
         try:
             Period = self.setting['msdpset']['ma']
@@ -96,6 +95,10 @@ class GrstStrategy(CtaTemplate):
             plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False)
             self.bada1 = Barda(trdvar, Period)
             self.bada1.dat = self.vada1
+
+            Mrst = Grst_Factor(trdvar, Period, self.vada1, fid='ma')
+            Mrst.grst_init(setting=setting, btconfig=TS_Config)
+
         except:
             self.vada1 = None
             self.bada1=None
@@ -107,6 +110,8 @@ class GrstStrategy(CtaTemplate):
             plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False)
             self.bada2 = Barda(trdvar, Period)
             self.bada2.dat = self.vada2
+            Arst = Grst_Factor(trdvar, Period, self.vada2, fid='su')
+            Arst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada2 = None
             self.bada2 = None
@@ -120,10 +125,8 @@ class GrstStrategy(CtaTemplate):
         """初始化策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略初始化' % self.name)
 
-
-
         print 'onInit'
-        # self.ctaEngine.loadDataFromMongo(self.vadas)
+
 
     # ----------------------------------------------------------------------
     def onStart(self):
@@ -471,7 +474,7 @@ if __name__ == '__main__':
         TS_Config['Symbol'] = var
         engine = TSBacktest(TS_Config)
         engine.initStrategy(GrstStrategy, setting)
-        # engine.runBacktesting()
+        engine.runBacktesting()
 
         # skdata = load_Dombar(var, Msdpset['ma'], Time_Param=TS_Config['Time_Param'], datain=datain, host=Host, DB_Rt_Dir=DB_Rt_Dir)
         # Mrst = Grst_Factor(var, Msdpset['ma'], skdata, fid='ma')

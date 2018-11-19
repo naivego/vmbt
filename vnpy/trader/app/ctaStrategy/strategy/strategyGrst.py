@@ -88,7 +88,15 @@ class GrstStrategy(CtaTemplate):
             plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False)
         except:
             ctaEngine.Mida = None
+
+        self.vada1 = None
+        self.bada1 = None
+        self.Marst = None
+        self.vada2 = None
+        self.bada2 = None
+        self.Surst = None
         # -------------------vada1
+
         try:
             Period = self.setting['msdpset']['ma']
             self.vada1 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
@@ -96,9 +104,8 @@ class GrstStrategy(CtaTemplate):
             self.bada1 = Barda(trdvar, Period)
             self.bada1.dat = self.vada1
 
-            Mrst = Grst_Factor(trdvar, Period, self.vada1, fid='ma')
-            Mrst.grst_init(setting=setting, btconfig=TS_Config)
-
+            self.Marst = Grst_Factor(trdvar, Period, self.vada1, fid='ma')
+            self.Marst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada1 = None
             self.bada1=None
@@ -110,8 +117,8 @@ class GrstStrategy(CtaTemplate):
             plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False)
             self.bada2 = Barda(trdvar, Period)
             self.bada2.dat = self.vada2
-            Arst = Grst_Factor(trdvar, Period, self.vada2, fid='su')
-            Arst.grst_init(setting=setting, btconfig=TS_Config)
+            self.Surst = Grst_Factor(trdvar, Period, self.vada2, fid='su')
+            self.Surst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada2 = None
             self.bada2 = None

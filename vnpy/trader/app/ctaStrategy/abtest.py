@@ -748,9 +748,14 @@ class TSBacktest(object):
             self.crtski = i
             self.crtidtm = idtm
             self.crtidate = self.crtidtm[:10]
+            self.crossords(i)
 
-    def corssords(self, ski):
+
+
+
+    def crossords(self, ski):
         # ----------------------------------------------------------------------------------------------------撮合订单
+        newtrdcnt = 0
         if True:
             for Var, Ords in self.OrdMkt_Dic.iteritems():
                 # 过滤行情缺失
@@ -759,7 +764,7 @@ class TSBacktest(object):
                 else:
                     print 'cross CurOrdMkt error: ', Var, self.sk_time[ski]
                     continue
-                for Ord in Ords['ords']:
+                for Ord in Ords:
                     try:
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
@@ -770,69 +775,68 @@ class TSBacktest(object):
                         elif trdsize < 0:
                             trdp = self.sk_open[ski] - self.SlipT * self.Tick_Size[Var]
                         else:
-                            print 'cross CurOrdMkt error: ', Var, idtime, ' trdp =', trdp
+                            print 'cross CurOrdMkt error: ', Var, self.sk_time[ski], ' trdp =', trdp
                             continue
-                        self.newtrd(Ord, trdsize, trdp, idtime, iski)
+                        self.newtrd(Ord, trdsize, trdp, self.sk_time[ski], ski)
+                        newtrdcnt += 1
                     except Exception, e:
                         print 'cross CurOrdMkt', e.message
                         pass
             # ------------------------------------------------------------
-            CurOrdStp = self.OrdStp_Dic.dropna(how='any')
-            if not CurOrdStp.empty:
-                for Var, Ords in CurOrdStp.iterrows():
-                    # 过滤行情缺失
-                    if self.sk_open[ski] > 0 and self.sk_close[ski] > 0 and self.sk_low[ski] > 0 and self.sk_high[ski] > 0:
-                        pass
-                    else:
-                        print 'cross CurOrdStp error: ', Var, idtime
-                        continue
-                    for Ord in Ords['ords']:
-                        try:
-                            if Ord.OrdSize != 0:
-                                trdsize = Ord.OrdSize
-                            else:
-                                trdsize = Ord.OrdAmount / (Ord.OrdPrice * self.Multiplier[Var])
+            for Var, Ords in self.OrdStp_Dic.iteritems():
+                # 过滤行情缺失
+                if self.sk_open[ski] > 0 and self.sk_close[ski] > 0 and self.sk_low[ski] > 0 and self.sk_high[ski] > 0:
+                    pass
+                else:
+                    print 'cross CurOrdStp error: ', Var, self.sk_time[ski]
+                    continue
+                for Ord in Ords:
+                    try:
+                        if Ord.OrdSize != 0:
+                            trdsize = Ord.OrdSize
+                        else:
+                            trdsize = Ord.OrdAmount / (Ord.OrdPrice * self.Multiplier[Var])
 
-                            if trdsize > 0 and self.sk_high[ski] >= Ord.OrdPrice:
-                                trdp = max(Ord.OrdPrice, self.sk_open[ski])
-                            elif trdsize < 0 and self.sk_low[ski] <= Ord.OrdPrice:
-                                trdp = min(Ord.OrdPrice, self.sk_open[ski])
-                            else:
-                                continue
-                            self.newtrd(Ord, trdsize, trdp, idtime, iski)
-                        except Exception, e:
-                            print 'cross CurOrdStp', e.message
-                            pass
+                        if trdsize > 0 and self.sk_high[ski] >= Ord.OrdPrice:
+                            trdp = max(Ord.OrdPrice, self.sk_open[ski])
+                        elif trdsize < 0 and self.sk_low[ski] <= Ord.OrdPrice:
+                            trdp = min(Ord.OrdPrice, self.sk_open[ski])
+                        else:
+                            continue
+                        self.newtrd(Ord, trdsize, trdp, self.sk_time[ski], ski)
+                        newtrdcnt += 1
+                    except Exception, e:
+                        print 'cross CurOrdStp', e.message
+                        pass
 
             # ------------------------------------------------------------
-            CurOrdLmt = self.OrdLmt_Dic.dropna(how='any')
-            if not CurOrdLmt.empty:
-                for Var, Ords in CurOrdLmt.iterrows():
-                    # 过滤行情缺失
-                    if self.sk_open[ski] > 0 and self.sk_close[ski] > 0 and self.sk_low[ski] > 0 and self.sk_high[ski] > 0:
+            for Var, Ords in self.OrdLmt_Dic.iteritems():
+                # 过滤行情缺失
+                if self.sk_open[ski] > 0 and self.sk_close[ski] > 0 and self.sk_low[ski] > 0 and self.sk_high[ski] > 0:
+                    pass
+                else:
+                    print 'cross CurOrdLmt error: ', Var, self.sk_time[ski]
+                    continue
+                for Ord in Ords:
+                    try:
+                        if Ord.OrdSize != 0:
+                            trdsize = Ord.OrdSize
+                        else:
+                            trdsize = Ord.OrdAmount / (Ord.OrdPrice * self.Multiplier[Var])
+
+                        if trdsize > 0 and Ord.OrdPrice >= self.sk_low[ski]:
+                            trdp = min(Ord.OrdPrice, self.sk_open[ski])
+                        elif trdsize < 0 and Ord.OrdPrice <= self.sk_high[ski]:
+                            trdp = max(Ord.OrdPrice, self.sk_open[ski])
+                        else:
+                            continue
+                        self.newtrd(Ord, trdsize, trdp, self.sk_time[ski], ski)
+                        newtrdcnt += 1
+                    except Exception, e:
+                        print 'cross CurOrdLmt', e.message
                         pass
-                    else:
-                        print 'cross CurOrdLmt error: ', Var, idtime
-                        continue
-                    for Ord in Ords['ords']:
-                        try:
-                            if Ord.OrdSize != 0:
-                                trdsize = Ord.OrdSize
-                            else:
-                                trdsize = Ord.OrdAmount / (Ord.OrdPrice * self.Multiplier[Var])
-
-                            if trdsize > 0 and Ord.OrdPrice >= self.sk_low[ski]:
-                                trdp = min(Ord.OrdPrice, self.sk_open[ski])
-                            elif trdsize < 0 and Ord.OrdPrice <= self.sk_high[ski]:
-                                trdp = max(Ord.OrdPrice, self.sk_open[ski])
-                            else:
-                                continue
-                            self.newtrd(Ord, trdsize, trdp, idtime, iski)
-                        except Exception, e:
-                            print 'cross CurOrdLmt', e.message
-                            pass
-
-        self.update_posinfo(ski)
+        if newtrdcnt >0:
+            self.update_posinfo(ski)
         # ------------------------------------------------------------
 
     def sgntotrd(self, ski, intedsgn):

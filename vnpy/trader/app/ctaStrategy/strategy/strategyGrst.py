@@ -6,17 +6,17 @@ Grst
 
 import os
 import sys
-import talib
+
 import numpy as np
 import pandas as pd
 
 from vnpy.trader.app.ctaStrategy.ctaBase import *
 from vnpy.trader.app.ctaStrategy.ctaTemplate import CtaTemplate
-from vnpy.trader.app.ctaStrategy.ctaBarda import *
 from vnpy.trader.app.ctaStrategy.afactor import *
 from vnpy.trader.app.ctaStrategy.factosdp import *
-from vnpy.trader.app.ctaStrategy.barLoader import *
-from vnpy.trader.app.ctaStrategy.ctaBarda import *
+from vnpy.trader.app.ctaStrategy.abtest import *
+# from vnpy.trader.app.ctaStrategy.barLoader import *
+import talib
 
 class GrstStrategy(CtaTemplate):
     """结合ATR和RSI指标的一个分钟线交易策略"""
@@ -85,47 +85,151 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = ctaEngine.MiniT
             ctaEngine.Mida = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False)
+            # plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False)
         except:
             ctaEngine.Mida = None
 
+        self.Teda = None
         self.vada1 = None
-        self.bada1 = None
         self.Marst = None
         self.vada2 = None
-        self.bada2 = None
         self.Surst = None
-        # -------------------vada1
 
+        # -------------------vada0
+        try:
+            Period = self.setting['msdpset']['te']
+            self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
+            plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
+            self.Teda = Barda(trdvar, Period, self.tedaOnbar)
+            self.Teda.dat = self.vada0
+            # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
+
+        except:
+            self.vada0 = None
+
+        # -------------------vada1
         try:
             Period = self.setting['msdpset']['ma']
             self.vada1 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.bada1 = Barda(trdvar, Period)
-            self.bada1.dat = self.vada1
-
             self.Marst = Grst_Factor(trdvar, Period, self.vada1, fid='ma')
             self.Marst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada1 = None
-            self.bada1=None
 
         # -------------------vada2
         try:
             Period = self.setting['msdpset']['su']
             self.vada2 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.bada2 = Barda(trdvar, Period)
-            self.bada2.dat = self.vada2
             self.Surst = Grst_Factor(trdvar, Period, self.vada2, fid='su')
             self.Surst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada2 = None
-            self.bada2 = None
 
 
         print 'strategy init finished'
-        #------------------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------
+    # 将 Marst和Surst中的信号映射到Teda中
+    def tedaInit(self, i):
+        print 'tedaInit'
+        if type(self.Teda) is type(None):
+            return
+        skdata = self.Teda.dat
+        self.sk_open = skdata['open'].values
+        self.sk_high = skdata['high'].values
+        self.sk_low = skdata['low'].values
+        self.sk_close = skdata['close'].values
+        self.sk_volume = skdata['volume'].values
+        self.sk_time = skdata.index
+
+        self.sk_ma = skdata['close'].rolling(10).mean()
+        self.sk_mid = skdata['close'].rolling(20).mean()
+        self.sk_std = skdata['close'].rolling(20).std()
+        self.sk_upl = self.sk_mid + 2 * self.sk_std
+        self.sk_dwl = self.sk_mid - 2 * self.sk_std
+
+        Dat_bar = pd.Dataframe(index=skdata.index)
+        Dat_bar['TR1'] = skdata['high'] - skdata['low']
+        Dat_bar['TR2'] = abs(skdata['high'] - skdata['close'].shift(1))
+        Dat_bar['TR3'] = abs(skdata['low'] - skdata['close'].shift(1))
+        TR = Dat_bar.loc[:, ['TR1', 'TR2', 'TR3']].max(axis=1)
+        ATR = TR.rolling(14).mean() / skdata['close'].shift(1)
+        self.sk_atr = ATR
+        self.sk_ckl = []
+        self.dkcn = []
+        self.teatmal = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
+        self.teatsul = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
+
+        skbgi = 20
+        if self.sk_close.size <= skbgi:
+            self.crtski = 0
+            return
+        for i in range(0, skbgi):
+            self.sk_ckl.append(None)
+        if self.sk_close[skbgi] >= self.sk_open[skbgi]:
+            ckli = 1
+            cksdh = self.sk_close[skbgi]
+            cksdl = self.sk_open[skbgi]
+            cklhp = self.sk_high[skbgi]
+            ckllp = self.sk_low[skbgi]
+        else:
+            ckli = -1
+            cksdl = self.sk_close[skbgi]
+            cksdh = self.sk_open[skbgi]
+            cklhp = self.sk_high[skbgi]
+            ckllp = self.sk_low[skbgi]
+        self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, skbgi))
+        self.crtski = skbgi
+
+    # ------------------------------------------------------------------------------------------
+    # 将 Marst和Surst中的信号映射到Teda中
+    def tedaOnbar(self, i):
+        print 'tedaOnbar'
+        self.crtski = i
+        sk_ckdtpst = 0.05  # 0.05倍平均涨幅作为涨跌柱子的公差
+        avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
+        if self.sk_ckl[i - 1][0] > 0:
+            if self.sk_close[i] >= self.sk_close[i - 1] - sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
+                        i - 1]:  # self.sk_open[i] - sk_ckdtpst * self.sk_atr[i]:  #
+                ckli = self.sk_ckl[i - 1][0] + 1
+                cksdh = max(self.sk_ckl[i - 1][1], self.sk_close[i])
+                cksdl = self.sk_ckl[i - 1][2]
+                cklhp = max(self.sk_ckl[i - 1][3], self.sk_high[i])
+                ckllp = min(self.sk_ckl[i - 1][4], self.sk_low[i])
+                cklbi = self.sk_ckl[i - 1][5]
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, cklbi))
+            else:
+                ckli = -1
+                cksdh = self.sk_ckl[i - 1][1]
+                cksdl = self.sk_close[i]
+                cklhp = max(self.sk_high[i], cksdh)
+                ckllp = self.sk_low[i]
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
+
+        else:
+            if self.sk_close[i] <= self.sk_close[i - 1] + sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
+                        i - 1]:  # self.sk_open[i] + sk_ckdtpst * self.sk_atr[i]:  #
+                ckli = self.sk_ckl[i - 1][0] - 1
+                cksdl = min(self.sk_ckl[i - 1][2], self.sk_close[i])
+                cksdh = self.sk_ckl[i - 1][1]
+                cklhp = max(self.sk_ckl[i - 1][3], self.sk_high[i])
+                ckllp = min(self.sk_ckl[i - 1][4], self.sk_low[i])
+                cklbi = self.sk_ckl[i - 1][5]
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, cklbi))
+
+            else:
+                ckli = 1
+                cksdl = self.sk_ckl[i - 1][2]
+                cksdh = self.sk_close[i]
+                cklhp = self.sk_high[i]
+                ckllp = min(self.sk_low[i], cksdl)
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
+
+
+
+
+
 
     # ----------------------------------------------------------------------
     def onInit(self):
@@ -189,201 +293,13 @@ class GrstStrategy(CtaTemplate):
             return
         if bar.datetime >= '2017-07-05':
             print 'chk'
-        self.ctaEngine.clearocoOrder()
 
-        for orderID in self.orderList:
-            self.cancelOrder(orderID)
+        self.Marst.bada.newbar(bar)
+        self.Surst.bada.newbar(bar)
+        if self.Teda:
+            self.Teda.newbar(bar)
 
-        self.orderList = []
 
-        # --------------------推送其他周期的vada
-        if self.vada1:
-            self.vada1.newbar(bar)
-        if self.vada2:
-            self.vada2.newbar(bar)
-
-        # 保存K线数据
-        self.closeArray[0:self.bufferSize - 1] = self.closeArray[1:self.bufferSize]
-        self.highArray[0:self.bufferSize - 1] = self.highArray[1:self.bufferSize]
-        self.lowArray[0:self.bufferSize - 1] = self.lowArray[1:self.bufferSize]
-
-        self.closeArray[-1] = bar.close
-        self.highArray[-1] = bar.high
-        self.lowArray[-1] = bar.low
-
-        self.bufferCount += 1
-        if self.bufferCount < self.bufferSize:
-            return
-
-        # 在vada0上计算指标数值
-        self.atrValue = talib.ATR(self.highArray, self.lowArray, self.closeArray, self.atrLength)[-1]
-        self.atrArray[0:self.bufferSize - 1] = self.atrArray[1:self.bufferSize]
-        self.atrArray[-1] = self.atrValue
-
-        self.atrCount += 1
-        if self.atrCount < self.bufferSize:
-            return
-
-        self.atrMa = talib.MA(self.atrArray, self.atrMaLength)[-1]
-        self.rsiValue = talib.RSI(self.closeArray, self.rsiLength)[-1]
-
-        self.cmaValue = talib.MA(self.closeArray, 20)[-1]
-        self.cmaArray[0:self.bufferSize - 1] = self.cmaArray[1:self.bufferSize]
-        self.cmaArray[-1] = self.cmaValue
-
-        # 在vada1上计算指标数值
-        if self.vada1:
-            vada = self.vada1
-            if vada.crtnum >= self.bufferSize:
-                self.usr_closeArr[:-1] = vada.dat['close'][vada.crtnum - self.bufferSize + 1:vada.crtnum]
-                self.usr_closeArr[-1] = vada.crtbar['close']
-
-                self.usr_openArr[:-1] = vada.dat['open'][vada.crtnum - self.bufferSize + 1:vada.crtnum]
-                self.usr_openArr[-1] = vada.crtbar['open']
-
-                self.usr_highArr[:-1] = vada.dat['high'][vada.crtnum - self.bufferSize + 1:vada.crtnum]
-                self.usr_highArr[-1] = vada.crtbar['high']
-
-                self.usr_lowArr[:-1] = vada.dat['low'][vada.crtnum - self.bufferSize + 1:vada.crtnum]
-                self.usr_lowArr[-1] = vada.crtbar['low']
-
-                atrval = talib.ATR(self.usr_highArr, self.usr_lowArr, self.usr_closeArr, self.atrLength)[-1]
-                tepma1 = talib.MA(self.usr_closeArr, self.usr_ma1cnt)[-1]
-                tepma2 = talib.MA(self.usr_closeArr, self.usr_ma2cnt)[-1]
-                tepma3 = talib.MA(self.usr_closeArr, self.usr_ma3cnt)[-1]
-                tepma4 = talib.MA(self.usr_closeArr, self.usr_ma4cnt)[-1]
-                tepma5 = talib.MA(self.usr_closeArr, self.usr_ma5cnt)[-1]
-
-                if vada.newsta:
-                    self.usr_ma1Arr[0:self.bufferSize - 1] = self.usr_ma1Arr[1:self.bufferSize]
-                    self.usr_ma1Arr[-1] = tepma1
-                    # -----
-                    self.usr_ma2Arr[0:self.bufferSize - 1] = self.usr_ma2Arr[1:self.bufferSize]
-                    self.usr_ma2Arr[-1] = tepma2
-                    # -----
-                    self.usr_ma3Arr[0:self.bufferSize - 1] = self.usr_ma3Arr[1:self.bufferSize]
-                    self.usr_ma3Arr[-1] = tepma3
-                    # -----
-                    self.usr_ma4Arr[0:self.bufferSize - 1] = self.usr_ma4Arr[1:self.bufferSize]
-                    self.usr_ma4Arr[-1] = tepma4
-                    # -----
-                    self.usr_ma5Arr[0:self.bufferSize - 1] = self.usr_ma5Arr[1:self.bufferSize]
-                    self.usr_ma5Arr[-1] = tepma5
-                else:
-                    self.usr_ma1Arr[-1] = tepma1
-                    self.usr_ma2Arr[-1] = tepma2
-                    self.usr_ma3Arr[-1] = tepma3
-                    self.usr_ma4Arr[-1] = tepma4
-                    self.usr_ma5Arr[-1] = tepma5
-
-                usr_k, usr_d = talib.STOCH(self.usr_highArr, self.usr_lowArr, self.usr_closeArr, 9, 3, 0, 3, 0)
-                # print 'kd'
-        # 在vada2上计算指标数值
-        if self.vada2:
-            pass
-            # vada = self.vada2
-
-        if self.vada1.crtnum < self.bufferSize:
-            return
-
-        # 判断是否要进行交易
-        lgcont11 = False
-
-        lgcont12 = False
-
-        lgcont13 = False
-
-        lgcont14 = False
-
-        lgcont2 = False
-
-        # ------------------------
-        stcont11 = False
-        stcont12 = False
-        stcont13 = False
-        stcont14 = False
-        stcont2 = False
-
-        # 当前无仓位
-        print bar.datetime
-        if self.pos == 0:
-            self.intraTradeHigh = bar.high
-            self.intraTradeLow = bar.low
-            sdop = None
-            sdsize = 0
-            if lgcont11 and lgcont12 and lgcont13 and lgcont14:
-                sdop = bar.close
-                sdsize = 1
-            elif lgcont2:
-                sdop = bar.close + 2 * self.ctaEngine.Tick_Size[self.vtSymbol]
-                sdsize = 1
-            if sdsize > 0:
-                orderID = self.buy(sdop, sdsize)
-                self.orderList.append(orderID)
-
-            sdop = None
-            sdsize = 0
-            if stcont11 and stcont12 and stcont13 and stcont14:
-                sdop = bar.close
-                sdsize = 1
-            elif stcont2:
-                sdop = bar.close - 2 * self.ctaEngine.Tick_Size[self.vtSymbol]
-                sdsize = 1
-            if sdsize > 0:
-                orderID = self.short(sdop, sdsize)
-                self.orderList.append(orderID)
-        # 持有多头仓位
-        elif self.pos > 0:
-            # 计算多头持有期内的最高价，以及重置最低价
-            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
-            self.intraTradeLow = bar.low
-
-            stpgrpid = 'LSTP'
-            # 计算多头移动止损
-            sdsp = self.intraTradeHigh * (1 - self.trailingPercent / 100)
-            # 发出本地止损委托，并且把委托号记录下来，用于后续撤单
-            orderID = self.sell(sdsp, abs(self.pos), stop=True)
-            self.orderList.append(orderID)
-            self.ctaEngine.addocoOrder(stpgrpid, orderID)
-            # ---------信号平仓----
-            sgn1spcont = False
-            if sgn1spcont:
-                sdsp = bar.close - 2 * self.ctaEngine.Tick_Size[self.vtSymbol]
-                orderID = self.sell(sdsp, abs(self.pos))
-                self.ctaEngine.addocoOrder(stpgrpid, orderID)
-            # -------- 获利止盈 ----
-            sgn1tpcont = False
-            if sgn1tpcont:
-                sdsp = bar.close - 2 * self.ctaEngine.Tick_Size[self.vtSymbol]
-                orderID = self.sell(sdsp, abs(self.pos))
-                self.orderList.append(orderID)
-                self.ctaEngine.addocoOrder(stpgrpid, orderID)
-        # 持有空头仓位
-        elif self.pos < 0:
-            self.intraTradeLow = min(self.intraTradeLow, bar.low)
-            self.intraTradeHigh = bar.high
-
-            stpgrpid = 'SSTP'
-            # 计算空头移动止损
-            sdsp = self.intraTradeLow * (1 + self.trailingPercent / 100)
-            # 发出本地止损委托，并且把委托号记录下来，用于后续撤单
-            orderID = self.cover(sdsp, abs(self.pos), stop=True)
-            self.orderList.append(orderID)
-            self.ctaEngine.addocoOrder(stpgrpid, orderID)
-            # ---------信号平仓----
-            sgn1spcont = False
-            if sgn1spcont:
-                sdsp = bar.close + 2 * self.ctaEngine.Tick_Size[self.vtSymbol]
-                orderID = self.cover(sdsp, abs(self.pos))
-                self.orderList.append(orderID)
-                self.ctaEngine.addocoOrder(stpgrpid, orderID)
-            # -------- 获利止盈 ----
-            sgn1tpcont = False
-            if sgn1tpcont:
-                sdsp = bar.close + 2 * self.ctaEngine.Tick_Size[self.vtSymbol]
-                orderID = self.cover(sdsp, abs(self.pos))
-                self.orderList.append(orderID)
-                self.ctaEngine.addocoOrder(stpgrpid, orderID)
 
         # 发出状态更新事件
         self.putEvent()
@@ -415,13 +331,16 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2016-06-01', '2017-06-25']
+    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-25']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M'
 
+
     setting = {}
-    setting['msdpset'] = {'ma': 'M30', 'su': 'd'}
+    setting['msdpset'] = {'te': 'M15','ma': 'M30', 'su': 'd'}
+
+
     # ---子策略ostp设置
     setting['ostpn_Dic'] = {
         'Grst':
@@ -459,7 +378,12 @@ if __name__ == '__main__':
     # --------------------backtest------------------------
     # mfaset = {'sal': True, 'rdl': True, 'mdl': True, 'upl': True, 'dwl': True, 'mir': True}
     setting['mfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
-    setting['tdkopset'] = {
+    setting['sfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
+    setting['makopset'] = {
+        'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
+        'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
+    }
+    setting['sukopset'] = {
         'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
         'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
     }

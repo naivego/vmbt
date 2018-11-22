@@ -3,13 +3,12 @@ __author__ = 'naivego'
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import csv
 #from datetime import datetime
 from datetime import datetime, timedelta
 import  copy
 from itertools import combinations, permutations
-from abtest import *
+from ctaBarda import *
 from  collections import OrderedDict
 
 #---------------------------------------------------------------------------
@@ -2072,6 +2071,7 @@ class Skatline(object):
                     sgntyp = 'rek0'
                     bsdir = tdl.dir
                     sdop =  self.rek0
+                    ordtyp = 'Mkt'
                     sdsp =  tdl.se_resp
                     sdtp = None
                     psn = usrpsn
@@ -3258,91 +3258,16 @@ class Rstsa(object):
                 self.mexi = self.rsti
                 self.mexp = self.rstp
 
-class Simp_Factor(object):
-    def __init__(self, var, skdata, sdt=False):
-        self.Var = var
-        self.quotes = skdata.loc[:]
-        if not sdt:
-            Column0 = self.quotes.columns[0]
-            if '_' not in Column0:
-                Period = 'd'
-            else:
-                Period = Column0.split('_')[1]
-
-            self.quotes = self.quotes.rename(
-                columns={'Open_' + Period: 'open', 'High_' + Period: 'high', 'Low_' + Period: 'low', 'Close_' + Period: 'close',
-                         'Volume_' + Period: 'volume'})
-            if Period == 'd':
-                # self.quotes = self.quotes.rename(columns={'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close','Volume':'volume'})
-                self.quotes['time'] = skdata.index
-                # for dtm in skdata.index:
-                #     print type(dtm)
-                xdate = [datetime.strptime(i, '%Y_%m_%d') for i in self.quotes['time']]
-                self.quotes['time'] = xdate
-            else:
-                self.quotes['time'] = skdata.index
-                xdate = [datetime.strptime(i, '%Y-%m-%d %H:%M:%S') for i in self.quotes['time']]
-                self.quotes['time'] = xdate
-        else:
-            xdate = [dtm.strftime("%Y-%m-%d") for dtm in skdata.index]
-            self.quotes.index = pd.Index(xdate)
-            self.quotes['time'] = skdata.index
-            xdate = [datetime.strptime(i, '%Y-%m-%d') for i in self.quotes.index]
-            self.quotes['time'] = xdate
-
-        Dat_bar = self.quotes.loc[:]
-        '''
-        Dat_open = self.quotes.loc[:,'open']
-        Dat_high = self.quotes.loc[:, 'high']
-        Dat_low = self.quotes.loc[:, 'low']
-        Dat_close = self.quotes.loc[:, 'close']
-
-        '''
-        Dat_bar['TR1'] = Dat_bar['high'] - Dat_bar['low']
-        Dat_bar['TR2'] = abs(Dat_bar['high'] - Dat_bar['close'].shift(1))
-        Dat_bar['TR3'] = abs(Dat_bar['low'] - Dat_bar['close'].shift(1))
-        TR = Dat_bar.loc[:, ['TR1', 'TR2', 'TR3']].max(axis=1)
-        ATR = TR.rolling(14).mean() / Dat_bar['close'].shift(1)
-        self.quotes['ATR'] = ATR
-
-        Ma  = Dat_bar['close'].rolling(10).mean()
-        Boll_mid = Dat_bar['close'].rolling(20).mean()
-        Std = Dat_bar['close'].rolling(20).std()
-        Boll_upl = Boll_mid + 2 * Std
-        Boll_dwl = Boll_mid - 2 * Std
-        self.quotes['ma'] = Ma
-        self.quotes['mid'] = Boll_mid
-        self.quotes['upl'] = Boll_upl
-        self.quotes['dwl'] = Boll_dwl
-
-    # ----------------------
-    # ----------------------
-    def addsgn(self, sgndat, sgnids, Tn='d'):
-        for isgn in sgnids:
-            if isgn in sgndat.columns:
-                self.extqts.append(isgn)
-        if len(self.extqts) == 0:
-            return
-        toaddf = sgndat.loc[:, self.extqts]
-        newindex = []
-        for dtm in toaddf.index:
-            if ' ' not in dtm:
-                newindex.append(dtm.replace('_', '-') + ' 16:00:00')
-        sindex = self.quotes.index
-        reindex = []
-        for dtm in newindex:
-            redtm = sindex[sindex <= dtm][-1]
-            reindex.append(redtm)
-        toaddf.index = reindex
-        coldic = {isgn: isgn + '_' + Tn for isgn in self.extqts}
-        toaddf.rename(columns=coldic, inplace=True)
-        self.extqts = toaddf.columns.tolist()
-        self.quotes = pd.concat([self.quotes, toaddf], axis=1, join_axes=[self.quotes.index])
-        self.quotes.fillna(method='pad', inplace=True)
-
 
 class Grst_Factor(object):
     def __init__(self, var, period, skdata, sdt=True, fid= 'ma'):
+        if period == 'd':
+            xdate = [' '.join([dtm, '16:00:00']) for dtm in skdata.index]
+            skdata.index = xdate
+
+        self.bada = Barda(var, period, self.onbar)
+        self.bada.dat = skdata
+
         self.quotes = skdata.loc[:]
         if not sdt:
             Column0 = self.quotes.columns[0]
@@ -3364,13 +3289,13 @@ class Grst_Factor(object):
                 xdate = [datetime.strptime(i, '%Y-%m-%d %H:%M:%S') for i in self.quotes['time']]
                 self.quotes['time'] = xdate
         else:
-            if period=='d':
-                xdate = [datetime.strptime(dtm, "%Y-%m-%d") for dtm in self.quotes.index]
-            else:
-                xdate = [datetime.strptime(dtm, '%Y-%m-%d %H:%M:%S') for dtm in self.quotes.index]
-            # self.quotes.index = pd.Index(xdate)
-            self.quotes['time'] = xdate
+            # if period=='d':
+            #     xdate = [datetime.strptime(dtm, "%Y-%m-%d") for dtm in self.quotes.index]
+            # else:
+            #     xdate = [datetime.strptime(dtm, '%Y-%m-%d %H:%M:%S') for dtm in self.quotes.index]
+            # self.quotes['time'] = xdate
 
+            self.quotes['time'] = self.quotes.index
         Dat_bar  =self.quotes.loc[:]
         '''
         Dat_open = self.quotes.loc[:,'open']
@@ -4288,9 +4213,1488 @@ class Grst_Factor(object):
         self.sk_rstspl.append(self.sk_low[skbgi])
         self.sk_rstsph.append(self.sk_high[skbgi])
         self.crtski = skbgi
-        self.crtidtm  = pd.Timestamp((self.sk_time[self.crtski])).strftime('%Y-%m-%d %H:%M:%S')
+        # self.crtidtm  = pd.Timestamp((self.sk_time[self.crtski])).strftime('%Y-%m-%d %H:%M:%S')
+        self.crtidtm = self.sk_time[self.crtski]
         self.crtidate = self.crtidtm[:10]
 
+        # self.bada.newbar()
+    # ----------------------------------------------------------
+    def onbar(self, i):
+        sk_ckdtpst = 0.05  # 0.05倍平均涨幅作为涨跌柱子的公差
+        detsdc = -5  # strong下降链构成下降反转的链长 =detsdc*avgski
+        detsuc = 5  # strong上升链构成上涨反转的链长 =detsuc*avgski
+        if i == 1085:
+            print i
+
+        idtm = self.sk_time[i]
+
+        self.crtski = i
+        self.crtidtm = idtm
+        self.crtidate = self.crtidtm[:10]
+
+        avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
+        if self.sk_ckl[i - 1][0] > 0:
+            if self.sk_close[i] >= self.sk_close[i - 1] - sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
+                        i - 1]:  # self.sk_open[i] - sk_ckdtpst * self.sk_atr[i]:  #
+                ckli = self.sk_ckl[i - 1][0] + 1
+                cksdh = max(self.sk_ckl[i - 1][1], self.sk_close[i])
+                cksdl = self.sk_ckl[i - 1][2]
+                cklhp = max(self.sk_ckl[i - 1][3], self.sk_high[i])
+                ckllp = min(self.sk_ckl[i - 1][4], self.sk_low[i])
+                cklbi = self.sk_ckl[i - 1][5]
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, cklbi))
+
+                # 更新 self.ckls
+                self.ckls[-1][1] += 1
+                self.ckls[-1][3] = cksdh
+                self.ckls[-1][4] = cksdh - cksdl
+            else:
+                ckli = -1
+                cksdh = self.sk_ckl[i - 1][1]
+                cksdl = self.sk_close[i]
+                cklhp = max(self.sk_high[i], cksdh)
+                ckllp = self.sk_low[i]
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
+
+                # 更新 self.ckls
+                cklbi = i
+                cklei = i
+                cklbp = cksdh
+                cklep = cksdl
+                cklsd = cklep - cklbp
+                self.ckls.append([cklbi, cklei, cklbp, cklep, cklsd])
+
+        else:
+            if self.sk_close[i] <= self.sk_close[i - 1] + sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
+                        i - 1]:  # self.sk_open[i] + sk_ckdtpst * self.sk_atr[i]:  #
+                ckli = self.sk_ckl[i - 1][0] - 1
+                cksdl = min(self.sk_ckl[i - 1][2], self.sk_close[i])
+                cksdh = self.sk_ckl[i - 1][1]
+                cklhp = max(self.sk_ckl[i - 1][3], self.sk_high[i])
+                ckllp = min(self.sk_ckl[i - 1][4], self.sk_low[i])
+                cklbi = self.sk_ckl[i - 1][5]
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, cklbi))
+
+                # 更新 self.ckls
+                self.ckls[-1][1] += 1
+                self.ckls[-1][3] = cksdl
+                self.ckls[-1][4] = cksdl - cksdh
+
+            else:
+                ckli = 1
+                cksdl = self.sk_ckl[i - 1][2]
+                cksdh = self.sk_close[i]
+                cklhp = self.sk_high[i]
+                ckllp = min(self.sk_low[i], cksdl)
+                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
+
+                # 更新 self.ckls
+                cklbi = i
+                cklei = i
+                cklbp = cksdl
+                cklep = cksdh
+                cklsd = cklep - cklbp
+                self.ckls.append([cklbi, cklei, cklbp, cklep, cklsd])
+
+        # print(i,self.sk_close.index[i],(ckli, round(cksdh,decsn), round(cksdl,decsn)))
+        # self.sk_cklsm=[] #在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls)
+        if len(self.ckls) >= 3:
+            ickls0 = tuple(self.ckls[-1])
+            ickls1 = tuple(self.ckls[-2])
+            ickls2 = tuple(self.ckls[-3])
+            if (ickls0[4] > 0 and self.sk_cklsm[-1][0] >= 3) or (
+                                ickls0[4] > 0 and ickls0[3] > ickls1[2] and ickls1[3] >= ickls2[2]):
+                # 3---处于nuckl N-S up ckl            (ickls0,ickls1,ickls2)
+                ckltp = 3
+                ickls = (ickls0, ickls1, ickls2)
+                self.sk_cklsm.append((ckltp, ickls))
+
+                # 更新self.nsckls=[]  由[nsckltp，insckls]组成 insckls=[insckls0,insckls1,insckls2...]
+                if len(self.nsckls) < 1:
+                    nsckltp = 3
+                    insckls0 = ickls0
+                    insckls1 = ickls1
+                    insckls2 = ickls2
+                    insckls = [insckls2, insckls1, insckls0]
+
+                    for icklsx in self.ckls[0:-3]:
+                        if icklsx[4] >= 0:
+                            self.nsckls.append([1, [tuple(icklsx)]])
+                        else:
+                            self.nsckls.append([-1, [tuple(icklsx)]])
+                    self.nsckls.append([nsckltp, insckls])
+                    self.nscklsedi = len(self.ckls) - 1
+                else:  # if len[self.nsckls]>=1 :
+                    insckls = self.nsckls[-1][1]
+                    if self.nsckls[-1][0] > 0 and ickls1[0] >= insckls[-2][0] and ickls1[1] <= insckls[-2][1] and ickls2[0] >= insckls[-3][0] and \
+                                    ickls2[1] <= insckls[-3][1] \
+                            and ickls0[0] <= insckls[-1][1]:
+                        self.nsckls[-1][1][-1] = ickls0
+                    elif self.nsckls[-1][0] > 0 and ickls2[0] == insckls[-1][0] and ickls2[1] == insckls[-1][1] and ickls1[1] > insckls[-1][1]:
+                        self.nsckls[-1][0] += 2
+                        self.nsckls[-1][1].append(ickls1)
+                        self.nsckls[-1][1].append(ickls0)
+                        self.nscklsedi = len(self.ckls) - 1
+
+                    elif ickls2[0] == insckls[-1][1]:
+                        nsckltp = 3
+                        insckls0 = ickls0
+                        insckls1 = ickls1
+                        insckls2 = ickls2
+                        insckls = [insckls2, insckls1, insckls0]
+                        self.nsckls.append([nsckltp, insckls])
+                        self.nscklsedi = len(self.ckls) - 1
+
+                    elif ickls2[0] > insckls[-1][1]:
+                        nsckltp = 3
+                        insckls0 = ickls0
+                        insckls1 = ickls1
+                        insckls2 = ickls2
+                        insckls = [insckls2, insckls1, insckls0]
+                        for icklsx in self.ckls[self.nscklsedi + 1:-3]:
+                            if icklsx[4] >= 0:
+                                self.nsckls.append([1, [tuple(icklsx)]])
+                            else:
+                                self.nsckls.append([-1, [tuple(icklsx)]])
+                        self.nsckls.append([nsckltp, insckls])
+                        self.nscklsedi = len(self.ckls) - 1
+
+
+            elif (ickls0[4] < 0 and self.sk_cklsm[-1][0] <= -3) or (
+                                ickls0[4] < 0 and ickls0[3] < ickls1[2] and ickls1[3] <= ickls2[2]):
+                # -3---处于ndckl N-S dowm ckl          (ickls0,ickls1,ickls2)
+                ckltp = -3
+                ickls = (ickls0, ickls1, ickls2)
+                self.sk_cklsm.append((ckltp, ickls))
+
+                # 更新self.nsckls=[]  由[nsckltp，insckls]组成 insckls=[insckls0,insckls1,insckls2...]
+                if len(self.nsckls) < 1:
+                    nsckltp = -3
+                    insckls0 = ickls0
+                    insckls1 = ickls1
+                    insckls2 = ickls2
+                    insckls = [insckls2, insckls1, insckls0]
+
+                    for icklsx in self.ckls[0:-3]:
+                        if icklsx[4] >= 0:
+                            self.nsckls.append([1, [tuple(icklsx)]])
+                        else:
+                            self.nsckls.append([-1, [tuple(icklsx)]])
+                    self.nsckls.append([nsckltp, insckls])
+                    self.nscklsedi = len(self.ckls) - 1
+                else:  # if len[self.nsckls]>=1 :
+                    insckls = self.nsckls[-1][1]
+                    if self.nsckls[-1][0] < 0 and ickls1[0] >= insckls[-2][0] and ickls1[1] <= insckls[-2][1] and ickls2[0] >= insckls[-3][0] and \
+                                    ickls2[1] <= insckls[-3][1] \
+                            and ickls0[0] <= insckls[-1][1]:
+                        self.nsckls[-1][1][-1] = ickls0
+                    elif self.nsckls[-1][0] < 0 and ickls2[0] == insckls[-1][0] and ickls2[1] == insckls[-1][1] and ickls1[1] > insckls[-1][1]:
+                        self.nsckls[-1][0] += -2
+                        self.nsckls[-1][1].append(ickls1)
+                        self.nsckls[-1][1].append(ickls0)
+                        self.nscklsedi = len(self.ckls) - 1
+                    elif ickls2[0] == insckls[-1][1]:
+                        nsckltp = -3
+                        insckls0 = ickls0
+                        insckls1 = ickls1
+                        insckls2 = ickls2
+                        insckls = [insckls2, insckls1, insckls0]
+                        self.nsckls.append([nsckltp, insckls])
+                        self.nscklsedi = len(self.ckls) - 1
+
+                    elif ickls2[0] > insckls[-1][1]:
+                        nsckltp = -3
+                        insckls0 = ickls0
+                        insckls1 = ickls1
+                        insckls2 = ickls2
+                        insckls = [insckls2, insckls1, insckls0]
+                        for icklsx in self.ckls[self.nscklsedi + 1:-3]:
+                            if icklsx[4] >= 0:
+                                self.nsckls.append([1, [tuple(icklsx)]])
+                            else:
+                                self.nsckls.append([-1, [tuple(icklsx)]])
+                        self.nsckls.append([nsckltp, insckls])
+                        self.nscklsedi = len(self.ckls) - 1
+
+            elif (ickls0[4] > 0 and self.sk_cklsm[-1][0] >= 2) or ickls0[4] >= detsuc * avgski:
+                # 2---处于suckl strong up ckl       (ickls0,)
+                ckltp = 2
+                ickls = (ickls0,)
+                self.sk_cklsm.append((ckltp, ickls))
+            elif (ickls0[4] < 0 and self.sk_cklsm[-1][0] <= -2) or ickls0[4] <= detsdc * avgski:
+                # -2--处于sdckl strong down ckl     (ickls0,)
+                ckltp = -2
+                ickls = (ickls0, ickls1, ickls2)
+                self.sk_cklsm.append((ckltp, ickls))
+            elif ickls0[4] > 0 and ickls0[4] < detsuc * avgski:
+                # 1---处于wuckl weak up ckl         (ickls0,)
+                ckltp = 1
+                ickls = (ickls0, ickls1, ickls2)
+                self.sk_cklsm.append((ckltp, ickls))
+            elif ickls0[4] < 0 and ickls0[4] > detsdc * avgski:
+                # -1--处于wdckl weak down ckl       (ickls0,)
+                ckltp = -1
+                ickls = (ickls0, ickls1, ickls2)
+                self.sk_cklsm.append((ckltp, ickls))
+            else:
+                ckltp = 0
+                ickls = (ickls0, ickls1, ickls2)
+                self.sk_cklsm.append((ckltp, ickls))
+        else:  # if len(ckls)<3:
+            ickls0 = tuple(self.ckls[-1])
+            if (ickls0[4] > 0 and self.sk_cklsm[-1][0] >= 2) or ickls0[4] >= detsuc * avgski:
+                # 2---处于suckl strong up ckl       (ickls0,)
+                ckltp = 2
+                ickls = (ickls0,)
+                self.sk_cklsm.append((ckltp, ickls))
+            elif (ickls0[4] < 0 and self.sk_cklsm[-1][0] <= -2) or ickls0[4] <= detsdc * avgski:
+                # -2--处于sdckl strong down ckl     (ickls0,)
+                ckltp = -2
+                ickls = (ickls0,)
+                self.sk_cklsm.append((ckltp, ickls))
+            if ickls0[4] > 0 and ickls0[4] < detsuc * avgski:
+                # 1---处于wuckl weak up ckl         (ickls0,)
+                ckltp = 1
+                ickls = (ickls0,)
+                self.sk_cklsm.append((ckltp, ickls))
+            elif ickls0[4] < 0 and ickls0[4] > detsdc * avgski:
+                # -1--处于wdckl weak down ckl       (ickls0,)
+                ckltp = -1
+                ickls = (ickls0,)
+                self.sk_cklsm.append((ckltp, ickls))
+            else:
+                ckltp = 0
+                ickls = (ickls0,)
+                self.sk_cklsm.append((ckltp, ickls))
+
+        # 更新  qspds=[] #趋势前沿列表 每段由[qsprti,nscklidx,nscklitp,qspbi,qspei,qspbsdp,qspesdp,qspbp,qspep]组成，来自于self.nsckls的波段
+        self.bsbj = 0
+        if len(self.qspds) <= 0 and len(self.nsckls) > 0:  # 当首次形成确定性的聚合链（数量可能大于1）的时候逐链划分趋势前沿
+            nscklidx = 0
+            qsprti = self.nsckls[-1][1][-1][1]
+            nscklitp = self.nsckls[-1][0]
+            qspbi = self.nsckls[-1][1][0][0]
+            qspei = self.nsckls[-1][1][-1][1]
+            qspbsdp = self.nsckls[-1][1][0][2]
+            qspesdp = self.nsckls[-1][1][-1][3]
+            if nscklitp > 0:
+                qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                qspep = self.sk_high[qspei]
+            else:
+                qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                qspep = self.sk_low[qspei]
+
+            self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+            revlsi = self.ckls[-1][0] - 1
+            self.qsstpchain.append(Stepchain(nscklitp, i, self.sk_ckl[i], self.sk_ckl[revlsi]))
+            # --------------------------------------------------------------------------------------------
+            if False:  # i > qspei:
+                for idx in range(qspei + 1, i + 1):
+                    iqspds0 = self.qspds[-1]
+                    if iqspds0[2] > 0:  # 当前的趋势是向上前沿
+                        if self.sk_close[idx] > iqspds0[6]:  # 向上步进
+                            # 检查此时的idx 处于第几个nsckls
+                            nscklidx = self.idxof_nsckls(self.nsckls, idx)
+                            if nscklidx > 0 and nscklidx > iqspds0[1]:
+                                qsprti = idx
+                                nscklitp = self.nsckls[nscklidx][0]
+                                qspbi = self.nsckls[nscklidx][1][0][0]
+                                qspei = self.nsckls[nscklidx][1][-1][1]
+                                qspbsdp = self.nsckls[nscklidx][1][0][2]
+                                qspesdp = self.nsckls[nscklidx][1][-1][3]
+                                if qspbi > 0:
+                                    qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                                else:
+                                    qspbp = self.sk_low[qspbi]
+                                if qspei <= i - 1:
+                                    qspep = max(self.sk_high[qspei], self.sk_high[qspei + 1])
+                                else:
+                                    qspep = self.sk_high[qspei]
+                                self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+                        elif self.sk_close[idx] < iqspds0[7]:  # 向下反转
+                            # 检查此时的idx 处于第几个nsckls
+                            nscklidx = self.idxof_nsckls(self.nsckls, idx)
+                            if nscklidx > 0 and nscklidx > iqspds0[1]:
+                                qsprti = idx
+                                nscklitp = self.nsckls[nscklidx][0]
+                                qspbi = self.nsckls[nscklidx][1][0][0]
+                                qspei = self.nsckls[nscklidx][1][-1][1]
+                                qspbsdp = self.nsckls[nscklidx][1][0][2]
+                                qspesdp = self.nsckls[nscklidx][1][-1][3]
+                                if qspbi > 0:
+                                    qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                                else:
+                                    qspbp = self.sk_high[qspbi]
+                                if qspei <= i - 1:
+                                    qspep = min(self.sk_low[qspei], self.sk_low[qspei + 1])
+                                else:
+                                    qspep = self.sk_low[qspei]
+                                self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                    elif iqspds0[2] < 0:  # 当前的趋势是向下前沿
+                        if self.sk_close[idx] < iqspds0[6]:  # 向下步进
+                            # 检查此时的idx 处于第几个nsckls
+                            nscklidx = self.idxof_nsckls(self.nsckls, idx)
+                            if nscklidx > 0 and nscklidx > iqspds0[1]:
+                                qsprti = idx
+                                nscklitp = self.nsckls[nscklidx][0]
+                                qspbi = self.nsckls[nscklidx][1][0][0]
+                                qspei = self.nsckls[nscklidx][1][-1][1]
+                                qspbsdp = self.nsckls[nscklidx][1][0][2]
+                                qspesdp = self.nsckls[nscklidx][1][-1][3]
+                                if qspbi > 0:
+                                    qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                                else:
+                                    qspbp = self.sk_high[qspbi]
+                                if qspei <= i - 1:
+                                    qspep = min(self.sk_low[qspei], self.sk_low[qspei + 1])
+                                else:
+                                    qspep = self.sk_low[qspei]
+                                self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+                        elif self.sk_close[idx] > iqspds0[7]:  # 向上反转
+                            # 检查此时的idx 处于第几个nsckls
+                            nscklidx = self.idxof_nsckls(self.nsckls, idx)
+                            if nscklidx > 0 and nscklidx > iqspds0[1]:
+                                qsprti = idx
+                                nscklitp = self.nsckls[nscklidx][0]
+                                qspbi = self.nsckls[nscklidx][1][0][0]
+                                qspei = self.nsckls[nscklidx][1][-1][1]
+                                qspbsdp = self.nsckls[nscklidx][1][0][2]
+                                qspesdp = self.nsckls[nscklidx][1][-1][3]
+                                if qspbi > 0:
+                                    qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                                else:
+                                    qspbp = self.sk_low[qspbi]
+                                if qspei <= i - 1:
+                                    qspep = max(self.sk_high[qspei], self.sk_high[qspei + 1])
+                                else:
+                                    qspep = self.sk_high[qspei]
+                                self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+        # 对于当前的isk, 更新qspds
+        elif len(self.qspds) >= 1:
+            iqspds0 = self.qspds[-1]
+            if iqspds0[2] > 0:  # 之前的趋势是向上前沿
+                if self.sk_ckl[i][0] < 0:
+                    if not self.bscp:
+                        self.bscp = self.sk_high[i]
+                    else:
+                        self.bscp = max(self.bscp, self.sk_high[i])
+                if self.bscp and self.sk_close[i] > self.bscp:
+                    self.bsbj = 1
+                # 最新的isk与之前的趋势前沿同处于一个聚合链或单链上--延伸
+                if i == self.nsckls[-1][1][-1][1] and self.nsckls[-1][1][0][0] <= iqspds0[3]:  # 最新的isk与之前的趋势前沿同处于一个聚合链
+                    nscklidx = len(self.nsckls) - 1
+                    qsprti = iqspds0[0]
+                    nscklitp = self.nsckls[-1][0]
+                    qspbi = self.nsckls[-1][1][0][0]
+                    qspei = self.nsckls[-1][1][-1][1]
+                    qspbsdp = self.nsckls[-1][1][0][2]
+                    qspesdp = self.nsckls[-1][1][-1][3]
+                    qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                    qspep = max(iqspds0[8], self.sk_high[qspei])
+                    self.qspds[-1] = [qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep]
+
+                elif iqspds0[4] >= self.ckls[-1][0] and iqspds0[4] <= self.ckls[-1][1]:  # 最新的isk与之前的趋势前沿同处于一个单链
+                    nscklidx = 0
+                    qsprti = iqspds0[0]
+                    nscklitp = 1
+                    qspbi = self.ckls[-1][0]
+                    qspei = self.ckls[-1][1]
+                    qspbsdp = self.ckls[-1][2]
+                    qspesdp = self.ckls[-1][3]
+                    qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                    qspep = max(iqspds0[8], self.sk_high[qspei])
+                    self.qspds[-1] = [qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep]
+
+                elif self.sk_close[i] > iqspds0[8]:  # 向上步进
+                    # 检查此时的isk 是否处于最新的nsckls上
+                    if i == self.nsckls[-1][1][-1][1]:  # 该聚合链是新前沿，向上步进
+                        nscklidx = len(self.nsckls) - 1
+                        qsprti = i
+                        nscklitp = self.nsckls[-1][0]
+                        qspbi = self.nsckls[-1][1][0][0]
+                        qspei = self.nsckls[-1][1][-1][1]
+                        qspbsdp = self.nsckls[-1][1][0][2]
+                        qspesdp = self.nsckls[-1][1][-1][3]
+                        qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                        qspep = self.sk_high[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                    else:  # 该isk还还不在一个聚合链上，但一定在最新的单链上，将此单链作为趋势前沿
+                        nscklidx = 0
+                        qsprti = i
+                        nscklitp = 1
+                        qspbi = self.ckls[-1][0]
+                        qspei = self.ckls[-1][1]
+                        qspbsdp = self.ckls[-1][2]
+                        qspesdp = self.ckls[-1][3]
+                        qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                        qspep = self.sk_high[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                elif self.sk_close[i] < self.zslp:  # iqspds0[7]:  # 趋势前沿向下逆转
+                    # 检查此时的isk 是否处于最新的nsckls上
+                    if i == self.nsckls[-1][1][-1][1]:  # 该聚合链是新前沿
+                        nscklidx = len(self.nsckls) - 1
+                        qsprti = i
+                        nscklitp = self.nsckls[-1][0]
+                        qspbi = self.nsckls[-1][1][0][0]
+                        qspei = self.nsckls[-1][1][-1][1]
+                        qspbsdp = self.nsckls[-1][1][0][2]
+                        qspesdp = self.nsckls[-1][1][-1][3]
+                        qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                        qspep = self.sk_low[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                    else:  # 该isk还还不在一个聚合链上，但一定在最新的单链上，将此单链作为趋势前沿
+                        nscklidx = 0
+                        qsprti = i
+                        nscklitp = -1
+                        qspbi = self.ckls[-1][0]
+                        qspei = self.ckls[-1][1]
+                        qspbsdp = self.ckls[-1][2]
+                        qspesdp = self.ckls[-1][3]
+                        qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                        qspep = self.sk_low[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                if i == self.qspds[-1][4] + 1:  # 更新右端极值点
+                    if self.qspds[-1][2] > 0:
+                        qspep = max(self.sk_high[i], self.qspds[-1][8])
+                        self.qspds[-1][8] = qspep
+                    elif self.qspds[-1][2] < 0:
+                        qspep = min(self.sk_low[i], self.qspds[-1][8])
+                        self.qspds[-1][8] = qspep
+
+            elif iqspds0[2] < 0:  # 之前的趋势是向下前沿
+                if self.sk_ckl[i][0] > 0:
+                    if not self.bscp:
+                        self.bscp = self.sk_low[i]
+                    else:
+                        self.bscp = min(self.bscp, self.sk_low[i])
+                if self.bscp and self.sk_close[i] < self.bscp:
+                    self.bsbj = -1
+                # 最新的isk与之前的趋势前沿同处于一个聚合链或单链上--延伸
+                if i == self.nsckls[-1][1][-1][1] and self.nsckls[-1][1][0][0] <= iqspds0[3]:  # 最新的isk与之前的趋势前沿同处于一个聚合链
+                    nscklidx = len(self.nsckls) - 1
+                    qsprti = iqspds0[0]
+                    nscklitp = self.nsckls[-1][0]
+                    qspbi = self.nsckls[-1][1][0][0]
+                    qspei = self.nsckls[-1][1][-1][1]
+                    qspbsdp = self.nsckls[-1][1][0][2]
+                    qspesdp = self.nsckls[-1][1][-1][3]
+                    qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                    qspep = min(self.qspds[-1][8], self.sk_low[qspei])
+                    self.qspds[-1] = [qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep]
+
+                elif iqspds0[4] >= self.ckls[-1][0] and iqspds0[4] <= self.ckls[-1][1]:  # 最新的isk与之前的趋势前沿同处于一个单链
+                    nscklidx = 0
+                    qsprti = iqspds0[0]
+                    nscklitp = -1
+                    qspbi = self.ckls[-1][0]
+                    qspei = self.ckls[-1][1]
+                    qspbsdp = self.ckls[-1][2]
+                    qspesdp = self.ckls[-1][3]
+                    qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                    qspep = min(self.qspds[-1][8], self.sk_low[qspei])
+                    self.qspds[-1] = [qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep]
+
+                elif self.sk_close[i] < iqspds0[8]:  # 向下步进
+                    # 检查此时的isk 是否处于最新的nsckls上
+                    if i == self.nsckls[-1][1][-1][1]:  # 该聚合链是新前沿，向下步进
+                        nscklidx = len(self.nsckls) - 1
+                        qsprti = i
+                        nscklitp = self.nsckls[-1][0]
+                        qspbi = self.nsckls[-1][1][0][0]
+                        qspei = self.nsckls[-1][1][-1][1]
+                        qspbsdp = self.nsckls[-1][1][0][2]
+                        qspesdp = self.nsckls[-1][1][-1][3]
+                        qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                        qspep = self.sk_low[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                    else:  # 该isk还还不在一个聚合链上，但一定在最新的单链上，将此单链作为趋势前沿
+                        nscklidx = 0
+                        qsprti = i
+                        nscklitp = -1
+                        qspbi = self.ckls[-1][0]
+                        qspei = self.ckls[-1][1]
+                        qspbsdp = self.ckls[-1][2]
+                        qspesdp = self.ckls[-1][3]
+                        qspbp = max(self.sk_high[qspbi], self.sk_high[qspbi - 1])
+                        qspep = self.sk_low[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                elif self.sk_close[i] > self.zshp:  # iqspds0[7]:  # 趋势前沿向上逆转
+                    # 检查此时的isk 是否处于最新的nsckls上
+                    if i == self.nsckls[-1][1][-1][1]:  # 该聚合链是新前沿，向上逆转
+                        nscklidx = len(self.nsckls) - 1
+                        qsprti = i
+                        nscklitp = self.nsckls[-1][0]
+                        qspbi = self.nsckls[-1][1][0][0]
+                        qspei = self.nsckls[-1][1][-1][1]
+                        qspbsdp = self.nsckls[-1][1][0][2]
+                        qspesdp = self.nsckls[-1][1][-1][3]
+                        qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                        qspep = self.sk_high[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                    else:  # 该isk还还不在一个聚合链上，但一定在最新的单链上，将此单链作为趋势前沿
+                        nscklidx = 0
+                        qsprti = i
+                        nscklitp = 1
+                        qspbi = self.ckls[-1][0]
+                        qspei = self.ckls[-1][1]
+                        qspbsdp = self.ckls[-1][2]
+                        qspesdp = self.ckls[-1][3]
+                        qspbp = min(self.sk_low[qspbi], self.sk_low[qspbi - 1])
+                        qspep = self.sk_high[qspei]
+                        self.qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+                if i == self.qspds[-1][4] + 1:  # 更新右端极值点
+                    if self.qspds[-1][2] > 0:
+                        qspep = max(self.sk_high[i], self.qspds[-1][8])
+                        self.qspds[-1][8] = qspep
+                    elif self.qspds[-1][2] < 0:
+                        qspep = min(self.sk_low[i], self.qspds[-1][8])
+                        self.qspds[-1][8] = qspep
+        newsgn = None
+        if len(self.qspds) <= 0:
+            qsprti = i
+            nscklidx = 0
+            nscklitp = 0
+            qspbi = 0
+            qspei = i
+            qspbsdp = self.sk_open[0]
+            qspesdp = self.sk_close[i]
+            qspbp = self.sk_open[0]
+            qspep = self.sk_close[i]
+            self.zslp = cksdl
+            self.zshp = cksdh
+            self.bslp = cksdl
+            self.bshp = cksdh
+            self.sk_sgn.append(None)
+
+        else:
+            qsprti = self.qspds[-1][0]
+            nscklidx = self.qspds[-1][1]
+            nscklitp = self.qspds[-1][2]
+            qspbi = self.qspds[-1][3]
+            qspei = self.qspds[-1][4]
+            qspbsdp = self.qspds[-1][5]
+            qspesdp = self.qspds[-1][6]
+            qspbp = self.qspds[-1][7]
+            qspep = self.qspds[-1][8]
+            # 对于当前的isk, 更新zs
+            iqspds0 = self.qspds[-1]
+            headqsp = self.sk_cklsm[self.qspds[-1][4]]  # 趋势前沿头部 triple ckls
+            self.zsdir = iqspds0[2]
+            # dtmi= pd.to_datetime(self.sk_time[i])
+            # if '2010-11-17' in str(dtmi):
+            #     print 'none'
+            if len(headqsp[1]) > 1:
+                self.zsckl = headqsp[1][1]
+                self.zsski = self.zsckl[1]
+                bsski = self.zsckl[0]
+                if nscklitp > 0:
+                    self.zslp = min(self.sk_low[self.zsski], self.sk_low[self.zsski + 1])  # self.sk_low[self.zsski]
+                    self.zshp = max(min(self.sk_open[self.zsski], self.sk_close[self.zsski]), min(self.sk_open[self.zsski + 1], self.sk_close[
+                        self.zsski + 1]))  # min(self.sk_open[self.zsski],self.sk_close[self.zsski])   max(self.sk_low[self.zsski], self.sk_low[self.zsski+1])
+                    self.zshp = self.zslp
+                    self.bslp = sorted([max(self.sk_open[bsski], self.sk_close[bsski]), max(self.sk_open[bsski - 1], self.sk_close[bsski - 1]),
+                                        max(self.sk_open[bsski - 2], self.sk_close[bsski - 2])])[
+                        1]  # min(self.sk_high[bsski], self.sk_high[bsski - 1]) #
+                    self.bshp = sorted([self.sk_high[bsski], self.sk_high[bsski - 1], self.sk_high[bsski - 2]])[
+                        1]  # max(max(self.sk_open[bsski], self.sk_close[bsski]), max(self.sk_open[bsski-1], self.sk_close[bsski-1])) #min(self.sk_high[bsski], self.sk_high[bsski - 1]) #max(self.sk_high[bsski], self.sk_high[bsski - 1])
+                else:
+                    self.zshp = max(self.sk_high[self.zsski], self.sk_high[self.zsski + 1])  # self.sk_high[self.zsski]
+                    self.zslp = min(max(self.sk_open[self.zsski], self.sk_close[self.zsski]),
+                                    max(self.sk_open[self.zsski + 1],
+                                        self.sk_close[self.zsski + 1]))  # max(self.sk_open[self.zsski], self.sk_close[self.zsski])
+                    self.zslp = self.zshp
+                    self.bslp = sorted([self.sk_low[bsski], self.sk_low[bsski - 1], self.sk_low[bsski - 2]])[
+                        1]  # min(min(self.sk_open[bsski], self.sk_close[bsski]), min(self.sk_open[bsski-1], self.sk_close[bsski-1])) # max(self.sk_low[bsski], self.sk_low[bsski - 1])   # min(self.sk_low[bsski], self.sk_low[bsski - 1])
+                    self.bshp = sorted([min(self.sk_open[bsski], self.sk_close[bsski]), min(self.sk_open[bsski - 1], self.sk_close[bsski - 1]),
+                                        min(self.sk_open[bsski - 2], self.sk_close[bsski - 2])])[
+                        1]  # max(self.sk_low[bsski], self.sk_low[bsski - 1]) #
+
+                    # self.zslp = self.sk_low[self.zsckl[1]]
+                    # self.zshp = self.sk_high[self.zsckl[1]]
+            else:
+                self.zsckl = headqsp[1][0]
+                self.zsski = self.zsckl[0]
+                bsski = self.zsski - abs(self.sk_ckl[self.zsski - 1][0])
+                if nscklitp > 0:
+                    self.zslp = min(self.sk_low[self.zsski], self.sk_low[self.zsski - 1])  # self.sk_low[self.zsski]
+                    self.zshp = max(min(self.sk_open[self.zsski], self.sk_close[self.zsski]),
+                                    min(self.sk_open[self.zsski - 1],
+                                        self.sk_close[self.zsski - 1]))  # min(self.sk_open[self.zsski],self.sk_close[self.zsski])
+                    self.zshp = self.zslp
+                    self.bslp = sorted([max(self.sk_open[bsski], self.sk_close[bsski]), max(self.sk_open[bsski - 1], self.sk_close[bsski - 1]),
+                                        max(self.sk_open[bsski - 2], self.sk_close[bsski - 2])])[
+                        1]  # min(self.sk_high[bsski], self.sk_high[bsski - 1])
+                    self.bshp = sorted([self.sk_high[bsski], self.sk_high[bsski - 1], self.sk_high[bsski - 2]])[
+                        1]  # max(max(self.sk_open[bsski], self.sk_close[bsski]), max(self.sk_open[bsski-1], self.sk_close[bsski-1])) # max(self.sk_high[bsski], self.sk_high[bsski - 1])
+                else:
+                    self.zshp = max(self.sk_high[self.zsski], self.sk_high[self.zsski - 1])  # self.sk_high[self.zsski]
+                    self.zslp = min(max(self.sk_open[self.zsski], self.sk_close[self.zsski]),
+                                    max(self.sk_open[self.zsski - 1],
+                                        self.sk_close[self.zsski - 1]))  # min(self.sk_open[self.zsski], self.sk_close[self.zsski])
+                    self.zslp = self.zshp
+                    self.bslp = sorted([self.sk_low[bsski], self.sk_low[bsski - 1], self.sk_low[bsski - 2]])[
+                        1]  # min(min(self.sk_open[bsski], self.sk_close[bsski]), min(self.sk_open[bsski-1], self.sk_close[bsski-1]))  #  min(self.sk_low[bsski], self.sk_low[bsski - 1])
+                    self.bshp = sorted([min(self.sk_open[bsski], self.sk_close[bsski]), min(self.sk_open[bsski - 1], self.sk_close[bsski - 1]),
+                                        min(self.sk_open[bsski - 2], self.sk_close[bsski - 2])])[
+                        1]  # max(self.sk_low[bsski], self.sk_low[bsski - 1])
+                    # self.zslp = self.sk_low[self.zsckl[0]]
+                    # self.zshp = self.sk_high[self.zsckl[0]]
+            # ------------------------------更新 qsbands, zsbands
+            if nscklitp > 0:
+                bandlp = qspbp
+                bandhp = min(min(self.sk_open[qspbi], self.sk_close[qspbi]), min(self.sk_open[qspbi - 1], self.sk_close[qspbi - 1]))
+                newband = Rsband(qspbi, qspei, bandhp, bandlp)
+                if not self.lstupqsbd or self.lstupqsbd.dtbi != newband.dtbi:
+                    self.upqsbands.addband(newband)
+                    self.lstupqsbd = newband
+                elif self.lstupqsbd.dtei != newband.dtei:
+                    self.upqsbands.updateband(newband)
+                    self.lstupqsbd = newband
+            # --------------------------------------------------
+            elif nscklitp < 0:
+                bandhp = qspbp
+                bandlp = max(max(self.sk_open[qspbi], self.sk_close[qspbi]), max(self.sk_open[qspbi - 1], self.sk_close[qspbi - 1]))
+                newband = Rsband(qspbi, qspei, bandhp, bandlp)
+                if not self.lstdwqsbd or self.lstdwqsbd.dtbi != newband.dtbi:
+                    self.dwqsbands.addband(newband)
+                    self.lstdwqsbd = newband
+                elif self.lstdwqsbd.dtei != newband.dtei:
+                    self.dwqsbands.updateband(newband)
+                    self.lstdwqsbd = newband
+            # --------------------------------------------------
+
+            if self.sk_qspds[-1][2] > 0 and nscklitp < 0:
+                newband = copy.copy(self.lstupzsbd)
+                newband.dtbi = i
+                newband.dtei = i
+                self.dwzsbands.addband(newband)
+            if self.sk_qspds[-1][2] < 0 and nscklitp > 0:
+                newband = copy.copy(self.lstdwzsbd)
+                newband.dtbi = i
+                newband.dtei = i
+                self.upzsbands.addband(newband)
+
+            newband = Rsband(self.zsski, self.zsski, self.zshp, self.zslp)
+            if self.zsdir > 0:
+                if not self.lstupzsbd or self.lstupzsbd.dtbi != newband.dtbi:
+                    self.upzsbands.addband(newband)
+                    self.lstupzsbd = newband
+            elif self.zsdir < 0:
+                if not self.lstdwzsbd or self.lstdwzsbd.dtbi != newband.dtbi:
+                    self.dwzsbands.addband(newband)
+                    self.lstdwzsbd = newband
+
+            # --------------------------------------------------
+            # 更新 ----------------------------------------------self.sk_sgn
+            lstsgn = self.sk_sgn[-1]
+            sgndir = 0
+            newsgn = Sgn_Rst(0, i, self.sk_close[i])
+            if not lstsgn:
+                newsgn.rsti = i
+                newsgn.rstp = self.sk_close[i]
+                newsgn.rstbi = qspbi
+                if nscklitp > 0:
+                    sgndir = 1
+                    self.upqsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                    self.upzsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                if nscklitp < 0:
+                    sgndir = -1
+                    self.dwqsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                    self.dwzsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+            else:
+                lstsgn.set_sgn(self.sk_open[i], self.sk_high[i], self.sk_low[i], self.sk_close[i], self.sk_atr[i])
+                # dtmi= pd.to_datetime(self.sk_time[i])
+                # if '2011-10-28' in str(dtmi):
+                #     print lstsgn.sgn_qs2c
+                #     print 'chk'
+
+                newsgn.rsti = lstsgn.rsti
+                newsgn.rstp = lstsgn.rstp
+                newsgn.rstbi = lstsgn.rstbi
+                if lstsgn.rstdir > 0:
+                    sgndir = 1
+
+                    if lstsgn.sgn_qs1c and lstsgn.sgn_qs1c[0] <= -5:
+
+                        if self.dwqsbands.count > 0:
+                            sgndir = -1
+                            newsgn.rsti = i
+
+                            newsgn.rstp = lstsgn.rsp_qs1c
+                            dwrsband = self.dwqsbands.getbandby_bmp('max')
+                            newsgn.rstbi = dwrsband.dtbi
+                            self.dwqsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                            self.dwzsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                            # elif not lstsgn.sgn_qs2c and lstsgn.sgn_qs1c and lstsgn.sgn_qs1c[0] <= -5:
+                            #
+                            #     if self.dwqsbands.count>0:
+                            #         sgndir = -1
+                            #         newsgn.rsti = i
+                            #
+                            #         newsgn.rstp = lstsgn.rsp_qs1c
+                            #         dwrsband = self.dwqsbands.getbandby_bmp('max')
+                            #         newsgn.rstbi = dwrsband.dtbi
+                            #         self.dwqsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                            #         self.dwzsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+
+                else:
+                    sgndir = -1
+
+                    if lstsgn.sgn_qs1c and lstsgn.sgn_qs1c[0] >= 5:
+
+                        if self.upqsbands.count > 0:
+                            sgndir = 1
+                            newsgn.rsti = i
+
+                            newsgn.rstp = lstsgn.rsp_qs1c
+                            uprsband = self.upqsbands.getbandby_bmp('min')
+                            newsgn.rstbi = uprsband.dtbi
+                            self.upqsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                            self.upzsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                            # elif not lstsgn.sgn_qs2c and lstsgn.sgn_qs1c and lstsgn.sgn_qs1c[0] >= 5:
+                            #
+                            #     if self.upqsbands.count>0:
+                            #         sgndir = 1
+                            #         newsgn.rsti = i
+                            #
+                            #         newsgn.rstp = lstsgn.rsp_qs1c
+                            #         uprsband = self.upqsbands.getbandby_bmp('min')
+                            #         newsgn.rstbi = uprsband.dtbi
+                            #         self.upqsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+                            #         self.upzsbands.updateformdti(newsgn.rstbi, newsgn.rstp)
+            if sgndir > 0:
+                newsgn.rstdir = 1
+                newsgn.setqsrsp(self.upqsbands)
+                newsgn.setzsrsp(self.upzsbands)
+
+            elif sgndir < 0:
+                newsgn.rstdir = -1
+                newsgn.setqsrsp(self.dwqsbands)
+                newsgn.setzsrsp(self.dwzsbands)
+
+            else:
+                newsgn = None
+
+            self.sk_sgn.append(newsgn)
+            # dtmi= pd.to_datetime(self.sk_time[i])
+            # if '2010-07-28' in str(dtmi):
+            #     print 'chk'
+
+            # 更新 ----------------------------------------------self.sk_sgn
+
+        if newsgn:
+            self.sk_zs1c.append(newsgn.rsp_zs1c if newsgn.rsp_zs1c else np.nan)
+            self.sk_zs1a.append(newsgn.rsp_zs1a if newsgn.rsp_zs1a else np.nan)
+            self.sk_zs2c.append(newsgn.rsp_zs2c if newsgn.rsp_zs2c else np.nan)
+            self.sk_zs2a.append(newsgn.rsp_zs2a if newsgn.rsp_zs2a else np.nan)
+            self.sk_qs1c.append(newsgn.rsp_qs1c if newsgn.rsp_qs1c else np.nan)
+            self.sk_qs1a.append(newsgn.rsp_qs1a if newsgn.rsp_qs1a else np.nan)
+            self.sk_qs2c.append(newsgn.rsp_qs2c if newsgn.rsp_qs2c else np.nan)
+            self.sk_qs2a.append(newsgn.rsp_qs2a if newsgn.rsp_qs2a else np.nan)
+        else:
+            self.sk_zs1c.append(np.nan)
+            self.sk_zs1a.append(np.nan)
+            self.sk_zs2c.append(np.nan)
+            self.sk_zs2a.append(np.nan)
+            self.sk_qs1c.append(np.nan)
+            self.sk_qs1a.append(np.nan)
+            self.sk_qs2c.append(np.nan)
+            self.sk_qs2a.append(np.nan)
+
+        self.sk_qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+        '''
+          ==============以下是信号部分==============
+        '''
+        self.sk_zsl.append(self.zslp)
+        self.sk_zsh.append(self.zshp)
+        self.sk_bsl.append(self.bslp)
+        self.sk_bsh.append(self.bshp)
+
+        self.sk_itp.append(self.sk_qspds[-1][2])
+
+        if self.sk_qspds[-1][2] > 0:
+            self.sk_qsh.append(self.sk_qspds[-1][8])
+            self.sk_qsl.append(self.sk_qspds[-1][7])
+            self.sk_qswr.append((self.sk_high[i] - self.zslp) / self.zslp / self.sk_atr[i - 1])
+            self.sk_rsl.append(0.2 + (self.sk_qsh[-1] - self.sk_close[i]) / (self.sk_qsh[-1] - self.sk_qsl[-1]))
+            self.sk_disrst.append(self.sk_qsh[-1])
+
+            # ---------------------------------------------------------------------------------------------------trdline
+            if self.ctp:
+                if self.ctp.skp < self.sk_high[i]:
+                    self.ctp = Extrp(i, self.sk_high[i], 1)
+
+                    # ----------------------------------------------------------------------------------------------------
+        elif self.sk_qspds[-1][2] < 0:
+            self.sk_qsh.append(self.sk_qspds[-1][7])
+            self.sk_qsl.append(self.sk_qspds[-1][8])
+            self.sk_qswr.append((self.sk_low[i] - self.zshp) / self.zshp / self.sk_atr[i - 1])
+            self.sk_rsl.append(-0.2 + (self.sk_qsl[-1] - self.sk_close[i]) / (self.sk_qsh[-1] - self.sk_qsl[-1]))
+            self.sk_disrst.append(self.sk_qsl[-1])
+
+            # ---------------------------------------------------------------------------------------------------trdline
+            if self.cbp:
+                if self.cbp.skp > self.sk_low[i]:
+                    self.cbp = Extrp(i, self.sk_low[i], -1)
+                    # ----------------------------------------------------------------------------------------------------
+        else:
+            self.sk_qsh.append(self.sk_qspds[-1][7])
+            self.sk_qsl.append(self.sk_qspds[-1][8])
+            self.sk_qswr.append(0)
+            self.sk_rsl.append(0)
+            self.sk_disrst.append(self.sk_qsl[-1])
+
+        # ----------------------------------------------基于 self.sk_disrst 生成 sadl序列
+        self.uptsads(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.sk_disrst, i)
+        if len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] > 0 and self.sk_qspds[-2][2] < 0:  # 向上转换
+            self.rstdir = 1
+            self.sads['sa_' + str(i)] = []
+            self.uprstsas['upr_' + str(i)] = OrderedDict()
+
+            self.crtsad = None
+            self.tepsad = Sadl(-1, bi=i, bap=self.sk_disrst[i])
+
+            sgn_rsti = i
+            sgn_rstp = self.sk_qspds[-2][7]
+            sgn_rstdir = 1
+            self.qsrstp.append((sgn_rsti, sgn_rstp, sgn_rstdir))
+            self.sk_qsrstp.append(sgn_rstdir)
+            self.sk_rstn.append(0)
+            # self.sk_rstspl.append(self.sk_bsl[-2])
+            # self.sk_rstsph.append(self.sk_bsh[-2])
+            self.bscp = None
+            newstpchain = Stepchain(1, i, self.sk_ckl[i], self.qsstpchain[-1].piockl)
+            self.qsstpchain.append(newstpchain)
+            self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+            self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+            # ---------------------------------------------------------------------------------------------------trdline
+            self.ctp = Extrp(i, self.sk_high[i], 1)
+            if self.cbp:
+                self.botms.append(self.cbp)
+                nrstsa = Rstsa(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.rstdir, self.cbp.ski, i)
+                rstna = self.uprstsas.keys()[-1]
+                self.uprstsas[rstna][rstna] = nrstsa
+                nrstsa.getrst()
+                nrstsa.uptmex(i)
+
+            if len(self.botms) > 1:
+                pass
+                # self.new_supline(self.botms[-2], self.tops[-1], self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, self.sk_ckl, i)
+                if self.faset['rdl']:
+                    newsupl = self.new_supline2(self.fid + '_rdl', self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                self.sk_time, self.sk_atr,
+                                                self.sk_ckl, i, upski)
+                    if newsupl:
+                        self.suplines[newsupl.socna] = {'rdl': newsupl, 'mdl': None, 'mir': OrderedDict(), 'upl': OrderedDict(),
+                                                        'dwl': OrderedDict()}
+                        self.prebbl = self.crtbbl
+                        self.crtbbl = newsupl
+                        if self.faset['mdl']:
+                            newtbl = self.new_supline3(self.fid + '_mdl', self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                       self.sk_time,
+                                                       self.sk_atr, self.sk_ckl, i, upski)
+                            if newtbl:
+                                self.suplines[newsupl.socna]['mdl'] = newtbl
+                        self.boti = newsupl.mxi + 1
+            if len(self.tops) > 1:
+                pass
+                if False and self.tops[-2].skp > self.tops[-2].skp:
+                    self.new_resline(self.fid + '_mdl', self.tops[-2], self.botms[-1], self.sk_open, self.sk_high, self.sk_low, self.sk_close,
+                                     self.sk_volume,
+                                     self.sk_time, self.sk_atr, self.sk_ckl, i, upski)
+
+        elif len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] < 0 and self.sk_qspds[-2][2] > 0:  # 向下转换
+            self.rstdir = -1
+            self.sads['sd_' + str(i)] = []
+            self.dwrstsas['dwr_' + str(i)] = OrderedDict()
+            self.crtsad = None
+            self.tepsad = Sadl(1, bi=i, bap=self.sk_disrst[i])
+
+            sgn_rsti = i
+            sgn_rstp = self.sk_qspds[-2][7]
+            sgn_rstdir = -1
+            self.qsrstp.append((sgn_rsti, sgn_rstp, sgn_rstdir))
+            self.sk_qsrstp.append(sgn_rstdir)
+            self.sk_rstn.append(0)
+            # self.sk_rstspl.append(self.sk_bsl[-2])
+            # self.sk_rstsph.append(self.sk_bsh[-2])
+            self.bscp = None
+            newstpchain = Stepchain(-1, i, self.sk_ckl[i], self.qsstpchain[-1].piockl)
+            self.qsstpchain.append(newstpchain)
+            self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+            self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+            # ---------------------------------------------------------------------------------------------------trdline
+            self.cbp = Extrp(i, self.sk_low[i], -1)
+            if self.ctp:
+                self.tops.append(self.ctp)
+                nrstsa = Rstsa(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.rstdir, self.ctp.ski, i)
+                rstna = self.dwrstsas.keys()[-1]
+                self.dwrstsas[rstna][rstna] = nrstsa
+                nrstsa.getrst()
+                nrstsa.uptmex(i)
+
+            if len(self.tops) > 1:
+                pass
+                # self.new_resline(self.tops[-2], self.botms[-1], self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, self.sk_ckl, i)
+                if self.faset['rdl']:
+                    newresl = self.new_resline2(self.fid + '_rdl', self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                self.sk_time, self.sk_atr,
+                                                self.sk_ckl, i, upski)
+                    if newresl:
+                        self.reslines[newresl.socna] = {'rdl': newresl, 'mdl': None, 'mir': OrderedDict(), 'upl': OrderedDict(),
+                                                        'dwl': OrderedDict()}
+                        self.prettl = self.crtttl
+                        self.crtttl = newresl
+                        if self.faset['mdl']:
+                            newtbl = self.new_resline3(self.fid + '_mdl', self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                       self.sk_time,
+                                                       self.sk_atr, self.sk_ckl, i, upski)
+                            if newtbl:
+                                self.reslines[newresl.socna]['mdl'] = newtbl
+                        self.topi = newresl.mxi + 1
+
+            if len(self.botms) > 1:
+                pass
+                if False and self.botms[-2].skp < self.botms[-2].skp:
+                    self.new_supline(self.fid + '_mdl', self.botms[-2], self.tops[-1], self.sk_open, self.sk_high, self.sk_low, self.sk_close,
+                                     self.sk_volume,
+                                     self.sk_time, self.sk_atr, self.sk_ckl, i, upski, upski)
+        else:
+            self.sk_qsrstp.append(0)
+            if len(self.qsstpchain) > 0:
+                self.qsstpchain[-1].updatestep(i, self.sk_ckl[i])
+                self.sk_rstn.append(len(self.qsstpchain[-1].revckls) - 1)
+
+                if self.sk_rstn[-1] > 0 and self.sk_rstn[-1] > self.sk_rstn[-2]:  # 发生步进
+                    if len(self.botms) > 1 and self.qsstpchain[-1].stpdir > 0 and self.ctp:
+                        pass
+                        # self.new_supline(self.botms[-2], self.ctp , self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, i)
+                    elif len(self.tops) > 1 and self.qsstpchain[-1].stpdir < 0 and self.cbp:
+                        pass
+                        # self.new_resline(self.tops[-2], self.cbp, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, i)
+
+                if self.qsstpchain[-1].stpdir > 0:
+                    self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+                    self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+                else:
+                    self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+                    self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+            else:
+                self.sk_rstn.append(0)
+                self.sk_rstsph.append(self.sk_close[i])
+                self.sk_rstspl.append(self.sk_close[i])
+
+            if self.bsbj != 0:
+                # self.sk_rstspl.append(self.sk_close[i])
+                # self.sk_rstsph.append(self.sk_close[i])
+                # self.sk_rstn.append(self.sk_rstn[-1]+1)
+                self.bscp = None
+            else:
+                pass
+                # self.sk_rstn.append(self.sk_rstn[-1])
+                # self.sk_rstspl.append(self.sk_rstspl[-1])
+                # self.sk_rstsph.append(self.sk_rstsph[-1])
+
+            if self.rstdir > 0:
+                if len(self.uprstsas) > 0 and len(self.uprstsas.values()[-1].values()) > 0:
+                    self.uprstsas.values()[-1].values()[-1].uptmex(i)
+            elif self.rstdir < 0:
+                if len(self.dwrstsas) > 0 and len(self.dwrstsas.values()[-1].values()):
+                    self.dwrstsas.values()[-1].values()[-1].uptmex(i)
+
+        if self.faset['sal'] and self.sads:
+            sadlist = self.sads.values()[-1]
+            sad1 = None
+            sad2 = None
+            six = 0
+            atr = self.sk_atr[i]
+            if len(sadlist) > 0:
+                if sadlist[-1].ei:
+                    sad2 = sadlist[-1]
+                    six = len(sadlist) - 1
+                    if len(sadlist) > 1:
+                        sad1 = sadlist[-2]
+                elif len(sadlist) > 1:
+                    sad2 = sadlist[-2]
+                    six = len(sadlist) - 2
+                    if len(sadlist) > 2:
+                        sad1 = sadlist[-3]
+            if sad2:
+                salna = self.fid + '_' + self.sads.keys()[-1] + '_' + str(six)
+                if salna not in self.sadlines or sad2.chg > 0:
+                    sad2.chg = 0
+                    if not sad1:
+                        if sad2.dwup > 0 and len(self.tops) > 0:
+                            sbi = self.tops[-1].ski
+                            sbp = self.tops[-1].skp
+                        elif sad2.dwup < 0 and len(self.botms) > 0:
+                            sbi = self.botms[-1].ski
+                            sbp = self.botms[-1].skp
+                        else:
+                            sbi = None
+                            sbp = None
+                    else:
+                        sbi = sad1.mi
+                        sbp = sad1.mp
+                    if sbi:
+                        rkp = max(self.sk_open[sad2.mi + 1], self.sk_close[sad2.mi + 1]) if sad2.dwup > 0 else min(self.sk_open[sad2.mi + 1],
+                                                                                                                   self.sk_close[sad2.mi + 1])
+                        newsal = getsaline2(salna, sbi, sbp, sad2, rkp, sbi, self.sk_time, atr, i, upski)
+                        if newsal:
+                            newsal.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                            self.sadlines[salna] = newsal
+        if len(self.sadlines) > 0:
+            crtsal = self.sadlines.values()[-1]
+            crtsal.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(crtsal, i)
+        else:
+            crtsal = None
+        if len(self.sadlines) > 1:
+            presal = self.sadlines.values()[-2]
+            presal.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(presal, i)
+        else:
+            presal = None
+
+        # -------------集中更新tdls与sk的位置状态----------------------------------------------
+        # 只更新最新的3组tdl
+        supls = self.suplines.keys()
+        for tdlna in supls[-3:]:
+            bbls = self.suplines[tdlna]
+            rdl = bbls['rdl']
+            mdl = bbls['mdl']
+            upls = bbls['upl']
+            mirs = bbls['mir']
+
+            rdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(rdl, i)
+            if not mdl:
+                continue
+            mdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(mdl, i)
+            if not self.faset['upl']:
+                continue
+            if mdl.upsmdi:
+                uplna = tdlna + '_up_' + str(mdl.upsmdi)
+                if uplna not in upls:
+                    mdi = mdl.upsmdi
+                    mp = mdl.extendp(mdi)
+                    mdp = mdl.upsmdp
+                    ak = mdl.ak
+                    atr = self.sk_atr[i]
+                    upl = getasline(uplna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    if upl:
+                        upls[uplna] = upl
+                        upl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            toaddupl = {}
+            for upl in upls.values():
+                upl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                if upl.upsmdi:
+                    nuplna = tdlna + '_up_' + str(upl.upsmdi)
+                    if nuplna in upls or nuplna in toaddupl:
+                        continue
+                    mdi = upl.upsmdi
+                    mp = upl.extendp(mdi)
+                    mdp = upl.upsmdp
+                    ak = upl.ak
+                    atr = self.sk_atr[i]
+                    nupl = getasline(nuplna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    if nupl:
+                        toaddupl[nuplna] = nupl
+                        nupl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+
+            for nuplna, nupl in toaddupl.iteritems():
+                upls[nuplna] = nupl
+                nupl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            # ---------------------------
+            if not self.faset['mir']:
+                continue
+            mirl = mirs.values()[-1] if mirs else None
+            miri = None
+            mirp = None
+            for upl in upls.values():
+                if upl.dwmdis:
+                    nmdi = upl.dwmdis[-1]
+                    nmdp = self.sk_low[nmdi]
+                    if not mirp or mirp < nmdp:
+                        miri = nmdi
+                        mirp = nmdp
+            if miri:
+                if not mirl:
+                    # nmrlna = tdlna + '_mr_' + str(miri)
+                    # mri = miri
+                    # mrp = mirp
+                    # ak = mdl.ak
+                    # atr = self.sk_atr[i]
+                    # nmrl = getmrline1(nmrlna, mri, mrp, ak, self.sk_time, atr, i)
+                    # if nmrl:
+                    #     nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                    #     mirl = nmrl
+                    #     mirs[nmrlna] = nmrl
+                    nmrlna = tdlna + '_mr_' + str(miri)
+                    if miri < i:
+                        mbi = mdl.fbi
+                        mbp = self.sk_low[mbi]
+                        fbi = miri
+                        ski = miri
+                        skp = min(self.sk_open[ski], self.sk_close[ski])
+                        lkp = min(self.sk_open[ski - 1], self.sk_close[ski - 1])
+                        rkp = min(self.sk_open[ski + 1], self.sk_close[ski + 1])
+                        sdpt = getsdi(mbi, mbp, fbi, skp, lkp, rkp, 1)
+                        if sdpt:
+                            mri = sdpt[0]
+                            mrp = sdpt[1]
+                            atr = self.sk_atr[i]
+                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            if nmrl:
+                                nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                                mirl = nmrl
+                                mirs[nmrlna] = nmrl
+                elif miri != mirl.fbi:
+                    nmrlna = tdlna + '_mr_' + str(miri)
+                    if miri < i:
+                        mbi = mirl.fbi
+                        mbp = self.sk_low[mbi]
+                        fbi = miri
+                        ski = miri
+                        skp = min(self.sk_open[ski], self.sk_close[ski])
+                        lkp = min(self.sk_open[ski - 1], self.sk_close[ski - 1])
+                        rkp = min(self.sk_open[ski + 1], self.sk_close[ski + 1])
+                        sdpt = getsdi(mbi, mbp, fbi, skp, lkp, rkp, 1)
+                        if sdpt:
+                            mri = sdpt[0]
+                            mrp = sdpt[1]
+                            atr = self.sk_atr[i]
+                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            if nmrl:
+                                nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                                mirl = nmrl
+                                mirs[nmrlna] = nmrl
+
+            if mirl:
+                mirl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+
+        resls = self.reslines.keys()
+        for tdlna in resls[-3:]:
+            ttls = self.reslines[tdlna]
+            rdl = ttls['rdl']
+            mdl = ttls['mdl']
+            dwls = ttls['dwl']
+            mirs = ttls['mir']
+            rdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(rdl, i)
+            if not mdl:
+                continue
+            mdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(mdl, i)
+            if not self.faset['dwl']:
+                continue
+            if mdl.dwsmdi:
+                dwlna = tdlna + '_dw_' + str(mdl.dwsmdi)
+                if dwlna not in dwls:
+                    mdi = mdl.dwsmdi
+                    mp = mdl.extendp(mdi)
+                    mdp = mdl.dwsmdp
+                    ak = mdl.ak
+                    atr = self.sk_atr[i]
+                    dwl = getasline(dwlna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    if dwl:
+                        dwls[dwlna] = dwl
+                        dwl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            toadddwl = {}
+            for dwl in dwls.values():
+                dwl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                if dwl.dwsmdi:
+                    ndwlna = tdlna + '_dw_' + str(dwl.dwsmdi)
+                    if ndwlna in dwls or ndwlna in toadddwl:
+                        continue
+                    mdi = dwl.dwsmdi
+                    mp = dwl.extendp(mdi)
+                    mdp = dwl.dwsmdp
+                    ak = dwl.ak
+                    atr = self.sk_atr[i]
+                    ndwl = getasline(ndwlna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    if ndwl:
+                        toadddwl[ndwlna] = ndwl
+                        ndwl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+
+            for ndwlna, ndwl in toadddwl.iteritems():
+                dwls[ndwlna] = ndwl
+                ndwl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            # ---------------------------
+            if not self.faset['mir']:
+                continue
+            miri = None
+            mirp = None
+            mirl = mirs.values()[-1] if mirs else None
+            for dwl in dwls.values():
+                if dwl.upmdis:
+                    nmdi = dwl.upmdis[-1]
+                    nmdp = self.sk_high[nmdi]
+                    if not mirp or mirp > nmdp:
+                        miri = nmdi
+                        mirp = nmdp
+            if miri:
+                if not mirl:
+                    # nmrlna = tdlna + '_mr_' + str(miri)
+                    # mri = miri
+                    # mrp = mirp
+                    # ak = mdl.ak
+                    # atr = self.sk_atr[i]
+                    # nmrl = getmrline1(nmrlna, mri, mrp, ak, self.sk_time, atr, i)
+                    # if nmrl:
+                    #     nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                    #     mirl = nmrl
+                    #     mirs[nmrlna] = nmrl
+                    nmrlna = tdlna + '_mr_' + str(miri)
+                    if miri < i:
+                        mbi = mdl.fbi
+                        mbp = self.sk_high[mbi]
+                        fbi = miri
+                        ski = miri
+                        skp = max(self.sk_open[ski], self.sk_close[ski])
+                        lkp = max(self.sk_open[ski - 1], self.sk_close[ski - 1])
+                        rkp = max(self.sk_open[ski + 1], self.sk_close[ski + 1])
+                        sdpt = getsdi(mbi, mbp, fbi, skp, lkp, rkp, -1)
+                        if sdpt:
+                            mri = sdpt[0]
+                            mrp = sdpt[1]
+                            atr = self.sk_atr[i]
+                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            if nmrl:
+                                nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                                mirl = nmrl
+                                mirs[nmrlna] = nmrl
+                elif miri != mirl.fbi:
+                    nmrlna = tdlna + '_mr_' + str(miri)
+                    if miri < i:
+                        mbi = mirl.fbi
+                        mbp = self.sk_high[mbi]
+                        fbi = miri
+                        ski = miri
+                        skp = max(self.sk_open[ski], self.sk_close[ski])
+                        lkp = max(self.sk_open[ski - 1], self.sk_close[ski - 1])
+                        rkp = max(self.sk_open[ski + 1], self.sk_close[ski + 1])
+                        sdpt = getsdi(mbi, mbp, fbi, skp, lkp, rkp, -1)
+                        if sdpt:
+                            mri = sdpt[0]
+                            mrp = sdpt[1]
+                            atr = self.sk_atr[i]
+                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            if nmrl:
+                                nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                                mirl = nmrl
+                                mirs[nmrlna] = nmrl
+            if mirl:
+                mirl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+        # -----------------------------------------------------------------------------------------------------------------
+        # -----------------------------------------------------------------------------------------------------------------因子输出
+
+        if self.rstdir > 0 and len(self.uprstsas) > 0 and len(self.uprstsas.values()[-1].values()) > 0:
+            self.sk_alp1.append(self.uprstsas.values()[-1].values()[-1].mexp)
+        else:
+            self.sk_alp1.append(self.sk_alp1[-1])
+        if self.rstdir < 0 and len(self.dwrstsas) > 0 and len(self.dwrstsas.values()[-1].values()) > 0:
+            self.sk_dlp1.append(self.dwrstsas.values()[-1].values()[-1].mexp)
+        else:
+            self.sk_dlp1.append(self.sk_dlp1[-1])
+
+        if crtsal:
+            self.sk_sal.append(crtsal.extp)
+            self.ak_sal.append(crtsal.ak)
+        else:
+            self.sk_sal.append(np.nan)
+            self.ak_sal.append(np.nan)
+
+        if self.crtbbl:
+            # if str(self.sk_time[i])[:10] == '2016-06-27':
+            #     print 'sta:', self.crtbbl.rsta
+            ydbblrsta = self.crtbbl.rsta
+            tdbblrsta = self.crtbbl.rsta
+            if None and ydbblrsta % 3 == 2 and tdbblrsta % 3 == 0 and tdbblrsta != ydbblrsta:  # None and
+                if len(self.botms) > 1 and self.ctp:
+                    pass
+                    self.new_supline(self.botms[-2], self.ctp, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                     self.sk_time, self.sk_atr, self.sk_ckl, i, upski)
+                    if self.crtbbl:
+                        self.crtbbl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+
+            if self.crtbbl.crsp:
+                self.sk_bbl.append(self.crtbbl.extp)
+                self.ak_bbl.append(self.crtbbl.ak)
+                tdlna = self.crtbbl.socna
+                bbls = self.suplines[tdlna]
+                rdl = bbls['rdl']
+                mdl = bbls['mdl']
+                upls = bbls['upl'].values()
+
+                if mdl:
+                    self.sk_obbl.append(mdl.extp)
+                    self.ak_obbl.append(mdl.ak)
+                else:
+                    self.sk_obbl.append(np.nan)
+                    self.ak_obbl.append(np.nan)
+
+                mirs = self.suplines[tdlna]['mir']
+                mirl = mirs.values()[-1] if mirs else None
+                if mirl:
+                    self.sk_alp2.append(mirl.extp)
+                else:
+                    self.sk_alp2.append(np.nan)
+            else:
+                self.sk_bbl.append(np.nan)
+                self.ak_bbl.append(np.nan)
+                self.sk_obbl.append(np.nan)
+                self.ak_obbl.append(np.nan)
+                self.sk_alp2.append(np.nan)
+        else:
+            self.sk_bbl.append(np.nan)
+            self.ak_bbl.append(np.nan)
+            self.sk_obbl.append(np.nan)
+            self.ak_obbl.append(np.nan)
+            self.sk_alp2.append(np.nan)
+
+        if self.crtttl:
+            ydttlrsta = self.crtttl.rsta
+            tdttlrsta = self.crtttl.rsta
+            if None and ydttlrsta % 3 == 2 and tdttlrsta % 3 == 0 and tdttlrsta != ydttlrsta:  # None and
+                if len(self.tops) > 1 and self.cbp:
+                    pass
+                    self.new_resline(self.tops[-2], self.cbp, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                     self.sk_time, self.sk_atr, self.sk_ckl, i, upski)
+                    if self.crtttl:
+                        self.crtttl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+
+            if self.crtttl.crsp:
+                self.sk_ttl.append(self.crtttl.extp)
+                self.ak_ttl.append(self.crtttl.ak)
+                tdlna = self.crtttl.socna
+                ttls = self.reslines[tdlna]
+                rdl = ttls['rdl']
+                mdl = ttls['mdl']
+                dwls = ttls['dwl'].values()
+                # if len(dwls) > 0:
+                #     self.sk_dlp1.append(dwls[-1].extp)
+                # else:
+                #     self.sk_dlp1.append(np.nan)
+
+                if mdl:
+                    self.sk_ottl.append(mdl.extp)
+                    self.ak_ottl.append(mdl.ak)
+                else:
+                    self.sk_ottl.append(np.nan)
+                    self.ak_ottl.append(np.nan)
+
+                mirs = self.reslines[tdlna]['mir']
+                mirl = mirs.values()[-1] if mirs else None
+                if mirl:
+                    self.sk_dlp2.append(mirl.extp)
+                else:
+                    self.sk_dlp2.append(np.nan)
+
+            else:
+                self.sk_ttl.append(np.nan)
+                self.ak_ttl.append(np.nan)
+                self.sk_ottl.append(np.nan)
+                self.ak_ottl.append(np.nan)
+                self.sk_dlp2.append(np.nan)
+
+        else:
+            self.sk_ttl.append(np.nan)
+            self.ak_ttl.append(np.nan)
+            self.sk_ottl.append(np.nan)
+            self.ak_ottl.append(np.nan)
+            self.sk_dlp2.append(np.nan)
+
+        # ----------------------生成集成信号----
+        # ------------------------------------------------------------------------
+        # iski = i
+        # ihigh = self.sk_high[i]
+        # if '2014-11-18' in self.crtidtm:
+        #     print 'iski:', i, 'idtm:', self.crtidtm, ' idate:', self.crtidate
+        # chkvar = self.crtsad
+        # chkobj = self.dwrstsas
+        # -----------------------------------------------------------------------
+        if self.subrst:
+            if '2010-07-27' in self.crtidtm:
+                ihigh = self.sk_high[i]
+                print 'iski:', i, 'idtm:', self.crtidtm, ' idate:', self.crtidate, 'ihigh:', ihigh
+
+            if np.isnan(self.sk_sudc[i]):
+                dix = self.upix[-1]
+                self.upix.append(dix)
+                self.mosi += 1
+            else:
+                dix = self.subrst.cal_next(upidtm=self.crtidtm, upski=i)
+                self.upix.append(dix)
+                self.mosi = 0
+
+            if len(self.subrst.sadlines) > 0:
+                subcrtsal = self.subrst.sadlines.values()[-1]
+                self.skatetl.uptsta(subcrtsal, i, self.upix, self.mosi)
+            if len(self.subrst.sadlines) > 1:
+                subpresal = self.subrst.sadlines.values()[-2]
+                self.skatetl.uptsta(subpresal, i, self.upix, self.mosi)
+
+            supls = self.subrst.suplines.keys()
+            for tdlna in supls[-3:]:
+                bbls = self.subrst.suplines[tdlna]
+                rdl = bbls['rdl']
+                mdl = bbls['mdl']
+                upls = bbls['upl']
+                mirs = bbls['mir']
+                if rdl:
+                    self.skatetl.uptsta(rdl, i, self.upix, self.mosi)
+                if mdl:
+                    self.skatetl.uptsta(mdl, i, self.upix, self.mosi)
+
+            resls = self.subrst.reslines.keys()
+            for tdlna in resls[-3:]:
+                ttls = self.subrst.reslines[tdlna]
+                rdl = ttls['rdl']
+                mdl = ttls['mdl']
+                dwls = ttls['dwl']
+                mirs = ttls['mir']
+                if rdl:
+                    self.skatetl.uptsta(rdl, i, self.upix, self.mosi)
+                if mdl:
+                    self.skatetl.uptsta(mdl, i, self.upix, self.mosi)
+            if '2010-08-12' in self.crtidtm or i == 1088:
+                print 'iski:', i, 'idtm:', self.crtidtm, ' idate:', self.crtidate
+        # ------------------------------------------------------------------------
+        iski = i
+        ihigh = self.sk_high[i]
+        if '2010-08-12' in self.crtidtm or i == 1088:
+            print 'iski:', i, 'idtm:', self.crtidtm, ' idate:', self.crtidate
+        chkvar = self.crtsad
+        chkobj = self.dwrstsas
+        # -----------------------------------------------------------------------
+
+        if self.TSBT:
+            mafs = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines, 'upsas': self.uprstsas,
+                    'dwsas': self.dwrstsas}
+            if self.subrst is None:
+                sufs = None
+            else:
+                sufs = {'rstdir': self.subrst.rstdir, 'sals': self.subrst.sadlines, 'bbls': self.subrst.suplines, 'ttls': self.subrst.reslines,
+                        'upsas': self.subrst.uprstsas, 'dwsas': self.subrst.dwrstsas}
+            self.intedsgn = Intsgnbs(self.tdkopset, self.skatsel, self.skatetl, mafs, sufs, self.upix, self.mosi)
+            self.intedsgn.sesgnbs(i)
+            self.intedsgn.etsgnbs(i)
+            self.TSBT.sgntotrd(i, self.intedsgn)
+
+    # ----------------------------------------------------------
     def cal_next(self, upidtm = None, upski = None):
         sk_ckdtpst = 0.05  # 0.05倍平均涨幅作为涨跌柱子的公差
         detsdc = -5  # strong下降链构成下降反转的链长 =detsdc*avgski
@@ -4302,7 +5706,8 @@ class Grst_Factor(object):
         for i in range(nxti, self.sk_close.size):
             if i==1085:
                 print i
-            idtm = pd.Timestamp((self.sk_time[i])).strftime('%Y-%m-%d %H:%M:%S')
+            # idtm = pd.Timestamp((self.sk_time[i])).strftime('%Y-%m-%d %H:%M:%S')
+            idtm = self.sk_time[i]
             if upidtm and upidtm < idtm:
                 break
             self.crtski = i

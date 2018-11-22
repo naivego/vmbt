@@ -4064,7 +4064,7 @@ class Grst_Factor(object):
 
         self.skatsel = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
 
-        self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
+        # self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
 
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:
@@ -4217,7 +4217,8 @@ class Grst_Factor(object):
         self.crtidtm = self.sk_time[self.crtski]
         self.crtidate = self.crtidtm[:10]
 
-        # self.bada.newbar()
+        self.bada.crtidx = self.crtidtm
+        self.bada.crtnum = self.crtski
     # ----------------------------------------------------------
     def onbar(self, i):
         sk_ckdtpst = 0.05  # 0.05倍平均涨幅作为涨跌柱子的公差

@@ -149,7 +149,7 @@ class GrstStrategy(CtaTemplate):
         self.sk_upl = self.sk_mid + 2 * self.sk_std
         self.sk_dwl = self.sk_mid - 2 * self.sk_std
 
-        Dat_bar = pd.Dataframe(index=skdata.index)
+        Dat_bar = pd.DataFrame(index=skdata.index)
         Dat_bar['TR1'] = skdata['high'] - skdata['low']
         Dat_bar['TR2'] = abs(skdata['high'] - skdata['close'].shift(1))
         Dat_bar['TR3'] = abs(skdata['low'] - skdata['close'].shift(1))
@@ -181,7 +181,9 @@ class GrstStrategy(CtaTemplate):
             ckllp = self.sk_low[skbgi]
         self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, skbgi))
         self.crtski = skbgi
-
+        self.crtidtm = self.sk_time[skbgi]
+        self.Teda.crtidx = self.crtidtm
+        self.Teda.crtnum = self.crtski
     # ------------------------------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda中
     def tedaOnbar(self, i):

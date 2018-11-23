@@ -94,18 +94,22 @@ class GrstStrategy(CtaTemplate):
         self.Marst = None
         self.vada2 = None
         self.Surst = None
+        self.tedaet = setting['tedaet']
+
+        self.skatetl = None
 
         # -------------------vada0
-        try:
-            Period = self.setting['msdpset']['te']
-            self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.Teda = Barda(trdvar, Period, self.tedaOnbar)
-            self.Teda.dat = self.vada0
-            # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
+        if len(self.tedaet)>0:
+            try:
+                Period = self.setting['msdpset']['te']
+                self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
+                plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
+                self.Teda = Barda(trdvar, Period, self.tedaOnbar)
+                self.Teda.dat = self.vada0
+                # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
 
-        except:
-            self.vada0 = None
+            except:
+                self.vada0 = None
 
         # -------------------vada1
         try:
@@ -156,10 +160,8 @@ class GrstStrategy(CtaTemplate):
         TR = Dat_bar.loc[:, ['TR1', 'TR2', 'TR3']].max(axis=1)
         ATR = TR.rolling(14).mean() / skdata['close'].shift(1)
         self.sk_atr = ATR
-        self.sk_ckl = []
         self.dkcn = []
-        self.teatmal = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
-        self.teatsul = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
+
 
         skbgi = 20
         if self.sk_close.size <= skbgi:
@@ -184,6 +186,11 @@ class GrstStrategy(CtaTemplate):
         self.crtidtm = self.sk_time[skbgi]
         self.Teda.crtidx = self.crtidtm
         self.Teda.crtnum = self.crtski
+
+        if len(self.tedaet):
+            self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+
+
     # ------------------------------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda中
     def tedaOnbar(self, i):
@@ -228,9 +235,51 @@ class GrstStrategy(CtaTemplate):
                 ckllp = min(self.sk_low[i], cksdl)
                 self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
 
+        #----------------------------------------------------------------
 
+        #----------------------------------------------------------------
+        for fa in self.tedaet:
+            if fa == 'ma':
+                farst = self.Marst
 
+            elif fa == 'su':
+                farst = self.Surst
 
+            else:
+                farst = None
+
+            if farst:
+                farst.teofi += 1
+                if len(farst.sadlines) > 0:
+                    subcrtsal = farst.sadlines.values()[-1]
+                    self.skatetl.uptsta(subcrtsal, i, farst.crtski, farst.teofi, farst.teofn)
+                if len(farst.sadlines) > 1:
+                    subpresal = farst.sadlines.values()[-2]
+                    self.skatetl.uptsta(subpresal, i, farst.crtski, farst.teofi, farst.teofn)
+
+                supls = farst.suplines.keys()
+                for tdlna in supls[-3:]:
+                    bbls = farst.suplines[tdlna]
+                    rdl = bbls['rdl']
+                    mdl = bbls['mdl']
+                    upls = bbls['upl']
+                    mirs = bbls['mir']
+                    if rdl:
+                        self.skatetl.uptsta(rdl, i, farst.crtski, farst.teofi, farst.teofn)
+                    if mdl:
+                        self.skatetl.uptsta(mdl, i, farst.crtski, farst.teofi, farst.teofn)
+
+                resls = farst.reslines.keys()
+                for tdlna in resls[-3:]:
+                    ttls = farst.reslines[tdlna]
+                    rdl = ttls['rdl']
+                    mdl = ttls['mdl']
+                    dwls = ttls['dwl']
+                    mirs = ttls['mir']
+                    if rdl:
+                        self.skatetl.uptsta(rdl, i, farst.crtski, farst.teofi, farst.teofn)
+                    if mdl:
+                        self.skatetl.uptsta(mdl, i, farst.crtski, farst.teofi, farst.teofn)
 
 
     # ----------------------------------------------------------------------
@@ -287,7 +336,7 @@ class GrstStrategy(CtaTemplate):
             bar.close = tick.lastPrice
 
     # ----------------------------------------------------------------------
-    def onBar(self, bar):
+    def onBar(self, bar, ski= 0):
         """收到Bar推送（必须由用户继承实现）"""
         # 撤销之前发出的尚未成交的委托（包括限价单和停止单）
         print 'onBar: ', bar.datetime
@@ -301,7 +350,12 @@ class GrstStrategy(CtaTemplate):
         if self.Teda:
             self.Teda.newbar(bar)
 
+        #----------------------------------
+        # 撮合前，若有信号更新需要相应的将原来的信号清除， 涉及4种信号 maetl, masel, suetl, susel
 
+
+
+        self.ctaEngine.crossords(bar, ski)
 
         # 发出状态更新事件
         self.putEvent()
@@ -381,6 +435,8 @@ if __name__ == '__main__':
     # mfaset = {'sal': True, 'rdl': True, 'mdl': True, 'upl': True, 'dwl': True, 'mir': True}
     setting['mfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
     setting['sfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
+
+    setting['tedaet'] = ['ma', 'su']
     setting['makopset'] = {
         'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
         'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}

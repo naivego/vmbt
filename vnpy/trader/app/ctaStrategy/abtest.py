@@ -751,7 +751,7 @@ class TSBacktest(object):
             # self.crossords(self.bar, ski= i)
 
             # 2、 更新各级数据周期下的信号
-            self.strategy.onBar(self.bar)
+            self.strategy.onBar(self.bar, ski= i)
 
             # 3、 在指定的周期下修正信号生成订单
 

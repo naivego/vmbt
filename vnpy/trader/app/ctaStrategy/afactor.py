@@ -1723,7 +1723,7 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, upski = None):
     return saline
 
 class Skatline(object):
-    def __init__(self,sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, sk_dkcn, setting =None):
+    def __init__(self,sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, setting =None):
         if setting is None:
             self.det = 0.2
             self.rdet = 0.05
@@ -1739,15 +1739,14 @@ class Skatline(object):
         self.sk_close = sk_close
         self.sk_atr = sk_atr
         self.sk_ckl = sk_ckl
-        self.sk_dkcn = sk_dkcn
         self.sgni = None  # 最新产生信号的ski
         self.trpkops = {}
 
-    def uptsta(self, tdl, i, upix = None, mosi = 0):
+    def uptsta(self, tdl, i, eti = None, mosi = 0, mosn=1):
         det = self.det
         rdet = self.rdet
         mdet = self.mdet
-        if not upix:
+        if type(eti) is type(None):
             if not tdl.se_upti:
                 tdl.se_ini = tdl.initi
                 ubi = tdl.se_ini
@@ -1897,12 +1896,10 @@ class Skatline(object):
                 ubi = tdl.et_upti + 1
             for idx in range(ubi, i+1):
                 atr = self.sk_atr[idx-1] * self.sk_close[idx-1]
-                si = upix[idx]
-                if self.sk_dkcn.size>idx:
-                    dkcn = self.sk_dkcn[idx]
-                    extp = tdl.extendp(si) + mosi * tdl.ak/dkcn
-                else:
-                    extp = tdl.extendp(si)
+
+                si = eti
+                extp = tdl.extendp(si) + mosi * tdl.ak / mosn
+
                 if tdl.dir > 0:
                     # 更新对tdl和bkl的触及状态
                     if tdl.et_sta % 2 == 1:
@@ -2035,7 +2032,7 @@ class Skatline(object):
                 tdl.et_upti = idx
                 
 
-    def sgnskatl(self, tdl, i, upix = None, mosi = 0):
+    def sgnskatl(self, tdl, i, eti = None, mosi = 0, mosn=1):
         # 反向交易信号 bek0(信号确认后按收盘价进场 -市价单), bek1（信号确认后待回踩突破线进场 -限价单）, bek2（信号确认后待突破进场 -突破单），bek3（信号确认后待回踩tdl进场 -限价单）
         # 顺向交易信号 rek0(信号确认后按收盘价进场 -市价单), rek1（信号确认后待回踩突破线进场 -限价单）, rek2（信号确认后待突破进场 -突破单），rek3（信号确认后待回踩tdl进场 -限价单）
         # 信号命名格式： 信号类_信号点-tdl名称    eg: bek2_65-ma_rdl_bbl_60, bek1_65-ma_sa_45_2
@@ -2055,7 +2052,7 @@ class Skatline(object):
         self.bek2 = None
         self.bek3 = None
         self.bek4 = None
-        if not upix:
+        if type(eti) is type(None):
             si = i
             nextp = tdl.extendp(si+1)
             if tdl.se_sta % 2 == 0:
@@ -2204,12 +2201,8 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
 
         else:
-            si = upix[i]
-            if self.sk_dkcn.size > i:
-                dkcn = self.sk_dkcn[i]
-                nextp = tdl.extendp(si) + (mosi+1) * tdl.ak / dkcn
-            else:
-                nextp = tdl.extendp(si)
+            si = eti
+            nextp = tdl.extendp(si) + (mosi+1) * tdl.ak / mosn
             if tdl.et_sta % 2 == 0:
                 if tdl.et_rti:
                     if not tdl.et_rek2i and tdl.et_sta<=5 :
@@ -4062,10 +4055,7 @@ class Grst_Factor(object):
         self.sk_qsrpt = []
         self.sk_sgn = []
 
-        self.skatsel = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
-
-        # self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.dkcn)
-
+        self.skatsel = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:
             self.crtski = 0
@@ -4219,8 +4209,13 @@ class Grst_Factor(object):
 
         self.bada.crtidx = self.crtidtm
         self.bada.crtnum = self.crtski
+        self.teofi = -1
+        self.teofn = 1
     # ----------------------------------------------------------
     def onbar(self, i):
+        self.teofn = self.teofi + 1
+        self.teofi = -1
+
         sk_ckdtpst = 0.05  # 0.05倍平均涨幅作为涨跌柱子的公差
         detsdc = -5  # strong下降链构成下降反转的链长 =detsdc*avgski
         detsuc = 5  # strong上升链构成上涨反转的链长 =detsuc*avgski
@@ -4228,7 +4223,6 @@ class Grst_Factor(object):
             print i
 
         idtm = self.sk_time[i]
-
         self.crtski = i
         self.crtidtm = idtm
         self.crtidate = self.crtidtm[:10]
@@ -5627,52 +5621,7 @@ class Grst_Factor(object):
         # chkvar = self.crtsad
         # chkobj = self.dwrstsas
         # -----------------------------------------------------------------------
-        if self.subrst:
-            if '2010-07-27' in self.crtidtm:
-                ihigh = self.sk_high[i]
-                print 'iski:', i, 'idtm:', self.crtidtm, ' idate:', self.crtidate, 'ihigh:', ihigh
 
-            if np.isnan(self.sk_sudc[i]):
-                dix = self.upix[-1]
-                self.upix.append(dix)
-                self.mosi += 1
-            else:
-                dix = self.subrst.cal_next(upidtm=self.crtidtm, upski=i)
-                self.upix.append(dix)
-                self.mosi = 0
-
-            if len(self.subrst.sadlines) > 0:
-                subcrtsal = self.subrst.sadlines.values()[-1]
-                self.skatetl.uptsta(subcrtsal, i, self.upix, self.mosi)
-            if len(self.subrst.sadlines) > 1:
-                subpresal = self.subrst.sadlines.values()[-2]
-                self.skatetl.uptsta(subpresal, i, self.upix, self.mosi)
-
-            supls = self.subrst.suplines.keys()
-            for tdlna in supls[-3:]:
-                bbls = self.subrst.suplines[tdlna]
-                rdl = bbls['rdl']
-                mdl = bbls['mdl']
-                upls = bbls['upl']
-                mirs = bbls['mir']
-                if rdl:
-                    self.skatetl.uptsta(rdl, i, self.upix, self.mosi)
-                if mdl:
-                    self.skatetl.uptsta(mdl, i, self.upix, self.mosi)
-
-            resls = self.subrst.reslines.keys()
-            for tdlna in resls[-3:]:
-                ttls = self.subrst.reslines[tdlna]
-                rdl = ttls['rdl']
-                mdl = ttls['mdl']
-                dwls = ttls['dwl']
-                mirs = ttls['mir']
-                if rdl:
-                    self.skatetl.uptsta(rdl, i, self.upix, self.mosi)
-                if mdl:
-                    self.skatetl.uptsta(mdl, i, self.upix, self.mosi)
-            if '2010-08-12' in self.crtidtm or i == 1088:
-                print 'iski:', i, 'idtm:', self.crtidtm, ' idate:', self.crtidate
         # ------------------------------------------------------------------------
         iski = i
         ihigh = self.sk_high[i]

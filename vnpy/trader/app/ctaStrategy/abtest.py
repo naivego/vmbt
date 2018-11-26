@@ -24,7 +24,7 @@ from barLoader import *
 # from matplotlib.ticker import LinearLocator, FormatStrFormatter
 # from matplotlib.pylab import date2num
 
-
+from afactor import *
 from factosdp import *
 from ctaBase import *
 
@@ -261,6 +261,7 @@ class TSBacktest(object):
         self.Return_Panel = None
         self.Return_Metric = {}
 
+        self.intedsgn = Intsgnbs()
         self.OrdMkt_Dic = {}
         self.OrdLmt_Dic = {}
         self.OrdStp_Dic = {}
@@ -850,12 +851,14 @@ class TSBacktest(object):
             self.update_posinfo(bar)
     # ------------------------------------------------------------
 
-    def sgntotrd(self, ski, intedsgn):
+    def sgntotrd(self, fid, seet, ski):
         # --撮合市价单
         # --撮合限价单
         # --撮合止损单
         # --统计持仓、盈亏、资产、保证金、杠杆水平
         # --根据因子信号设置委托单
+
+
         sk_open = self.sk_open
         sk_high = self.sk_high
         sk_low = self.sk_low
@@ -945,9 +948,7 @@ class TSBacktest(object):
 
 
 
-        self.OrdMkt_Dic[:] = np.nan
-        self.OrdLmt_Dic[:] = np.nan
-        self.OrdStp_Dic[:] = np.nan
+
         self.SdCld_dic = {}
         self.SdOpen_dic = {}
 

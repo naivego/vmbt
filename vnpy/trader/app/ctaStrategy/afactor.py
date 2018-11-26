@@ -2035,7 +2035,7 @@ class Skatline(object):
     def sgnskatl(self, tdl, i, eti = None, mosi = 0, mosn=1):
         # 反向交易信号 bek0(信号确认后按收盘价进场 -市价单), bek1（信号确认后待回踩突破线进场 -限价单）, bek2（信号确认后待突破进场 -突破单），bek3（信号确认后待回踩tdl进场 -限价单）
         # 顺向交易信号 rek0(信号确认后按收盘价进场 -市价单), rek1（信号确认后待回踩突破线进场 -限价单）, rek2（信号确认后待突破进场 -突破单），rek3（信号确认后待回踩tdl进场 -限价单）
-        # 信号命名格式： 信号类_信号点-tdl名称    eg: bek2_65-ma_rdl_bbl_60, bek1_65-ma_sa_45_2
+        # 信号命名格式： 信号类_se/et_信号点-tdl名称    eg: bek2_se_65-ma_rdl_bbl_60, bek1_et_65-ma_sa_45_2
         atr = self.sk_atr[i] * self.sk_close[i]
         det = self.det
         rdet = self.rdet
@@ -2064,7 +2064,7 @@ class Skatline(object):
 
                 #---------------------------------------------
                 if self.rek0:
-                    sgnna = 'rek0' + '_' +str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek0' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek0'
                     bsdir = tdl.dir
                     sdop =  self.rek0
@@ -2078,7 +2078,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.rek1:
-                    sgnna = 'rek1' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek1' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek0'
                     bsdir = tdl.dir
                     sdop = self.rek1
@@ -2092,7 +2092,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.rek2:
-                    sgnna = 'rek2' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek2' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek2'
                     bsdir = tdl.dir
                     sdop = self.rek2
@@ -2106,7 +2106,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.rek3:
-                    sgnna = 'rek3' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek3' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek3'
                     bsdir = tdl.dir
                     sdop = self.rek3
@@ -2131,7 +2131,7 @@ class Skatline(object):
                     self.bek4 = self.sk_ckl[tdl.se_bkl_beks[-1]][4] - mdet * atr * tdl.dir
                 # ---------------------------------------------
                 if self.bek0:
-                    sgnna = 'bek0' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek0' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek0'
                     bsdir = -tdl.dir
                     sdop = self.bek0
@@ -2145,7 +2145,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek1:
-                    sgnna = 'bek1' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek1' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek0'
                     bsdir = -tdl.dir
                     sdop = self.bek1
@@ -2159,7 +2159,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek2:
-                    sgnna = 'bek2' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek2' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek2'
                     bsdir = -tdl.dir
                     sdop = self.bek2
@@ -2173,7 +2173,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek3:
-                    sgnna = 'bek3' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek3' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek3'
                     bsdir = -tdl.dir
                     sdop = self.bek3
@@ -2187,7 +2187,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek4:
-                    sgnna = 'bek4' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek4' + '_se_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek4'
                     bsdir = -tdl.dir
                     sdop = self.bek4
@@ -2212,7 +2212,7 @@ class Skatline(object):
 
                 # ---------------------------------------------
                 if self.rek0:
-                    sgnna = 'rek0' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek0' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek0'
                     bsdir = tdl.dir
                     sdop = self.rek0
@@ -2226,7 +2226,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.rek1:
-                    sgnna = 'rek1' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek1' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek0'
                     bsdir = tdl.dir
                     sdop = self.rek1
@@ -2240,7 +2240,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.rek2:
-                    sgnna = 'rek2' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'rek2' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'rek2'
                     bsdir = tdl.dir
                     sdop = self.rek2
@@ -2255,7 +2255,7 @@ class Skatline(object):
                 # ---------------------------------------------
                 if self.rek3:
                     try:
-                        sgnna = 'rek3' + '_' + str(i) + '-' + tdl.fsocna
+                        sgnna = 'rek3' + '_et_'+ str(i) + '-' + tdl.fsocna
                     except:
                         pass
                     sgntyp = 'rek3'
@@ -2282,7 +2282,7 @@ class Skatline(object):
                     self.bek4 = self.sk_ckl[tdl.et_bkl_beks[-1]][4] - mdet * atr * tdl.dir
                 # ---------------------------------------------
                 if self.bek0:
-                    sgnna = 'bek0' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek0' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek0'
                     bsdir = -tdl.dir
                     sdop = self.bek0
@@ -2296,7 +2296,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek1:
-                    sgnna = 'bek1' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek1' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek0'
                     bsdir = -tdl.dir
                     sdop = self.bek1
@@ -2310,7 +2310,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek2:
-                    sgnna = 'bek2' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek2' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek2'
                     bsdir = -tdl.dir
                     sdop = self.bek2
@@ -2324,7 +2324,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek3:
-                    sgnna = 'bek3' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek3' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek3'
                     bsdir = -tdl.dir
                     sdop = self.bek3
@@ -2338,7 +2338,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
                 # ---------------------------------------------
                 if self.bek4:
-                    sgnna = 'bek4' + '_' + str(i) + '-' + tdl.fsocna
+                    sgnna = 'bek4' + '_et_'+ str(i) + '-' + tdl.fsocna
                     sgntyp = 'bek4'
                     bsdir = -tdl.dir
                     sdop = self.bek4
@@ -2435,14 +2435,16 @@ class Sgnman(object):  # 信号强度管理
 
 
 class Intsgnbs(object):
-    def __init__(self, tdkopset, skatsel, skatetl, mafs, sufs = None, upix = None, mosi = 0):
-        self.tdkopset = tdkopset
-        self.skatsel = skatsel
-        self.skatetl = skatetl
-        self.mafs = mafs
-        self.sufs = sufs
-        self.upix = upix
-        self.mosi = mosi
+    def __init__(self): #tdkopset,skatsel, skatetl, mafs, sufs = None, upix = None, mosi = 0
+        self.tdkopset = {}
+        self.fas = {}
+        self.skatl= {}
+        # self.skatsel = skatsel
+        # self.skatetl = skatetl
+        # self.mafs = mafs
+        # self.sufs = sufs
+        # self.upix = upix
+        # self.mosi = mosi
 
         self.cmbkops = {}
         self.sgnsocs = {}  # 源信号字典
@@ -2452,18 +2454,21 @@ class Intsgnbs(object):
         self.isgnctp = {}
 
     # ------------------------------------------
-    def sesgnbs(self, i):
+    def sesgnbs(self, fid, i):
         kopset = self.tdkopset['sekop']
-        rstdir = self.mafs['rstdir']
-        bbls_dic = self.mafs['bbls']
-        ttls_dic = self.mafs['ttls']
-        sals_dic = self.mafs['sals']
-        upsas = self.mafs['upsas']
-        dwsas = self.mafs['dwsas']
+        xfas = self.fas[fid]
+        skatsel = self.skatl[fid]
 
-        if self.skatsel.sgni != i:
-            self.skatsel.trpkops = {}
-            self.skatsel.sgni = i
+        rstdir = xfas['rstdir']
+        bbls_dic = xfas['bbls']
+        ttls_dic = xfas['ttls']
+        sals_dic = xfas['sals']
+        upsas = xfas['upsas']
+        dwsas = xfas['dwsas']
+
+        if skatsel.sgni != i:
+            skatsel.trpkops = {}
+            skatsel.sgni = i
         crtsal = None
         presal = None
 
@@ -2496,30 +2501,30 @@ class Intsgnbs(object):
             pret_mdl = ttls_dic.values()[-2]['mdl']
 
         if 'sal' in kopset and  kopset['sal'] >=1 and crtsal:
-            self.skatsel.sgnskatl(crtsal, i)
+            skatsel.sgnskatl(crtsal, i)
         if 'sal' in kopset and  kopset['sal'] >=2 and presal:
-            self.skatsel.sgnskatl(presal, i)
+            skatsel.sgnskatl(presal, i)
         # ----------------------------------
         if 'rdl' in kopset and  kopset['rdl'] >=1 and crtb_rdl:
-            self.skatsel.sgnskatl(crtb_rdl, i)
+            skatsel.sgnskatl(crtb_rdl, i)
         if 'rdl' in kopset and  kopset['rdl'] >=1 and crtt_rdl:
-            self.skatsel.sgnskatl(crtt_rdl, i)
+            skatsel.sgnskatl(crtt_rdl, i)
         #----------------------------------
         if 'rdl' in kopset and  kopset['rdl'] >=2 and preb_rdl:
-            self.skatsel.sgnskatl(preb_rdl, i)
+            skatsel.sgnskatl(preb_rdl, i)
         if 'rdl' in kopset and  kopset['rdl'] >=2 and pret_rdl:
-            self.skatsel.sgnskatl(pret_rdl, i)
+            skatsel.sgnskatl(pret_rdl, i)
 
         # ----------------------------------
         if 'mdl' in kopset and  kopset['mdl'] >=1 and crtb_mdl:
-            self.skatsel.sgnskatl(crtb_mdl, i)
+            skatsel.sgnskatl(crtb_mdl, i)
         if 'mdl' in kopset and  kopset['mdl'] >=1 and crtt_mdl:
-            self.skatsel.sgnskatl(crtt_mdl, i)
+            skatsel.sgnskatl(crtt_mdl, i)
         # ----------------------------------
         if 'mdl' in kopset and  kopset['mdl'] >=2 and preb_mdl:
-            self.skatsel.sgnskatl(preb_mdl, i)
+            skatsel.sgnskatl(preb_mdl, i)
         if 'mdl' in kopset and  kopset['mdl'] >=2 and pret_mdl:
-            self.skatsel.sgnskatl(pret_mdl, i)
+            skatsel.sgnskatl(pret_mdl, i)
 
         if len(upsas) > 0:
             crtupr = upsas.values()[-1]
@@ -2531,20 +2536,21 @@ class Intsgnbs(object):
             crtdwr = None
 
     # ------------------------------------------
-    def etsgnbs(self, i):
-        if self.sufs is None:
-            return
+    def etsgnbs(self, fid, i, eti, mosi = 0, mosn=1):
         kopset = self.tdkopset['etkop']
-        rstdir = self.sufs['rstdir']
-        bbls_dic = self.sufs['bbls']
-        ttls_dic = self.sufs['ttls']
-        sals_dic = self.sufs['sals']
-        upsas = self.sufs['upsas']
-        dwsas = self.sufs['dwsas']
+        xfas = self.fas[fid]
+        skatetl = self.skatl['te']
 
-        if self.skatetl.sgni != i:
-            self.skatetl.trpkops = {}
-            self.skatetl.sgni = i
+        rstdir = xfas['rstdir']
+        bbls_dic = xfas['bbls']
+        ttls_dic = xfas['ttls']
+        sals_dic = xfas['sals']
+        upsas = xfas['upsas']
+        dwsas = xfas['dwsas']
+
+        if skatetl.sgni != i:
+            skatetl.trpkops = {}
+            skatetl.sgni = i
         crtsal = None
         presal = None
 
@@ -2577,29 +2583,29 @@ class Intsgnbs(object):
             pret_mdl = ttls_dic.values()[-2]['mdl']
 
         if 'sal' in kopset and  kopset['sal'] >=1 and crtsal:
-            self.skatetl.sgnskatl(crtsal, i, self.upix, self.mosi)
+            skatetl.sgnskatl(crtsal, i, eti, mosi, mosn)
         if 'sal' in kopset and  kopset['sal'] >=2 and presal:
-            self.skatetl.sgnskatl(presal, i, self.upix, self.mosi)
+            skatetl.sgnskatl(presal, i, eti, mosi, mosn)
         # ----------------------------------
         if 'rdl' in kopset and  kopset['rdl'] >=1 and crtb_rdl:
-            self.skatetl.sgnskatl(crtb_rdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(crtb_rdl, i, eti, mosi, mosn)
         if 'rdl' in kopset and  kopset['rdl'] >=1 and crtt_rdl:
-            self.skatetl.sgnskatl(crtt_rdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(crtt_rdl, i, eti, mosi, mosn)
         # ----------------------------------
         if 'rdl' in kopset and  kopset['rdl'] >=2 and preb_rdl:
-            self.skatetl.sgnskatl(preb_rdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(preb_rdl, i, eti, mosi, mosn)
         if 'rdl' in kopset and  kopset['rdl'] >=2 and pret_rdl:
-            self.skatetl.sgnskatl(pret_rdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(pret_rdl, i, eti, mosi, mosn)
         # ----------------------------------
         if 'mdl' in kopset and  kopset['mdl'] >=1 and crtb_mdl:
-            self.skatetl.sgnskatl(crtb_mdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(crtb_mdl, i, eti, mosi, mosn)
         if 'mdl' in kopset and  kopset['mdl'] >=1 and crtt_mdl:
-            self.skatetl.sgnskatl(crtt_mdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(crtt_mdl, i, eti, mosi, mosn)
         # ----------------------------------
         if 'mdl' in kopset and  kopset['mdl'] >=2 and preb_mdl:
-            self.skatetl.sgnskatl(preb_mdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(preb_mdl, i, eti, mosi, mosn)
         if 'mdl' in kopset and  kopset['mdl'] >=2 and pret_mdl:
-            self.skatetl.sgnskatl(pret_mdl, i, self.upix, self.mosi)
+            skatetl.sgnskatl(pret_mdl, i, eti, mosi, mosn)
 
         if len(upsas) > 0:
             crtupr = upsas.values()[-1]
@@ -3253,7 +3259,7 @@ class Rstsa(object):
 
 
 class Grst_Factor(object):
-    def __init__(self, var, period, skdata, sdt=True, fid= 'ma'):
+    def __init__(self, ctaEngine, var, period, skdata, sdt=True, fid= 'ma'):
         if period == 'd':
             xdate = [' '.join([dtm, '16:00:00']) for dtm in skdata.index]
             skdata.index = xdate
@@ -3338,7 +3344,7 @@ class Grst_Factor(object):
 
         self.Var = var
         self.TS_Config = None
-        self.TSBT = None
+        self.ctaEngine = ctaEngine
         self.fid = fid
     # ----------------------
     def addsgn(self, sgndat, sgnids, Tn='d', fillna = True):
@@ -3945,7 +3951,7 @@ class Grst_Factor(object):
             self.sk_sudc = np.array([])
             # ----------------------------------------------
         self.faset = setting['mfaset']
-        self.tdkopset = setting['tdkopset']
+        # self.tdkopset = setting['tdkopset']
 
         self.sk_ckl = []  # 与ck同步，由元组（ckli,cksdh,cksdl）构成的队列，记录当前的sk链所包括的sk数目和实体部分的区间
         self.ckls = []  # 与ckl线段列表，由列表[cklbi,cklei,cklbp,cklep,cklsd]构成,记录线段的起点位置、终点位置、起点价格、终点价格、长度
@@ -4055,7 +4061,9 @@ class Grst_Factor(object):
         self.sk_qsrpt = []
         self.sk_sgn = []
 
-        self.skatsel = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+
+        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+        self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:
             self.crtski = 0
@@ -5631,18 +5639,10 @@ class Grst_Factor(object):
         chkobj = self.dwrstsas
         # -----------------------------------------------------------------------
 
-        if self.TSBT:
-            mafs = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines, 'upsas': self.uprstsas,
-                    'dwsas': self.dwrstsas}
-            if self.subrst is None:
-                sufs = None
-            else:
-                sufs = {'rstdir': self.subrst.rstdir, 'sals': self.subrst.sadlines, 'bbls': self.subrst.suplines, 'ttls': self.subrst.reslines,
-                        'upsas': self.subrst.uprstsas, 'dwsas': self.subrst.dwrstsas}
-            self.intedsgn = Intsgnbs(self.tdkopset, self.skatsel, self.skatetl, mafs, sufs, self.upix, self.mosi)
-            self.intedsgn.sesgnbs(i)
-            self.intedsgn.etsgnbs(i)
-            self.TSBT.sgntotrd(i, self.intedsgn)
+        self.ctaEngine.intedsgn.fas[self.fid] = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines,
+                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas}
+        self.ctaEngine.intedsgn.sesgnbs(self.fid, i)
+        self.ctaEngine.sgntotrd(self.fid, 'se', i)
 
     # ----------------------------------------------------------
     def cal_next(self, upidtm = None, upski = None):
@@ -7106,17 +7106,22 @@ class Grst_Factor(object):
             chkobj = self.dwrstsas
             # -----------------------------------------------------------------------
 
-            if self.TSBT:
-                mafs = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines, 'upsas': self.uprstsas, 'dwsas': self.dwrstsas}
-                if self.subrst is None:
-                    sufs = None
-                else:
-                    sufs = {'rstdir': self.subrst.rstdir, 'sals': self.subrst.sadlines, 'bbls': self.subrst.suplines, 'ttls': self.subrst.reslines,
-                            'upsas': self.subrst.uprstsas, 'dwsas': self.subrst.dwrstsas}
-                self.intedsgn = Intsgnbs(self.tdkopset, self.skatsel, self.skatetl, mafs, sufs,  self.upix, self.mosi)
-                self.intedsgn.sesgnbs(i)
-                self.intedsgn.etsgnbs(i)
-                self.TSBT.sgntotrd(i, self.intedsgn)
+            self.ctaEngine.intedsgn.fas[self.fid] = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines, 'upsas': self.uprstsas, 'dwsas': self.dwrstsas}
+            self.ctaEngine.intedsgn.sesgnbs(self.fid, i)
+            self.ctaEngine.sgntotrd(self.fid, i)
+
+
+            # if self.TSBT:
+            #     mafs = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines, 'upsas': self.uprstsas, 'dwsas': self.dwrstsas}
+            #     if self.subrst is None:
+            #         sufs = None
+            #     else:
+            #         sufs = {'rstdir': self.subrst.rstdir, 'sals': self.subrst.sadlines, 'bbls': self.subrst.suplines, 'ttls': self.subrst.reslines,
+            #                 'upsas': self.subrst.uprstsas, 'dwsas': self.subrst.dwrstsas}
+            #     self.intedsgn = Intsgnbs(self.tdkopset, self.skatsel, self.skatetl, mafs, sufs,  self.upix, self.mosi)
+            #     self.intedsgn.sesgnbs(i)
+            #     self.intedsgn.etsgnbs(i)
+            #     self.TSBT.sgntotrd(i, self.intedsgn)
 
 
 

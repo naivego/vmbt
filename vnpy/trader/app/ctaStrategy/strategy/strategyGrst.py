@@ -71,6 +71,7 @@ class GrstStrategy(CtaTemplate):
         self.setting = setting
         self.Ostpn_Dic = setting['ostpn_Dic']
         self.Sgnwt_Dic = setting['sgnwt_Dic']
+        self.ctaEngine.intedsgn.tdkopset = setting['tdkopset']
         # ----------------------------------------------------------------------数据列表设置
 
         DB_Rt_Dir = ctaEngine.DB_Rt_Dir
@@ -116,7 +117,7 @@ class GrstStrategy(CtaTemplate):
             Period = self.setting['msdpset']['ma']
             self.vada1 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.Marst = Grst_Factor(trdvar, Period, self.vada1, fid='ma')
+            self.Marst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada1, fid='ma')
             self.Marst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada1 = None
@@ -126,7 +127,7 @@ class GrstStrategy(CtaTemplate):
             Period = self.setting['msdpset']['su']
             self.vada2 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.Surst = Grst_Factor(trdvar, Period, self.vada2, fid='su')
+            self.Surst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada2, fid='su')
             self.Surst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada2 = None
@@ -160,7 +161,7 @@ class GrstStrategy(CtaTemplate):
         TR = Dat_bar.loc[:, ['TR1', 'TR2', 'TR3']].max(axis=1)
         ATR = TR.rolling(14).mean() / skdata['close'].shift(1)
         self.sk_atr = ATR
-        self.dkcn = []
+        self.sk_ckl = []
 
 
         skbgi = 20
@@ -188,7 +189,8 @@ class GrstStrategy(CtaTemplate):
         self.Teda.crtnum = self.crtski
 
         if len(self.tedaet):
-            self.skatetl = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+            self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
 
     # ------------------------------------------------------------------------------------------
@@ -281,7 +283,8 @@ class GrstStrategy(CtaTemplate):
                     if mdl:
                         self.skatetl.uptsta(mdl, i, farst.crtski, farst.teofi, farst.teofn)
 
-
+                self.ctaEngine.intedsgn.etsgnbs(fa, i, farst.crtski, farst.teofi, farst.teofn)
+                self.ctaEngine.sgntotrd(fa, 'et', i)
     # ----------------------------------------------------------------------
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
@@ -437,14 +440,17 @@ if __name__ == '__main__':
     setting['sfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
 
     setting['tedaet'] = ['ma', 'su']
-    setting['makopset'] = {
-        'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
-        'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
+    setting['tdkopset'] = {
+        'ma': {
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
+            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
+        },
+        'su': {
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
+            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
+        }
     }
-    setting['sukopset'] = {
-        'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
-        'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
-    }
+
 
     DB_Rt_Dir = TS_Config['DB_Rt_Dir']
     Host = TS_Config['Host']

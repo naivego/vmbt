@@ -284,7 +284,7 @@ class GrstStrategy(CtaTemplate):
                         self.skatetl.uptsta(mdl, i, farst.crtski, farst.teofi, farst.teofn)
 
                 self.ctaEngine.intedsgn.etsgnbs(fa, i, farst.crtski, farst.teofi, farst.teofn)
-                self.ctaEngine.sgntotrd(fa, 'et', i)
+                self.ctaEngine.sgntotrd(fa, 'et', i, farst.crtski, farst.teofi, farst.teofn)
     # ----------------------------------------------------------------------
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""

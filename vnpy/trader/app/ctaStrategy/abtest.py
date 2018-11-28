@@ -588,7 +588,7 @@ class TSBacktest(object):
                 self.ShortEnt_Df['mktvalue'] += pos.MktValue
 
             #------------------------------------------------------------统计各子策略中各品种持仓信息
-            sgnid = Flag.split('_')[0]
+            sgnid = '_'.join(Flag.split('_')[0:2])
             if sgnid in self.SgnVarPos_Dic:
                 self.SgnVarPos_Dic[sgnid].addpos(pos)
             else:
@@ -851,120 +851,50 @@ class TSBacktest(object):
             self.update_posinfo(bar)
     # ------------------------------------------------------------
 
-    def sgntotrd(self, fid, seet, ski):
-        # --撮合市价单
-        # --撮合限价单
-        # --撮合止损单
-        # --统计持仓、盈亏、资产、保证金、杠杆水平
+    def sgntotrd(self, fid, seet, ski, eti=0, mosi = 0, mosn=1):  # fid = ma|su  seet = se|et
+
         # --根据因子信号设置委托单
+        if seet == 'et':
+            xskl = self.intedsgn.skatl['te']
+        else:
+            xskl = self.intedsgn.skatl[fid]
 
-
-        sk_open = self.sk_open
-        sk_high = self.sk_high
-        sk_low = self.sk_low
-        sk_close = self.sk_close
-        sk_volume = self.sk_volume
-        sk_time = self.sk_time
-        sk_atr = self.sk_atr
+        sk_open = xskl.sk_open
+        sk_high = xskl.sk_high
+        sk_low = xskl.sk_low
+        sk_close = xskl.sk_close
+        sk_volume = xskl.sk_volume
+        sk_time = xskl.sk_time
+        sk_atr = xskl.sk_atr
         atr = sk_atr[ski] * sk_close[ski]
-        sk_ckl = self.sk_ckl
-        #-----------------------------------其他因子，包括外部周期添加的因子---------------
-        if 'disrst' in self.quotes.columns:
-            sk_disrst = self.quotes['disrst'].values
-        if 'disrst_d' in self.quotes.columns:
-            sk_disrst_d = self.quotes['disrst_d'].values
+        sk_ckl = xskl.sk_ckl
+        kopsdic = xskl.trpkops
+
+        xfas = self.intedsgn.fas[fid]
 
         #-----------------------------------------------------------------
-        stridtm = pd.Timestamp((sk_time[ski])).strftime('%Y-%m-%d %H:%M:%S')
-        print 'backtest: trade on ', stridtm
-        # print stridtm
-        idtime = stridtm[:]
-        iski  = ski # str(sk_time[ski])[:10]
+        idtime = sk_time[ski]
+        print 'backtest: trade on ', idtime
+        iski  = ski
         ihigh = sk_high[ski]
-        if '2014-11-17' in stridtm:
-            print ' iski:', iski, 'crtdate:', idtime[:10], 'crttime:', stridtm
-
-
-
-        '''
-        rstdir = intedsgn.rstdir
-        crtbbl = None
-        prebbl = None
-        crtttl = None
-        prettl = None
-        crtsal = None
-        presal = None
-        if len(intedsgn.sals_dic)>0:
-            crtsal = intedsgn.sals_dic.values()[-1]
-        if len(intedsgn.sals_dic)>1:
-            presal = intedsgn.sals_dic.values()[-2]
-
-        if len(intedsgn.bbls_dic)>0:
-            crtbbl = intedsgn.bbls_dic.values()[-1]['rdl']
-        if len(intedsgn.bbls_dic)>1:
-            prebbl = intedsgn.bbls_dic.values()[-2]['rdl']
-
-        if len(intedsgn.ttls_dic)>0:
-            crtttl = intedsgn.ttls_dic.values()[-1]['rdl']
-        if len(intedsgn.ttls_dic)>1:
-            prettl = intedsgn.ttls_dic.values()[-2]['rdl']
-
-        if crtsal:
-            crtsal.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-            intedsgn.addsgn(crtsal.socna, crtsal.trpkops, crtsal.trpcsts, crtsal.trpctps, 0)
-        if presal:
-            presal.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-            intedsgn.addsgn(presal.socna, presal.trpkops, presal.trpcsts, presal.trpctps, 1)
-        if crtbbl:
-            crtbbl.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-            intedsgn.addsgn(crtbbl.socna, crtbbl.trpkops, crtbbl.trpcsts, crtbbl.trpctps, 0)
-        if crtttl:
-            crtttl.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-            intedsgn.addsgn(crtttl.socna, crtttl.trpkops, crtttl.trpcsts, crtttl.trpctps, 0)        
-        
-        if prebbl:
-            prebbl.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-            intedsgn.addsgn(prebbl.socna, prebbl.trpkops, prebbl.trpcsts, prebbl.trpctps, 1)
-        if prettl:
-            prettl.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-            intedsgn.addsgn(prettl.socna, prettl.trpkops, prettl.trpcsts, prettl.trpctps, 1)
-
-        if len(intedsgn.uprstsas)>0:
-            crtupr = intedsgn.uprstsas.values()[-1]
-        else:
-            crtupr = None
-        if len(intedsgn.dwrstsas)>0:
-            crtdwr = intedsgn.dwrstsas.values()[-1]
-        else:
-            crtdwr = None
-
-
-        subrst = intedsgn.subrst
-        intedsgn.intsgn()
-        sgnkops= intedsgn.isgnkop
-        '''
-
-
-
-
+        if '2014-11-17' in idtime:
+            print ' iski:', iski, 'crtdate:', idtime[:10], 'crttime:', idtime
 
 
         self.SdCld_dic = {}
         self.SdOpen_dic = {}
 
-        sekops = intedsgn.skatsel.trpkops
-        etkops = intedsgn.skatetl.trpkops
-        rstdir = intedsgn.mafs['rstdir']
-        if len(intedsgn.mafs['upsas']) > 0:
-            crtupr = intedsgn.mafs['upsas'].values()[-1]
+        rstdir = xfas['rstdir']
+        if len(xfas['upsas']) > 0:
+            crtupr = xfas['upsas'].values()[-1]
         else:
             crtupr = None
-        if len(intedsgn.mafs['dwsas']) > 0:
-            crtdwr = intedsgn.mafs['dwsas'].values()[-1]
+        if len(xfas['dwsas']) > 0:
+            crtdwr = xfas['dwsas'].values()[-1]
         else:
             crtdwr = None
 
-        intedsgn.cmbsgn(self.SocPos_Dic)
+        self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)
 
         # --------------------------------------------------------平仓逻辑 止损 止盈
         for socna, sgnpos in self.SocPos_Dic.iteritems():
@@ -1056,7 +986,7 @@ class TSBacktest(object):
                         self.sendord(var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
 
         # --------------------------------------------------------开仓逻辑
-        for socna, sgnkops in intedsgn.cmbkops.iteritems():
+        for socna, sgnkops in self.intedsgn.cmbkops.iteritems():
             for sgnid, koplist in sgnkops.iteritems():
                 for kop in koplist:
                     var = self.Symbol

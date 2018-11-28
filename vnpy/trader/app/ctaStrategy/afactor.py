@@ -2052,7 +2052,7 @@ class Skatline(object):
         self.bek2 = None
         self.bek3 = None
         self.bek4 = None
-        if type(eti) is type(None):
+        if type(eti) == type(None):
             si = i
             nextp = tdl.extendp(si+1)
             if tdl.se_sta % 2 == 0:
@@ -2618,67 +2618,35 @@ class Intsgnbs(object):
 
 
     # ------------------------------------------根据新开仓信号和持仓整合新进场和出场信号
-    def cmbsgn(self, socpos_dic):
+    def cmbsgn(self, fid, seet, socpos_dic):
         # 1、根据新开仓信号和信号持仓字典决定新开仓是否生效
         # 2、调整同源持仓的止损和目标
         # 3、根据信号源之间的优先关系调整异源信号开仓和持仓
         self.cmbkops = {}
-
-        kopsdic = self.skatsel.trpkops
-        sgni = self.skatsel.sgni
+        xskl = self.skatl[fid]
+        kopsdic = xskl.trpkops
+        sgni = xskl.sgni
         for sgn, kop in kopsdic.iteritems():
             ckpos = None
-            sgnid = sgn.split('_')[0]
+            sgnid = '_'.join(sgn.split('_')[0:2])
             socna = sgn.split('-')[1]
+
             if kop.sdsp:
                 if (kop.bsdir > 0 and kop.sdsp > kop.sdop) or (kop.bsdir < 0 and kop.sdsp < kop.sdop):
                     continue
 
-            if sgnid in ['bek1', 'bek2']:
+            # 同一个data中，skl的bek1|bek2同时只允许开一个
+            if sgnid in ['bek1_'+seet, 'bek2_'+seet]:
                 if socna not in socpos_dic:
                     ckpos = kop
-                elif 'bek1' in socpos_dic[socna] or 'bek2' in socpos_dic[socna]:
+                elif 'bek1_'+seet in socpos_dic[socna] or 'bek2_'+seet in socpos_dic[socna]:
                     continue
                 else:
                     ckpos = kop
             else:
                 try:
                     pos = socpos_dic[socna][sgnid][-1]
-                    if abs(kop.sdop - pos.EntPrice) >= self.skatsel.sk_atr[sgni] * self.skatsel.sk_close[sgni] * 2:
-                        ckpos = kop
-                except:
-                    ckpos = kop
-            if ckpos:
-                if socna in self.cmbkops:
-                    if sgnid in self.cmbkops[socna]:
-                        self.cmbkops[socna][sgnid].append(kop)
-                    else:
-                        self.cmbkops[socna][sgnid] = [kop]
-                else:
-                    self.cmbkops[socna] = {sgnid: [kop]}
-
-        #---------------
-        kopsdic = self.skatetl.trpkops
-        sgni = self.skatetl.sgni
-        for sgn, kop in kopsdic.iteritems():
-            ckpos = None
-            sgnid = sgn.split('_')[0]
-            socna = sgn.split('-')[1]
-            if kop.sdsp:
-                if (kop.bsdir > 0 and kop.sdsp > kop.sdop) or (kop.bsdir < 0 and kop.sdsp < kop.sdop):
-                    continue
-
-            if sgnid in ['bek1', 'bek2']:
-                if socna not in socpos_dic:
-                    ckpos = kop
-                elif 'bek1' in socpos_dic[socna] or 'bek2' in socpos_dic[socna]:
-                    continue
-                else:
-                    ckpos = kop
-            else:
-                try:
-                    pos = socpos_dic[socna][sgnid][-1]
-                    if abs(kop.sdop - pos.EntPrice) >= self.skatetl.sk_atr[sgni] * self.skatetl.sk_close[sgni] * 2:
+                    if abs(kop.sdop - pos.EntPrice) >= xskl.sk_atr[sgni] * xskl.sk_close[sgni] * 2:
                         ckpos = kop
                 except:
                     ckpos = kop
@@ -2692,6 +2660,7 @@ class Intsgnbs(object):
                     self.cmbkops[socna] = {sgnid: [kop]}
 
         #-----------------
+        # bek1|bek2存在，调整仓位中的rek3
         for socna, sgnpos in socpos_dic.iteritems():
             rek1op = None
             rek2op = None
@@ -2702,16 +2671,16 @@ class Intsgnbs(object):
             bek3op = None
             bek4op = None
             try:
-                bek1op = self.cmbkops[socna]['bek1'][-1].sdop
+                bek1op = self.cmbkops[socna]['bek1_'+seet][-1].sdop
             except:
                 pass
             try:
-                bek2op = self.cmbkops[socna]['bek2'][-1].sdop
+                bek2op = self.cmbkops[socna]['bek2_'+seet][-1].sdop
             except:
                 pass
 
             try:
-                rek3s= sgnpos['rek3']
+                rek3s = sgnpos['rek3_'+seet]
                 for pos in rek3s:
                     if not pos.EntSp or (bek2op and ( pos.EntSp - bek2op ) * pos.EntSize < 0 ):
                         pos.EntSp = bek2op

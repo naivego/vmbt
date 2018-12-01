@@ -3905,7 +3905,9 @@ class Grst_Factor(object):
         # self.mosi = 0 # 记录Mrst的当前sk相对subrst最新sk偏移的数目
 
         skbgi = 20  # 起始点
-        self.teix = [0] * (skbgi+1)  # 当前sk在teda周期下对应sk的索引
+        self.teix = [0] * (skbgi + 1)  # 当前sk在teda周期下对应sk的索引
+        self.tekn = [1] * (skbgi + 1)  # 记录当前sk包括多少个teda sk
+
         self.sk_open = self.quotes['open'].values
         self.sk_high = self.quotes['high'].values
         self.sk_low = self.quotes['low'].values
@@ -3913,14 +3915,7 @@ class Grst_Factor(object):
         self.sk_volume = self.quotes['volume'].values
         self.sk_time = self.quotes['time'].values
         self.sk_atr = self.quotes['ATR'].values
-        if 'dkcn' in self.quotes.columns:
-            self.dkcn = self.quotes['dkcn'].values
-        else:
-            self.dkcn = np.array([])
-        if 'sudc' in self.quotes.columns:
-            self.sk_sudc = self.quotes['sudc'].values
-        else:
-            self.sk_sudc = np.array([])
+
             # ----------------------------------------------
         self.faset = setting['mfaset']
         # self.tdkopset = setting['tdkopset']
@@ -4194,6 +4189,7 @@ class Grst_Factor(object):
     # ----------------------------------------------------------
     def onbar(self, i):
         self.teofn = self.teofi + 1
+        self.tekn.append(self.teofn)
         self.teofi = -1
         if self.teda:
             self.teix.append(self.teda.crtnum)
@@ -5621,7 +5617,7 @@ class Grst_Factor(object):
         aflg = flg
         if not aflg:
             aflg = '_' + self.fid
-
+        self.quotes['tekn' + aflg] = self.tekn
         self.quotes['qrst' + aflg] = self.sk_qsrstp
         self.quotes['qsh' + aflg] = self.sk_qsh
         self.quotes['qsl' + aflg] = self.sk_qsl
@@ -5675,18 +5671,3 @@ class Grst_Factor(object):
         # self.quotes['sk_zsrpt'+aflg] = self.sk_zsrpt
         # self.quotes['sk_qsrpt'+aflg] = self.sk_qsrpt
 
-        afc = []
-        for col in self.quotes.columns:
-            if '_d' in col and 'ak_' + col in self.quotes.columns:
-                afc.append(col)
-
-        for col in afc:
-            self.quotes.loc[:,'ak_'+col].fillna(method='pad', inplace=True)
-        if len(afc)>0:
-            fidtm = self.quotes.index[0]
-            for idtm in self.quotes.index[1:]:
-                for col in afc:
-                    if np.isnan(self.quotes.loc[idtm, col]):
-                        self.quotes.loc[idtm, col] = self.quotes.loc[fidtm, col] + self.quotes.loc[fidtm, 'ak_'+col]*1.0/self.quotes.loc[fidtm, 'dkcn']
-                fidtm = idtm
-        self.quotes.fillna(method='pad', inplace=True)

@@ -728,8 +728,7 @@ class TSBacktest(object):
         self.LongEnt_Df = pd.DataFrame([[0, 0, 0]], index=self.Variety_List, columns=['entnum', 'size', 'mktvalue'])
         self.ShortEnt_Df = pd.DataFrame([[0, 0, 0]], index=self.Variety_List, columns=['entnum', 'size', 'mktvalue'])
 
-
-
+    # -------------------------------------------
     def runBacktesting(self):
         self.initbacktest()
         if type(self.Mida) == type(None):
@@ -765,6 +764,9 @@ class TSBacktest(object):
             if idtm[11:13] =='15' and (nxtdtmhh =='09' or nxtdtmhh =='21'):
                 self.endOfDay(idtm, self.bar.close)
 
+        self.strategy.showfas()
+
+    # -------------------------------------------
     def crossords(self, bar, ski=None):
         # ----------------------------------------------------------------------------------------------------撮合订单
         newtrdcnt = 0

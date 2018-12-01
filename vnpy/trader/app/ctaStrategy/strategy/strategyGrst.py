@@ -194,35 +194,26 @@ class GrstStrategy(CtaTemplate):
 
     # ----------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda上
-    def tedasgn(self, sgndat, sgnids, Tn='d', fillna = True):
-        for isgn in sgnids:
+    def tedasgn(self, sgndat, sgnids, fid='ma', fillna = True):
+        xsgns = [isgn + '_' + fid for isgn in sgnids]
+        extqts = []
+        for isgn in xsgns:
             if isgn in sgndat.columns:
-                self.extqts.append(isgn)
+                extqts.append(isgn)
                 if 'ak_' + isgn in sgndat.columns:
-                    self.extqts.append('ak_' + isgn)
-
-        if len(self.extqts) == 0:
+                    extqts.append('ak_' + isgn)
+        if len(extqts) == 0:
             return
-        toaddf = sgndat.loc[:, self.extqts]
-        newindex = []
-        for dtm in toaddf.index:
-            if ' ' not in dtm:
-                newindex.append(dtm.replace('_', '-') + ' 16:00:00')
-            else:
-                newindex.append(''.join([dtm.split(' ')[0], '16:00:00']))
-
-        sindex = self.quotes.index
+        toaddf = sgndat.loc[:, extqts]
+        sindex = self.Teda.dat.index
         reindex = []
-        for dtm in newindex:
+        for dtm in toaddf.index:
             redtm = sindex[sindex <= dtm][-1]
             reindex.append(redtm)
         toaddf.index = reindex
-        coldic = {isgn: isgn + '_' + Tn for isgn in self.extqts}
-        toaddf.rename(columns=coldic, inplace=True)
-        self.extqts = toaddf.columns.tolist()
-        self.quotes = pd.concat([self.quotes, toaddf], axis=1, join_axes=[self.quotes.index])
+        self.Teda.dat = pd.concat([self.Teda.dat, toaddf], axis=1, join_axes=[self.Teda.dat.index])
         if fillna:
-            self.quotes.fillna(method='pad', inplace=True)
+            self.Teda.dat.fillna(method='pad', inplace=True)
     # ------------------------------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda中
     def tedaOnbar(self, i):
@@ -316,30 +307,40 @@ class GrstStrategy(CtaTemplate):
                 self.ctaEngine.intedsgn.etsgnbs(fa, i, farst.crtski, farst.teofi, farst.teofn)
                 self.ctaEngine.sgntotrd(fa, 'et', i, farst.crtski, farst.teofi, farst.teofn)
     # ----------------------------------------------------------------------
-    def showfas(self, showset):
+    def showfas(self, showset = {}):
 
         self.Marst.colfas()
         self.Surst.colfas()
-        Tn = 'd'
-        extfas = ['disrst', 'sal', 'brdl', 'trdl']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        self.Teda.dat.addsgn(self.Marst.quotes, extfas, Tn=Tn, fillna=False)
 
-        self.Teda
+        extfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']     # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        self.tedasgn(self.Surst.quotes, extfas, fid='su', fillna=True)
+        self.tedasgn(self.Marst.quotes, extfas, fid='ma', fillna=True)
 
-        Mrst.addsgn(Arst.quotes, ['close'], Tn='d', fillna=False)
-        #     Mrst.renamequote('close_d', 'sudc')
-        #     Mrst.setmacn()
+        afc = []
+        for col in self.Teda.dat.columns:
+            if 'ak_' + col in self.Teda.dat.columns:
+                afc.append(col)
 
-        if 'su' in Msdpset:
-            Arst.colfas()
-            Tn = 'd'
-            extfas = ['disrst', 'sal', 'brdl', 'trdl']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-            Mrst.addsgn(Arst.quotes, extfas, Tn=Tn, fillna=False)
-            disfas = [colna + '_' + Tn for colna in extfas] + ['disrst', 'brdl', 'trdl', 'alp1', 'dlp1',
-                                                               'sal']  # 'disrst','ma','mid', ['disrst','sal', 'brdl', 'trdl', 'alp1', 'dlp1' ]
-        Mrst.colfas()
-        quotesk = Mrst.quotes
-        plotsdk(quotesk, Symbol=var, disfactors=disfas)
+        for col in afc:
+            self.Teda.dat.loc[:, 'ak_' + col].fillna(method='pad', inplace=True)
+        if len(afc) > 0:
+            fidtm = self.Teda.dat.index[0]
+            for idtm in self.Teda.dat.index[1:]:
+                for col in afc:
+                    fid = col.split('_')[-1]
+                    if np.isnan(self.Teda.dat.loc[idtm, col]):
+                        self.Teda.dat.loc[idtm, col] = self.Teda.dat.loc[fidtm, col] + self.Teda.dat.loc[
+                            fidtm, 'ak_' + col] * 1.0 / self.Teda.dat.loc[fidtm, 'tekn_'+fid]
+                fidtm = idtm
+
+        self.Teda.dat.fillna(method='pad', inplace=True)
+        quotesk = self.Teda.dat
+
+        shwmafas = [fas + '_ma' for fas in extfas]
+
+        shwsufas = [fas + '_su' for fas in extfas]
+
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwmafas+shwsufas)
 
     # ----------------------------------------------------------------------
     def onInit(self):

@@ -117,7 +117,7 @@ class GrstStrategy(CtaTemplate):
             Period = self.setting['msdpset']['ma']
             self.vada1 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.Marst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada1, fid='ma')
+            self.Marst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada1, fid='ma', teda = self.Teda)
             self.Marst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada1 = None
@@ -127,7 +127,7 @@ class GrstStrategy(CtaTemplate):
             Period = self.setting['msdpset']['su']
             self.vada2 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False)
-            self.Surst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada2, fid='su')
+            self.Surst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada2, fid='su', teda = self.Teda)
             self.Surst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada2 = None
@@ -192,7 +192,37 @@ class GrstStrategy(CtaTemplate):
             self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
+    # ----------------------------------------------------------------------
+    # 将 Marst和Surst中的信号映射到Teda上
+    def tedasgn(self, sgndat, sgnids, Tn='d', fillna = True):
+        for isgn in sgnids:
+            if isgn in sgndat.columns:
+                self.extqts.append(isgn)
+                if 'ak_' + isgn in sgndat.columns:
+                    self.extqts.append('ak_' + isgn)
 
+        if len(self.extqts) == 0:
+            return
+        toaddf = sgndat.loc[:, self.extqts]
+        newindex = []
+        for dtm in toaddf.index:
+            if ' ' not in dtm:
+                newindex.append(dtm.replace('_', '-') + ' 16:00:00')
+            else:
+                newindex.append(''.join([dtm.split(' ')[0], '16:00:00']))
+
+        sindex = self.quotes.index
+        reindex = []
+        for dtm in newindex:
+            redtm = sindex[sindex <= dtm][-1]
+            reindex.append(redtm)
+        toaddf.index = reindex
+        coldic = {isgn: isgn + '_' + Tn for isgn in self.extqts}
+        toaddf.rename(columns=coldic, inplace=True)
+        self.extqts = toaddf.columns.tolist()
+        self.quotes = pd.concat([self.quotes, toaddf], axis=1, join_axes=[self.quotes.index])
+        if fillna:
+            self.quotes.fillna(method='pad', inplace=True)
     # ------------------------------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda中
     def tedaOnbar(self, i):
@@ -285,6 +315,32 @@ class GrstStrategy(CtaTemplate):
 
                 self.ctaEngine.intedsgn.etsgnbs(fa, i, farst.crtski, farst.teofi, farst.teofn)
                 self.ctaEngine.sgntotrd(fa, 'et', i, farst.crtski, farst.teofi, farst.teofn)
+    # ----------------------------------------------------------------------
+    def showfas(self, showset):
+
+        self.Marst.colfas()
+        self.Surst.colfas()
+        Tn = 'd'
+        extfas = ['disrst', 'sal', 'brdl', 'trdl']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        self.Teda.dat.addsgn(self.Marst.quotes, extfas, Tn=Tn, fillna=False)
+
+        self.Teda
+
+        Mrst.addsgn(Arst.quotes, ['close'], Tn='d', fillna=False)
+        #     Mrst.renamequote('close_d', 'sudc')
+        #     Mrst.setmacn()
+
+        if 'su' in Msdpset:
+            Arst.colfas()
+            Tn = 'd'
+            extfas = ['disrst', 'sal', 'brdl', 'trdl']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+            Mrst.addsgn(Arst.quotes, extfas, Tn=Tn, fillna=False)
+            disfas = [colna + '_' + Tn for colna in extfas] + ['disrst', 'brdl', 'trdl', 'alp1', 'dlp1',
+                                                               'sal']  # 'disrst','ma','mid', ['disrst','sal', 'brdl', 'trdl', 'alp1', 'dlp1' ]
+        Mrst.colfas()
+        quotesk = Mrst.quotes
+        plotsdk(quotesk, Symbol=var, disfactors=disfas)
+
     # ----------------------------------------------------------------------
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
@@ -390,7 +446,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-25']
+    TS_Config['Time_Param'] = ['2016-06-05', '2017-06-25']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M'
@@ -442,12 +498,12 @@ if __name__ == '__main__':
     setting['tedaet'] = ['ma', 'su']
     setting['tdkopset'] = {
         'ma': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
-            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
+            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 1},
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
-            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 0}
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1},
+            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 1}
         }
     }
 
@@ -470,6 +526,7 @@ if __name__ == '__main__':
         engine = TSBacktest(TS_Config)
         engine.initStrategy(GrstStrategy, setting)
         engine.runBacktesting()
+        engine.Show_SaveResult()
 
         # skdata = load_Dombar(var, Msdpset['ma'], Time_Param=TS_Config['Time_Param'], datain=datain, host=Host, DB_Rt_Dir=DB_Rt_Dir)
         # Mrst = Grst_Factor(var, Msdpset['ma'], skdata, fid='ma')

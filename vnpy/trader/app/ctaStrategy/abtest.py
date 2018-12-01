@@ -450,31 +450,31 @@ class TSBacktest(object):
         # ----------------------------------------------------------------------
 
 
-    def sendord(self, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, OrdFlg='NB'):
+    def sendord(self, Soda, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, OrdFlg='NB'):
         # print 'sendord:', Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg
         self.LogOrdsnum += 1
         # self.LogOrds.loc[self.LogOrdsnum, :] = [self.LogOrdsnum, Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg]
         self.write_to_csv_file(self.Ordslogfile, [self.LogOrdsnum, Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg])
         if OrdTyp == 'Mkt':
             neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, OrdFlg=OrdFlg)
-            if Symbol in self.OrdMkt_Dic:
-                self.OrdMkt_Dic[Symbol].append(neword)
+            if Soda in self.OrdMkt_Dic:
+                self.OrdMkt_Dic[Soda].append(neword)
             else:
-                self.OrdMkt_Dic[Symbol] = [neword]
+                self.OrdMkt_Dic[Soda] = [neword]
 
         elif OrdTyp == 'Lmt':
             neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, OrdFlg=OrdFlg)
-            if Symbol in self.OrdLmt_Dic:
-                self.OrdLmt_Dic[Symbol].append(neword)
+            if Soda in self.OrdLmt_Dic:
+                self.OrdLmt_Dic[Soda].append(neword)
             else:
-                self.OrdLmt_Dic[Symbol] = [neword]
+                self.OrdLmt_Dic[Soda] = [neword]
 
         elif OrdTyp == 'Stp':
             neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, OrdFlg=OrdFlg)
-            if Symbol in self.OrdStp_Dic:
-                self.OrdStp_Dic[Symbol].append(neword)
+            if Soda in self.OrdStp_Dic:
+                self.OrdStp_Dic[Soda].append(neword)
             else:
-                self.OrdStp_Dic[Symbol] = [neword]
+                self.OrdStp_Dic[Soda] = [neword]
 
     def newposition(self, OpenTrd):
         newpos = Position(OpenTrd)
@@ -721,9 +721,9 @@ class TSBacktest(object):
         self.write_to_csv_file(self.Trdslogfile, self.LogTrds.columns)
         self.write_to_csv_file(self.CldPoslogfile, self.LogCldPos.columns)
 
-        self.OrdMkt_Dic = pd.DataFrame(index=self.Variety_List, columns=['ords'])
-        self.OrdLmt_Dic = pd.DataFrame(index=self.Variety_List, columns=['ords'])
-        self.OrdStp_Dic = pd.DataFrame(index=self.Variety_List, columns=['ords'])
+        self.OrdMkt_Dic = {}
+        self.OrdLmt_Dic = {}
+        self.OrdStp_Dic = {}
 
         self.LongEnt_Df = pd.DataFrame([[0, 0, 0]], index=self.Variety_List, columns=['entnum', 'size', 'mktvalue'])
         self.ShortEnt_Df = pd.DataFrame([[0, 0, 0]], index=self.Variety_List, columns=['entnum', 'size', 'mktvalue'])
@@ -763,21 +763,22 @@ class TSBacktest(object):
             except:
                 nxtdtmhh = '09'
             if idtm[11:13] =='15' and (nxtdtmhh =='09' or nxtdtmhh =='21'):
-                self.endOfDay(idtm)
+                self.endOfDay(idtm, self.bar.close)
 
     def crossords(self, bar, ski=None):
         # ----------------------------------------------------------------------------------------------------撮合订单
         newtrdcnt = 0
         if True:
-            for Var, Ords in self.OrdMkt_Dic.iteritems():
+            for soda, Ords in self.OrdMkt_Dic.iteritems():
                 # 过滤行情缺失
                 if bar.open > 0 and bar.close > 0 and bar.low > 0 and bar.high > 0:
                     pass
                 else:
-                    print 'cross CurOrdMkt error: ', Var, bar.datetime
+                    print 'cross CurOrdMkt error: ', soda, bar.datetime
                     continue
                 for Ord in Ords:
                     try:
+                        Var = Ord.Symbol
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
                         else:
@@ -795,15 +796,16 @@ class TSBacktest(object):
                         print 'cross CurOrdMkt', e.message
                         pass
             # ------------------------------------------------------------
-            for Var, Ords in self.OrdStp_Dic.iteritems():
+            for soda, Ords in self.OrdStp_Dic.iteritems():
                 # 过滤行情缺失
                 if bar.open > 0 and bar.close > 0 and bar.low > 0 and bar.high > 0:
                     pass
                 else:
-                    print 'cross CurOrdStp error: ', Var, bar.datetime
+                    print 'cross CurOrdStp error: ', soda, bar.datetime
                     continue
                 for Ord in Ords:
                     try:
+                        Var = Ord.Symbol
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
                         else:
@@ -822,15 +824,16 @@ class TSBacktest(object):
                         pass
 
             # ------------------------------------------------------------
-            for Var, Ords in self.OrdLmt_Dic.iteritems():
+            for soda, Ords in self.OrdLmt_Dic.iteritems():
                 # 过滤行情缺失
                 if bar.open > 0 and bar.close > 0 and bar.low > 0 and bar.high > 0:
                     pass
                 else:
-                    print 'cross CurOrdLmt error: ', Var, bar.datetime
+                    print 'cross CurOrdLmt error: ', soda, bar.datetime
                     continue
                 for Ord in Ords:
                     try:
+                        Var = Ord.Symbol
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
                         else:
@@ -852,7 +855,7 @@ class TSBacktest(object):
     # ------------------------------------------------------------
 
     def sgntotrd(self, fid, seet, ski, eti=0, mosi = 0, mosn=1):  # fid = ma|su  seet = se|et
-
+        soda = fid+seet
         # --根据因子信号设置委托单
         if seet == 'et':
             xskl = self.intedsgn.skatl['te']
@@ -895,7 +898,11 @@ class TSBacktest(object):
             crtdwr = None
 
         self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)
+        # 更新相应的发单信号
 
+        self.OrdMkt_Dic[soda] = []
+        self.OrdLmt_Dic[soda] = []
+        self.OrdStp_Dic[soda] = []
         # --------------------------------------------------------平仓逻辑 止损 止盈
         for socna, sgnpos in self.SocPos_Dic.iteritems():
             for sgnid, poslist in sgnpos.iteritems():
@@ -973,7 +980,7 @@ class TSBacktest(object):
                             sdflg = spflg
 
                     if sdsp and abs(sdsp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
-                        self.sendord(var, -entsize, 0, sdsp, 'Stp', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
+                        self.sendord(soda, var, -entsize, 0, sdsp, 'Stp', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
                         pos.EntSp = sdsp
                         pos.SpFlg = sdflg
                     # --------------------限价平仓止盈单
@@ -983,7 +990,7 @@ class TSBacktest(object):
                         sdtp = pos.EntTp
                         sdflg = 'tp0'
                     if sdtp and abs(sdtp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
-                        self.sendord(var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
+                        self.sendord(soda, var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
 
         # --------------------------------------------------------开仓逻辑
         for socna, sgnkops in self.intedsgn.cmbkops.iteritems():
@@ -1022,7 +1029,7 @@ class TSBacktest(object):
                     entsize = entsize * kop.bsdir
                     ordtyp = kop.ordtyp
 
-                    self.sendord(var, entsize, 0, sdop, ordtyp, idtime, Offset='open', EntSki=iski, OrdSp=sdsp, OrdTp=sdtp, Psn=psn, Msn=msn,
+                    self.sendord(soda, var, entsize, 0, sdop, ordtyp, idtime, Offset='open', EntSki=iski, OrdSp=sdsp, OrdTp=sdtp, Psn=psn, Msn=msn,
                                  OrdFlg=sgnna)
 
         '''        

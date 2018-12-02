@@ -19,8 +19,8 @@ import matplotlib
 # matplotlib.use('Qt4Agg')
 matplotlib.use('TkAgg')
 
-from matplotlib.finance import candlestick2_ohlc
-# from mpl_finance import candlestick2_ohlc   #若不存在得安装 mpl_finance
+# from matplotlib.finance import candlestick2_ohlc
+from mpl_finance import candlestick2_ohlc   #若不存在得安装 mpl_finance
 
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
@@ -282,8 +282,8 @@ def load_Dombar(Var, Period, Time_Param, Datain='mongo', Host='localhost', DB_Rt
             dbName = '_'.join(['Dom', Period])
         collection = dbClient[dbName][Var]
         # 载入初始化需要用的数据
-        dataStartDate = Time_Param[0]
-        dataEndDate = Time_Param[1]
+        dataStartDate = ' '.join([Time_Param[0], '21:00:00'])
+        dataEndDate = ' '.join([Time_Param[1], '16:00:00'])
         flt = {'datetime': {'$gte': dataStartDate, '$lt': dataEndDate}}
         dbCursor = collection.find(flt).sort('datetime', pymongo.ASCENDING)
         datas = list(dbCursor)

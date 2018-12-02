@@ -13,14 +13,14 @@ class Barda(object):
         self.dat = pd.DataFrame()
         self.crtidx = 'init'
         self.crtnum = 0
-        self.crtbar = pd.Series()
+        self.crtbar = None
         self.newsta = 0
         self.indexs = []
         self.onbar = onbar
     # ----------------------------------------------------------------------
-    def newbar(self, bar):
+    def newbar(self, bar, islastbar = False):
         for idtm in self.dat.index[self.crtnum:self.dat.index.size]:
-            if bar.datetime > idtm:
+            if bar.datetime > idtm or islastbar:
                 if type(self.onbar) != type(None):
                     self.onbar(self.crtnum)
                 self.crtnum = min(self.crtnum+1, self.dat.index.size-1)
@@ -28,6 +28,8 @@ class Barda(object):
                 self.crtbar = pd.Series(index=self.dat.columns)
                 self.newsta = 1
             else:
+                if type(self.crtbar) == type(None):
+                    return
                 if self.crtbar.count() == 0:
                     if bar.vtSymbol == self.var:
                         self.crtbar.name = idtm

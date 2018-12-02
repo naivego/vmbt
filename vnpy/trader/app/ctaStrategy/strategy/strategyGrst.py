@@ -86,7 +86,7 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = ctaEngine.MiniT
             ctaEngine.Mida = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            # plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False)
+            # plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
         except:
             ctaEngine.Mida = None
 
@@ -104,11 +104,10 @@ class GrstStrategy(CtaTemplate):
             try:
                 Period = self.setting['msdpset']['te']
                 self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-                plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
+                plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
                 self.Teda = Barda(trdvar, Period, self.tedaOnbar)
                 self.Teda.dat = self.vada0
-                # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False)
-
+                self.tedaInit()
             except:
                 self.vada0 = None
 
@@ -116,7 +115,7 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = self.setting['msdpset']['ma']
             self.vada1 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False)
+            plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
             self.Marst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada1, fid='ma', teda = self.Teda)
             self.Marst.grst_init(setting=setting, btconfig=TS_Config)
         except:
@@ -126,7 +125,7 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = self.setting['msdpset']['su']
             self.vada2 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False)
+            plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
             self.Surst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada2, fid='su', teda = self.Teda)
             self.Surst.grst_init(setting=setting, btconfig=TS_Config)
         except:
@@ -136,7 +135,7 @@ class GrstStrategy(CtaTemplate):
         print 'strategy init finished'
     #------------------------------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda中
-    def tedaInit(self, i):
+    def tedaInit(self):
         print 'tedaInit'
         if type(self.Teda) is type(None):
             return
@@ -185,17 +184,20 @@ class GrstStrategy(CtaTemplate):
         self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, skbgi))
         self.crtski = skbgi
         self.crtidtm = self.sk_time[skbgi]
-        self.Teda.crtidx = self.crtidtm
-        self.Teda.crtnum = self.crtski
 
+        self.Teda.crtnum = self.crtski + 1
+        self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
         if len(self.tedaet):
-            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl)
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
     # ----------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda上
     def tedasgn(self, sgndat, sgnids, fid='ma', fillna = True):
-        xsgns = [isgn + '_' + fid for isgn in sgnids]
+        sgns= sgnids[:]
+        if 'tekn' not in sgns:
+            sgns.append('tekn')
+        xsgns = [isgn + '_' + fid for isgn in sgns]
         extqts = []
         for isgn in xsgns:
             if isgn in sgndat.columns:
@@ -396,7 +398,7 @@ class GrstStrategy(CtaTemplate):
             bar.close = tick.lastPrice
 
     # ----------------------------------------------------------------------
-    def onBar(self, bar, ski= 0):
+    def onBar(self, bar, ski= 0, islastbar = False):
         """收到Bar推送（必须由用户继承实现）"""
         # 撤销之前发出的尚未成交的委托（包括限价单和停止单）
         print 'onBar: ', bar.datetime
@@ -405,10 +407,10 @@ class GrstStrategy(CtaTemplate):
         if bar.datetime >= '2017-07-05':
             print 'chk'
 
-        self.Marst.bada.newbar(bar)
-        self.Surst.bada.newbar(bar)
+        self.Marst.bada.newbar(bar, islastbar)
+        self.Surst.bada.newbar(bar, islastbar)
         if self.Teda:
-            self.Teda.newbar(bar)
+            self.Teda.newbar(bar, islastbar)
 
         #----------------------------------
         # 撮合前，若有信号更新需要相应的将原来的信号清除， 涉及4种信号 maetl, masel, suetl, susel
@@ -447,14 +449,14 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2016-06-05', '2017-06-25']
+    TS_Config['Time_Param'] = ['2016-03-05', '2016-04-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M'
 
 
     setting = {}
-    setting['msdpset'] = {'te': 'M15','ma': 'M30', 'su': 'd'}
+    setting['msdpset'] = {'te': 'M15', 'ma': 'M30', 'su': 'd'}
 
 
     # ---子策略ostp设置
@@ -528,99 +530,3 @@ if __name__ == '__main__':
         engine.initStrategy(GrstStrategy, setting)
         engine.runBacktesting()
         engine.Show_SaveResult()
-
-        # skdata = load_Dombar(var, Msdpset['ma'], Time_Param=TS_Config['Time_Param'], datain=datain, host=Host, DB_Rt_Dir=DB_Rt_Dir)
-        # Mrst = Grst_Factor(var, Msdpset['ma'], skdata, fid='ma')
-        # btest = True
-        # if 'su' in Msdpset:
-        #     sfaset = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
-        #     stdsk = load_Dombar(var, Msdpset['su'], Time_Param=TS_Config['Time_Param'], datain=datain, host=Host, DB_Rt_Dir=DB_Rt_Dir)
-        #     Arst = Grst_Factor(var, Msdpset['su'], stdsk, fid='su')
-        #     Arst.grst_init(faset=sfaset, btest=False, btconfig=TS_Config, subrst=None)
-        #     Mrst.addsgn(Arst.quotes, ['close'], Tn='d', fillna=False)
-        #     Mrst.renamequote('close_d', 'sudc')
-        #     Mrst.setmacn()
-        # else:
-        #     Arst = None
-        # Mrst.grst_init(faset=mfaset, btest=btest, btconfig=TS_Config, subrst=Arst, tdkopset=tdkopset)
-        # Mrst.cal_next()
-        #
-        # if Mrst.TSBT:
-        #     Mrst.TSBT.Show_SaveResult()
-        #
-        # disfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl',
-        #           'tmdl']  # ,'zsh', 'zsl', 'rstsph', 'rstspl','bsh', 'bsl' ,'bbl', 'ttl'  'bbl', 'ttl', 'obbl', 'ottl',
-        # # plotsdk(quotes, disfactors=['grst', 'qsh', 'qsl', 'zsh', 'zsl', 'rsl','disrst', 'bbl', 'ttl'])  # ,'ATR'  'qswr',
-        # # plotsdk(quotes, disfactors=['disrst','sk_qsrpt','sk_zs1c', 'sk_zs2c', 'sk_qs1c','sk_qs2c','sk_zs1a', 'sk_zs2a', 'sk_qs1a','sk_qs2a'])  #,'sk_zsrpt','sk_qsrpt'  'sk_zs1c','sk_zs2c', 'qsh', 'qsl',
-        # # plotsdk(quotes, Symbol=var, disfactors=['disrst', 'bbl', 'ttl', 'alp1', 'alp2', 'alp5', 'dlp1', 'dlp2', 'dlp5', ])
-        # # plotsdk(quotes, Symbol=var, disfactors=disfas)
-        #
-        # # ---------------show sgns
-        # if 'su' in Msdpset:
-        #     Arst.colfas()
-        #     Tn = 'd'
-        #     extfas = ['disrst', 'sal', 'brdl', 'trdl']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        #     Mrst.addsgn(Arst.quotes, extfas, Tn=Tn, fillna=False)
-        #     disfas = [colna + '_' + Tn for colna in extfas] + ['disrst', 'brdl', 'trdl', 'alp1', 'dlp1',
-        #                                                        'sal']  # 'disrst','ma','mid', ['disrst','sal', 'brdl', 'trdl', 'alp1', 'dlp1' ]
-        # Mrst.colfas()
-        # quotesk = Mrst.quotes
-        # plotsdk(quotesk, Symbol=var, disfactors=disfas)
-        #
-        # print datetime.now(), 'ok'
-
-
-
-
-
-
-
-
-
-
-    #
-    #
-    #
-    # # 创建回测引擎
-    # btconfig = {}
-    # btconfig['Rt_Dir'] = r'D:\Apollo\vmtb'  # '/home/chenxiubin/projects/PMM'
-    # btconfig['DB_Rt_Dir'] = r'D:\ArcticFox\project\hdf5_database'.replace('\\', '/')  # '/data/all/project/hdf5_database'.replace('\\', '/')
-    # btconfig['Start_Date'] = '2016-03-01'
-    # btconfig['End_Date'] = '2016-03-30'
-    # btconfig['InitCapital'] = 1000000
-    # btconfig['Slippage'] = 1
-    # btconfig['Symbol'] = 'RB'
-    # btconfig['MiniT'] = 'M'
-    # engine = BacktestingEngine(btconfig)
-    # # 设置引擎的回测模式为K线
-    # engine.setBacktestingMode(engine.BAR_MODE)
-    #
-    # # set setting ---该setting信息在交易中可以通过json导入
-    # setting = {}
-    # #---------数据列表设置
-    # setting['vada1'] = {'var': '', 'period': 'M15'} # var='' --> engine.symbol,
-    # setting['vada2'] = {'var': '', 'period': 'H'}
-    # setting['vada3'] = {'var': '', 'period': 'd'}
-    # # ---------各数据所需要计算的因子列表和参数设置
-    #
-    # setting['fas1'] = {'Boll': [20, 2], 'Atr': [10, 26, 50], 'Ma': [10, 20, 0]}
-    # setting['fas2'] = {'Boll': [20, 2], 'Atr': [10, 26, 50], 'Ma': [10, 20, 0]}
-    # setting['fas3'] = {'Boll': [20, 2], 'Atr': [10, 26, 50], 'Ma': [10, 20, 0]}
-    #
-    # engine.initStrategy(HdmatStrategy, setting)
-    #
-    # # 开始跑回测
-    # engine.runBacktesting()
-    #
-    # # 显示回测结果
-    # engine.showBacktestingResult()
-    #
-    # ## 跑优化
-    #
-    # # import time
-    # # start = time.time()
-    #
-    # ## 运行单进程优化函数，自动输出结果，耗时：359秒
-    #
-    #
-    # # print u'耗时：%s' %(time.time()-start)

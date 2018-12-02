@@ -1724,7 +1724,7 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     return saline
 
 class Skatline(object):
-    def __init__(self,sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, setting =None):
+    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, setting =None):
         if setting is None:
             self.det = 0.2
             self.rdet = 0.05
@@ -1733,11 +1733,12 @@ class Skatline(object):
             self.det = setting['det']
             self.rdet = setting['rdet']
             self.mdet = setting['mdet']
-
+        self.sk_time = sk_time
         self.sk_open = sk_open
         self.sk_high = sk_high
-        self.sk_low = sk_low
-        self.sk_close = sk_close
+        self.sk_low  = sk_low
+        self.sk_close  = sk_close
+        self.sk_volume = sk_volume
         self.sk_atr = sk_atr
         self.sk_ckl = sk_ckl
         self.sgni = None  # 最新产生信号的ski
@@ -2456,7 +2457,9 @@ class Intsgnbs(object):
 
     # ------------------------------------------
     def sesgnbs(self, fid, i):
-        kopset = self.tdkopset['sekop']
+        kopset = self.tdkopset[fid]['sekop']
+        if fid not in self.fas:
+            return
         xfas = self.fas[fid]
         skatsel = self.skatl[fid]
 
@@ -2538,7 +2541,9 @@ class Intsgnbs(object):
 
     # ------------------------------------------
     def etsgnbs(self, fid, i, eti, mosi = 0, mosn=1):
-        kopset = self.tdkopset['etkop']
+        kopset = self.tdkopset[fid]['etkop']
+        if fid not in self.fas:
+            return
         xfas = self.fas[fid]
         skatetl = self.skatl['te']
 
@@ -4029,7 +4034,7 @@ class Grst_Factor(object):
         self.sk_sgn = []
 
 
-        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl)
+        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl)
         self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:
@@ -4178,12 +4183,12 @@ class Grst_Factor(object):
         self.sk_rstspl.append(self.sk_low[skbgi])
         self.sk_rstsph.append(self.sk_high[skbgi])
         self.crtski = skbgi
-        # self.crtidtm  = pd.Timestamp((self.sk_time[self.crtski])).strftime('%Y-%m-%d %H:%M:%S')
+
         self.crtidtm = self.sk_time[self.crtski]
         self.crtidate = self.crtidtm[:10]
-
-        self.bada.crtidx = self.crtidtm
-        self.bada.crtnum = self.crtski
+        # bada init
+        self.bada.crtnum = self.crtski+1
+        self.bada.crtidx = self.sk_time[self.bada.crtnum]
         self.teofi = -1
         self.teofn = 1
     # ----------------------------------------------------------

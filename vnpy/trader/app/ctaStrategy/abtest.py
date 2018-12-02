@@ -188,16 +188,24 @@ def max_drawdown(Networth_Series):
                 Recovery_Duration = i
                 break
 
-    return {'Max': Max, 'Max_Drawdown': Drawdown[Ind], 'Drawdown_Duration': Drawdown_Duration[Ind],
+        redic = {'Max': Max, 'Max_Drawdown': Drawdown[Ind], 'Drawdown_Duration': Drawdown_Duration[Ind],
             'Recovery_Duration': Recovery_Duration}
+    else:
+        redic = {'Max': Max, 'Max_Drawdown': np.nan, 'Drawdown_Duration': np.nan, 'Recovery_Duration': Recovery_Duration}
+
+    return redic
 
 
 # ----------------------------------------------------------------------
 def return_metrics(Networth_Series, Trading_Days_Per_Year=242):
     Num_Days = Networth_Series.size
+    if Num_Days<=1:
+        return {'Daily_Return': np.nan, 'Annualized_Return': np.nan, 'Annualized_Std': np.nan,
+            'Sharpe_Ratio': np.nan, 'Sortino_Ratio': np.nan, 'Winning_Rate': np.nan,
+            'Num_Days': Num_Days}
+
     Daily_Return = (Networth_Series / Networth_Series.shift() - 1)[1:]
     Winning_Rate = Daily_Return[Daily_Return > 0].size / Daily_Return.dropna().size
-
     Mean_Daily_Return = Daily_Return.mean()
     Annualized_Return = np.power((Mean_Daily_Return + 1), Trading_Days_Per_Year) - 1
     Annualized_Std = Daily_Return.std() * np.sqrt(Trading_Days_Per_Year)
@@ -751,7 +759,8 @@ class TSBacktest(object):
             # self.crossords(self.bar, ski= i)
 
             # 2、 更新各级数据周期下的信号
-            self.strategy.onBar(self.bar, ski= i)
+            islastbar = (i == self.Mida.index.size-1)
+            self.strategy.onBar(self.bar, ski= i, islastbar=islastbar)
 
             # 3、 在指定的周期下修正信号生成订单
 
@@ -858,6 +867,9 @@ class TSBacktest(object):
 
     def sgntotrd(self, fid, seet, ski, eti=0, mosi = 0, mosn=1):  # fid = ma|su  seet = se|et
         soda = fid+seet
+        if fid not in self.intedsgn.fas:
+            return
+        xfas = self.intedsgn.fas[fid]
         # --根据因子信号设置委托单
         if seet == 'et':
             xskl = self.intedsgn.skatl['te']
@@ -874,8 +886,6 @@ class TSBacktest(object):
         atr = sk_atr[ski] * sk_close[ski]
         sk_ckl = xskl.sk_ckl
         kopsdic = xskl.trpkops
-
-        xfas = self.intedsgn.fas[fid]
 
         #-----------------------------------------------------------------
         idtime = sk_time[ski]

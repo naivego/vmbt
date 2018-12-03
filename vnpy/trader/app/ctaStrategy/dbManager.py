@@ -88,8 +88,8 @@ class DbManager(object):
         self.dbClient = dbConnect(host, port)
 
     # ----------------------------------------------------------
-    def createIndex(self, key=None, dir = pymongo.ASCENDING):
-        pass
+    def createIndex(self, dbname, colname, key=None, dir=pymongo.ASCENDING):
+        self.dbClient[dbname][colname].create_index([(key, dir)])
 
 
 

@@ -86,7 +86,7 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = ctaEngine.MiniT
             ctaEngine.Mida = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
+            # plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
         except:
             ctaEngine.Mida = None
             print 'ctaEngine.Mida load_Dombar error'

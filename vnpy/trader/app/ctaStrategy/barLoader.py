@@ -13,14 +13,14 @@ import sys
 import os
 import pymongo
 from datetime import datetime, timedelta
-
+import traceback
 import matplotlib
 
 # matplotlib.use('Qt4Agg')
 matplotlib.use('TkAgg')
 
-# from matplotlib.finance import candlestick2_ohlc
-from mpl_finance import candlestick2_ohlc   #若不存在得安装 mpl_finance
+from matplotlib.finance import candlestick2_ohlc
+# from mpl_finance import candlestick2_ohlc   # 若不存在得安装 mpl_finance
 
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
@@ -282,14 +282,19 @@ def load_Dombar(Var, Period, Time_Param, Datain='mongo', Host='localhost', DB_Rt
             dbName = '_'.join(['Dom', Period])
         collection = dbClient[dbName][Var]
         # 载入初始化需要用的数据
-        dataStartDate = ' '.join([Time_Param[0], '21:00:00'])
-        dataEndDate = ' '.join([Time_Param[1], '16:00:00'])
-        flt = {'datetime': {'$gte': dataStartDate, '$lt': dataEndDate}}
-        dbCursor = collection.find(flt).sort('datetime', pymongo.ASCENDING)
-        datas = list(dbCursor)
-        if len(datas) == 0:
-            print 'no data'
-        skdata = pd.DataFrame(datas)
+        try:
+            dataStartDate = ' '.join([Time_Param[0], '21:00:00'])
+            dataEndDate = ' '.join([Time_Param[1], '16:00:00'])
+            flt = {'datetime': {'$gte': dataStartDate, '$lt': dataEndDate}}
+            dbCursor = collection.find(flt).sort('datetime', pymongo.ASCENDING)
+            datas = list(dbCursor)
+            if len(datas) == 0:
+                print 'no data'
+            skdata = pd.DataFrame(datas)
+        except:
+            print traceback.format_exc()
+            print 'barload error'
+
         skdata.drop(['_id'], axis=1, inplace=True)
         skdata.set_index('datetime', inplace=True)
         return skdata

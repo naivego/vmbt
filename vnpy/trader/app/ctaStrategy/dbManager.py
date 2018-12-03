@@ -88,6 +88,12 @@ class DbManager(object):
         self.dbClient = dbConnect(host, port)
 
     # ----------------------------------------------------------
+    def createIndex(self, key=None, dir = pymongo.ASCENDING):
+        pass
+
+
+
+    # ----------------------------------------------------------
     def loadBarFromMongo(self, dbname= 'Dom_M', var='RB', startdate= '2017-01-01', enddate='2017-06-01'):
         collection = self.dbClient[dbname][var]
         collection.create_index([('datetime', pymongo.ASCENDING)])
@@ -183,7 +189,7 @@ class DbManager(object):
             sdf = df.ix[i:i+100,:]
             self.dbClient[dbname][var].insert(json.loads(sdf.T.to_json(), object_pairs_hook=OrderedDict).values())
             # self.dbClient[dbname][var].insert(df.to_dict())
-
+        self.dbClient[dbname][var].create_index([('datetime', pymongo.ASCENDING)])
 # ----------------------------------------------------------
     def correctDatas(self, dbna = 'Dom_M'):
         # 自2016年5月3日起，螺纹钢、热轧卷板、石油沥青期货品种的连续交易时间由每周一至周五的21：00至次日1：00调整为21：00至23：00
@@ -299,6 +305,10 @@ def stdbard(pathdir, savedir, period, vars):
 
                 df.to_csv(savedir+'/'+file, encoding='gbk')
                 print file, 'ok'
+
+
+
+
 
 
 if __name__ == '__main__':

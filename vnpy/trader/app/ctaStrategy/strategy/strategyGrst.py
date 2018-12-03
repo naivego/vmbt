@@ -86,10 +86,10 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = ctaEngine.MiniT
             ctaEngine.Mida = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            # plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
+            plotsdk(ctaEngine.Mida, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
         except:
             ctaEngine.Mida = None
-
+            print 'ctaEngine.Mida load_Dombar error'
         self.Teda = None
         self.vada1 = None
         self.Marst = None
@@ -193,11 +193,8 @@ class GrstStrategy(CtaTemplate):
 
     # ----------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda上
-    def tedasgn(self, sgndat, sgnids, fid='ma', fillna = True):
-        sgns= sgnids[:]
-        if 'tekn' not in sgns:
-            sgns.append('tekn')
-        xsgns = [isgn + '_' + fid for isgn in sgns]
+    def tedasgn(self, sgndat, sgnids, fid='ma', fillna = False):
+        xsgns = [isgn + '_' + fid for isgn in sgnids]
         extqts = []
         for isgn in xsgns:
             if isgn in sgndat.columns:
@@ -314,9 +311,12 @@ class GrstStrategy(CtaTemplate):
         self.Marst.colfas()
         self.Surst.colfas()
 
+        self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna = True)
+        self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
+
         extfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']     # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        self.tedasgn(self.Surst.quotes, extfas, fid='su', fillna=True)
-        self.tedasgn(self.Marst.quotes, extfas, fid='ma', fillna=True)
+        self.tedasgn(self.Surst.quotes, extfas, fid='su')
+        self.tedasgn(self.Marst.quotes, extfas, fid='ma')
 
         afc = []
         for col in self.Teda.dat.columns:
@@ -449,7 +449,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2016-03-05', '2016-04-15']
+    TS_Config['Time_Param'] = ['2014-03-05', '2017-04-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M'

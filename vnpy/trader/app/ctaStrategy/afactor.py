@@ -2045,6 +2045,11 @@ class Skatline(object):
         usrpsn = 4
         usrmsn = 1
 
+        # bek1/bek2多选一成交信号
+        ocobek12 = Ocosta()
+        # rek2/rek3多选一成交信号
+        ocorek23 = Ocosta()
+
         self.rek0 = None
         self.rek1 = None
         self.rek2 = None
@@ -2105,7 +2110,8 @@ class Skatline(object):
                     msn = usrmsn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    oco = ocorek23
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.rek3:
                     sgnna = 'rek3' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2119,7 +2125,8 @@ class Skatline(object):
                     msn = usrmsn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    oco = ocorek23
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
             if tdl.se_sta % 2 == 1:
                 if not tdl.se_bek1i and tdl.se_sta <= 5:
                     self.bek1 = tdl.se_bklp - rdet * atr * tdl.dir
@@ -2144,7 +2151,8 @@ class Skatline(object):
                     msn = usrmsn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    oco = ocobek12
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.bek1:
                     sgnna = 'bek1' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2158,7 +2166,8 @@ class Skatline(object):
                     msn = usrmsn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    oco = ocobek12
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.bek2:
                     sgnna = 'bek2' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2172,7 +2181,8 @@ class Skatline(object):
                     msn = usrmsn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    oco = ocobek12
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.bek3:
                     sgnna = 'bek3' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2355,10 +2365,13 @@ class Skatline(object):
 
 #---------------------------------------------------------------------------
 
+class Ocosta(object):
+    def __init__(self):
+        self.trdsta = 0
 
 #------------------------开仓信号------
 class Sgnkop(object):
-    def __init__(self, sgnna=None, sgntyp=None, bsdir=None, sdop=None, ordtyp='Lmt', sdsp=None, sdtp=None, psn=None, msn = None, mark=None, prio=0):
+    def __init__(self, sgnna=None, sgntyp=None, bsdir=None, sdop=None, ordtyp='Lmt', sdsp=None, sdtp=None, psn=None, msn = None, mark=None, prio=0, oco=None):
         self.sgnna = sgnna   # 拟开仓仓的信号名称
         self.sgntyp = sgntyp
         self.bsdir = bsdir
@@ -2370,6 +2383,7 @@ class Sgnkop(object):
         self.msn = msn
         self.mark = mark
         self.prio = prio
+        self.oso = oco
 #------------------------止损平仓信号-----
 class Sgncst(object):
     def __init__(self, sgnna=None, sgntyp=None, bsdir=None, sdsp=None, mark=None, prio=0):
@@ -3921,7 +3935,7 @@ class Grst_Factor(object):
         self.sk_time = self.quotes['time'].values
         self.sk_atr = self.quotes['ATR'].values
 
-            # ----------------------------------------------
+        # ----------------------------------------------
         self.faset = setting['mfaset']
         # self.tdkopset = setting['tdkopset']
 

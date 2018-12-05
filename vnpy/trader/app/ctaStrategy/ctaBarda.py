@@ -17,16 +17,23 @@ class Barda(object):
         self.newsta = 0
         self.indexs = []
         self.onbar = onbar
+
     # ----------------------------------------------------------------------
     def newbar(self, bar, islastbar = False):
         for idtm in self.dat.index[self.crtnum:self.dat.index.size]:
+            if self.newsta>1:
+                return
             if bar.datetime > idtm or islastbar:
                 if type(self.onbar) != type(None):
                     self.onbar(self.crtnum)
-                self.crtnum = min(self.crtnum+1, self.dat.index.size-1)
-                self.crtidx = self.dat.index[self.crtnum]
-                self.crtbar = pd.Series(index=self.dat.columns)
-                self.newsta = 1
+                if self.crtnum >= self.dat.index.size-1:
+                    self.newsta = 2
+                    return
+                else:
+                    self.crtnum += 1
+                    self.crtidx = self.dat.index[self.crtnum]
+                    self.crtbar = pd.Series(index=self.dat.columns)
+                    self.newsta = 1
             else:
                 if type(self.crtbar) == type(None):
                     return

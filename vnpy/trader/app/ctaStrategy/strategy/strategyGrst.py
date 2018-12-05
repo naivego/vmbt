@@ -104,7 +104,7 @@ class GrstStrategy(CtaTemplate):
             try:
                 Period = self.setting['msdpset']['te']
                 self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-                plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
+                # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
                 self.Teda = Barda(trdvar, Period, self.tedaOnbar)
                 self.Teda.dat = self.vada0
                 self.tedaInit()
@@ -115,7 +115,7 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = self.setting['msdpset']['ma']
             self.vada1 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
+            # plotsdk(self.vada1, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
             self.Marst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada1, fid='ma', teda = self.Teda)
             self.Marst.grst_init(setting=setting, btconfig=TS_Config)
         except:
@@ -125,7 +125,7 @@ class GrstStrategy(CtaTemplate):
         try:
             Period = self.setting['msdpset']['su']
             self.vada2 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-            plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
+            # plotsdk(self.vada2, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
             self.Surst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada2, fid='su', teda = self.Teda)
             self.Surst.grst_init(setting=setting, btconfig=TS_Config)
         except:
@@ -315,8 +315,8 @@ class GrstStrategy(CtaTemplate):
         self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
 
         extfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']     # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        self.tedasgn(self.Surst.quotes, extfas, fid='su')
-        self.tedasgn(self.Marst.quotes, extfas, fid='ma')
+        self.tedasgn(self.Surst.quotes, extfas, fid='su', fillna = False)
+        self.tedasgn(self.Marst.quotes, extfas, fid='ma', fillna = False)
 
         afc = []
         for col in self.Teda.dat.columns:
@@ -342,7 +342,7 @@ class GrstStrategy(CtaTemplate):
 
         shwsufas = [fas + '_su' for fas in extfas]
 
-        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwmafas+shwsufas)
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwmafas+shwsufas, period= self.Teda.period)
 
     # ----------------------------------------------------------------------
     def onInit(self):
@@ -449,7 +449,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2014-03-05', '2017-04-15']
+    TS_Config['Time_Param'] = ['2016-03-05', '2017-04-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M'

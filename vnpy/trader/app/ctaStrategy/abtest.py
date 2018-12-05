@@ -28,10 +28,10 @@ from afactor import *
 from factosdp import *
 from ctaBase import *
 
-
+# ----------------------------------------------------------------------
 class Order(object):
     # ----------------------------------------------------------------------
-    def __init__(self, Symbol, OrdSize, OrdAmount, OrdPrice, OrdTyp, OrdTime, Offset, OrdSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, OrdFlg='NB'):
+    def __init__(self, Symbol, OrdSize, OrdAmount, OrdPrice, OrdTyp, OrdTime, Offset, OrdSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, Mso=None, OrdFlg='NB'):
         """Constructor"""
         self.Symbol = Symbol
         self.OrdSize = OrdSize
@@ -46,9 +46,10 @@ class Order(object):
         self.Psn = Psn
         self.Msn = Msn
         self.Ordid = Ordid
+        self.Mso = Mso
         self.OrdFlg = OrdFlg
 
-
+# ----------------------------------------------------------------------
 class Trdord(object):
     # ----------------------------------------------------------------------
     def __init__(self, Symbol, TrdSize, TrdPrice, TrdTime, Offset, Trdski=None, TrdSp = None, TrdTp = None, Psn=None, Msn = None, Trdid=None, TrdFlg='NB'):
@@ -235,36 +236,24 @@ class TSBacktest(object):
         self.Rt_Dir = TS_Config['Rt_Dir']
         self.DB_Rt_Dir = TS_Config['DB_Rt_Dir']
         self.Meta_Csv_Dir = self.Rt_Dir + '/vnpy/trader/' + 'CommodityMetaData.csv'
+
+        self.Trade_Date_DT = pd.read_csv(self.Rt_Dir + '/vnpy/trader/' + 'CHN_Date.csv').iloc[:, 0]
+
         self.Host = TS_Config['Host']
         self.Result_Dir = self.Rt_Dir + '/TSBT_results/'
         self.Symbol = TS_Config['Symbol']
         self.Var = self.Symbol
         self.Variety_List = [self.Symbol]
         self.MiniT = TS_Config['MiniT']
-
         self.Mida = None
-        # self.sk_open = sk_open
-        # self.sk_high = sk_high
-        # self.sk_low = sk_low
-        # self.sk_close = sk_close
-        # self.sk_volume = sk_volume
-        # self.sk_time = sk_time
-        # self.sk_atr = sk_atr
-        # self.sk_ckl = sk_ckl
 
-        # self.quotes = quotes
-        # self.sk_open = quotes['open'].values
-        # self.sk_high = quotes['high'].values
-        # self.sk_low = quotes['low'].values
-        # self.sk_close = quotes['close'].values
-        # self.sk_volume = quotes['volume'].values
-        # self.sk_time = quotes['time'].values
-        # self.sk_atr = quotes['ATR'].values
-        # self.sk_ckl = sk_ckl
+        Time_Param = TS_Config['Time_Param']
+        self.Trade_Date_DT = self.Trade_Date_DT[self.Trade_Date_DT >= Time_Param[0]]
+        self.Trade_Date_DT = self.Trade_Date_DT[self.Trade_Date_DT < Time_Param[1]].tolist()
 
-        self.Time_Param = TS_Config['Time_Param']
-        self.Start_Date = self.Time_Param[0]
-        self.End_Date = self.Time_Param[1]
+        self.Start_Date = self.Trade_Date_DT[0]
+        self.End_Date = self.Trade_Date_DT[-1]
+        self.Time_Param = [self.Start_Date, self.End_Date]
 
         self.Return_Panel = None
         self.Return_Metric = {}
@@ -282,12 +271,11 @@ class TSBacktest(object):
 
 
         # 回测相关
-        self.Trade_Date_DT = None
         Init_Capital = TS_Config['Init_Capital']
         self.Init_Capital = TS_Config['Init_Capital']
         self.SlipT = TS_Config['SlipT']
         self.Free_Money = self.Init_Capital
-        self.Networth = 1
+        self.Networth = self.Init_Capital
         self.Record_Frame = pd.DataFrame([[Init_Capital, 0, Init_Capital, 0, 0]], index=['Init'],
                                          columns=['Free', 'Margin', 'Networth', 'Max_Holding_Ratio','Net_Holding_Ratio'])
         self.Transaction_Rate = pd.Series([0.0] * len(self.Variety_List), index=self.Variety_List)
@@ -458,27 +446,27 @@ class TSBacktest(object):
         # ----------------------------------------------------------------------
 
 
-    def sendord(self, Soda, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, OrdFlg='NB'):
+    def sendord(self, Soda, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, Mso=None, OrdFlg='NB'):
         # print 'sendord:', Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg
         self.LogOrdsnum += 1
         # self.LogOrds.loc[self.LogOrdsnum, :] = [self.LogOrdsnum, Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg]
         self.write_to_csv_file(self.Ordslogfile, [self.LogOrdsnum, Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg])
         if OrdTyp == 'Mkt':
-            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, OrdFlg=OrdFlg)
+            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
             if Soda in self.OrdMkt_Dic:
                 self.OrdMkt_Dic[Soda].append(neword)
             else:
                 self.OrdMkt_Dic[Soda] = [neword]
 
         elif OrdTyp == 'Lmt':
-            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, OrdFlg=OrdFlg)
+            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
             if Soda in self.OrdLmt_Dic:
                 self.OrdLmt_Dic[Soda].append(neword)
             else:
                 self.OrdLmt_Dic[Soda] = [neword]
 
         elif OrdTyp == 'Stp':
-            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, OrdFlg=OrdFlg)
+            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
             if Soda in self.OrdStp_Dic:
                 self.OrdStp_Dic[Soda].append(neword)
             else:
@@ -787,8 +775,11 @@ class TSBacktest(object):
                 else:
                     print 'cross CurOrdMkt error: ', soda, bar.datetime
                     continue
-                for Ord in Ords:
+                for Ord in Ords[:]:
                     try:
+                        if Ord.Mso and Ord.Mso.trdsta >0:
+                            Ords.remove(Ord)
+                            continue
                         Var = Ord.Symbol
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
@@ -801,7 +792,11 @@ class TSBacktest(object):
                         else:
                             print 'cross CurOrdMkt error: ', Var, bar.datetime, ' trdp =', trdp
                             continue
+                        # -----------成交后将ord.Mso.trdsta置为1(已经成交)，并删除委托单
                         self.newtrd(Ord, trdsize, trdp, bar.datetime, ski)
+                        if Ord.Mso:
+                            Ord.Mso.trdsta = 1
+                        Ords.remove(Ord)
                         newtrdcnt += 1
                     except Exception, e:
                         print 'cross CurOrdMkt', e.message
@@ -814,8 +809,11 @@ class TSBacktest(object):
                 else:
                     print 'cross CurOrdStp error: ', soda, bar.datetime
                     continue
-                for Ord in Ords:
+                for Ord in Ords[:]:
                     try:
+                        if Ord.Mso and Ord.Mso.trdsta >0:
+                            Ords.remove(Ord)
+                            continue
                         Var = Ord.Symbol
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
@@ -828,7 +826,11 @@ class TSBacktest(object):
                             trdp = min(Ord.OrdPrice, bar.open)
                         else:
                             continue
+                        # -----------成交后将ord.Mso.trdsta置为1(已经成交)，并删除委托单
                         self.newtrd(Ord, trdsize, trdp, bar.datetime, ski)
+                        if Ord.Mso:
+                            Ord.Mso.trdsta = 1
+                        Ords.remove(Ord)
                         newtrdcnt += 1
                     except Exception, e:
                         print 'cross CurOrdStp', e.message
@@ -842,8 +844,11 @@ class TSBacktest(object):
                 else:
                     print 'cross CurOrdLmt error: ', soda, bar.datetime
                     continue
-                for Ord in Ords:
+                for Ord in Ords[:]:
                     try:
+                        if Ord.Mso and Ord.Mso.trdsta >0:
+                            Ords.remove(Ord)
+                            continue
                         Var = Ord.Symbol
                         if Ord.OrdSize != 0:
                             trdsize = Ord.OrdSize
@@ -856,7 +861,11 @@ class TSBacktest(object):
                             trdp = max(Ord.OrdPrice, bar.open)
                         else:
                             continue
+                        # -----------成交后将ord.Mso.trdsta置为1(已经成交)，并删除委托单
                         self.newtrd(Ord, trdsize, trdp, bar.datetime, ski)
+                        if Ord.Mso:
+                            Ord.Mso.trdsta = 1
+                        Ords.remove(Ord)
                         newtrdcnt += 1
                     except Exception, e:
                         print 'cross CurOrdLmt', e.message
@@ -1015,6 +1024,7 @@ class TSBacktest(object):
                     sdtp = kop.sdtp
                     psn = kop.psn
                     msn = kop.msn
+                    oco = kop.oco
                     if kop.bsdir > 0:
                         stp = sdop - sdsp if sdsp else None
                         tpl = sdtp - sdop if sdtp else None
@@ -1036,195 +1046,16 @@ class TSBacktest(object):
                     ifsize = round(iRsp / perstp) if perstp else None
 
                     entsize = min(ifsize, imsize) if ifsize else imsize
-
                     # entsize = imsize
+                    if entsize < 1:
+                        continue
                     entsize = entsize * kop.bsdir
                     ordtyp = kop.ordtyp
 
                     self.sendord(soda, var, entsize, 0, sdop, ordtyp, idtime, Offset='open', EntSki=iski, OrdSp=sdsp, OrdTp=sdtp, Psn=psn, Msn=msn,
-                                 OrdFlg=sgnna)
+                                 Mso=oco, OrdFlg=sgnna)
 
-        '''        
-        # --------------------------------------------------------平仓逻辑 止损 止盈
-        for pos in self.Position_List:
-            entski = pos.EntSki
-            entsize = pos.EntSize
-            entprice = pos.EntPrice
-            entflg  = pos.EntFlg
-            var     = pos.Symbol
-            psn = pos.Psn
-            msn = pos.Msn
 
-            sgnna =  entflg
-            sgntyp = sgnna.split('-')[0]
-            socna  = sgnna.split('-')[1]
-            soctyp = socna.split('_')[0]
-            sgnid  = sgntyp + '-' + soctyp
-            # -------------------止损单
-            sdsp = pos.EntSp
-            sdflg = pos.SpFlg
-            # --------------------------平保止损
-            pbsp = None
-            if psn:
-                if entsize>0 and sk_close[ski] >= entprice + psn * atr:
-                    pbsp = entprice + 0.5 * atr
-                elif entsize<0 and sk_close[ski] <= entprice - psn * atr:
-                    pbsp = entprice - 0.5 * atr
-
-            # --------------------------基于sads的移动止损
-            msp = None
-            if msn:
-                if entsize > 0 and rstdir>0 and crtupr:
-                    rsti = crtupr.values()[-1].rsti
-                    if rsti:
-                        msp = sk_open[rsti] - 0.4* atr
-                elif entsize < 0 and rstdir<0 and crtdwr:
-                    rsti = crtdwr.values()[-1].rsti
-                    if rsti:
-                        msp = sk_open[rsti] + 0.4* atr
-            # --------------------------信号止损
-            sgnbs = None
-            if 'tdk' in sgnna:
-                fsgnna = sgnna.replace('tdk', 'cst')
-                soctdl = None
-                if socna in intedsgn.bbls_dic:
-                    soctdl = intedsgn.bbls_dic[socna]['mdl']
-                elif socna in intedsgn.ttls_dic:
-                    soctdl = intedsgn.ttls_dic[socna]['mdl']
-                elif socna in intedsgn.sals_dic:
-                    soctdl = intedsgn.sals_dic[socna]
-
-                if soctdl:
-                    soctdl.trgsgn(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
-                    if fsgnna in soctdl.trpcsts:
-                        sgnbs = soctdl.trpcsts[fsgnna]
-            else:
-                # sgnbs = intedsgn.samsocsgn(self, sgnna, sgnost='cst', frech=0)
-                sgnbs = None #intedsgn.simsocsgn(sgnna, sgnost='cst', frech=0)
-
-            sgnsp = None
-            spflg = ''
-            if  sgnbs:
-                if sgnbs.mark and entski > sgnbs.mark:
-                    sgnsp = sgnbs.sdsp
-                    spflg = sgnbs.sgnna
-
-            #--------------------------------------
-            if entsize>0:
-                if not sdsp or ( pbsp and sdsp < pbsp ):
-                    sdsp = pbsp
-                    sdflg = 'pbsp'
-                if not sdsp or ( msp and sdsp < msp ):
-                    sdsp = msp
-                    sdflg = 'msp'
-                if not sdsp or ( sgnsp and sdsp < sgnsp ):
-                    sdsp = sgnsp
-                    sdflg = spflg
-
-            elif entsize<0:
-                if not sdsp or ( pbsp and sdsp > pbsp ):
-                    sdsp = pbsp
-                    sdflg = 'pbsp'
-                if not sdsp or ( msp and sdsp > msp ):
-                    sdsp = msp
-                    sdflg = 'msp'
-                if not sdsp or ( sgnsp and sdsp > sgnsp ):
-                    sdsp = sgnsp
-                    sdflg = spflg
-
-            if sdsp and abs(sdsp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
-                self.sendord(var, -entsize, 0, sdsp, 'Stp', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
-                pos.EntSp = sdsp
-                pos.SpFlg = sdflg
-            # --------------------限价平仓止盈单
-            sdtp = None
-
-            # sgnbs = intedsgn.simsocsgn(sgnna, sgnost='ctp', frech=0)
-            # if sgnbs:
-            #     sdtp = sgnbs.sdtp
-            #     sdflg = sgnbs.sgnna
-            # else:
-            #     sgnbs = intedsgn.difsocsgn(sgnna, sgnost='kop', frech=0)
-            #     if sgnbs:
-            #         sdtp = sgnbs.sdop
-            #         sdflg = sgnbs.sgnna
-
-            if True or not sdtp:
-                sdtp = pos.EntTp
-                sdflg = 'tp0'
-            if sdtp and abs(sdtp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
-                self.sendord(var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
-
-        # --------------------------------------------------------开仓逻辑
-        # if idtime == '2017-06-15':
-        #     print 'crttime:', idtime, ' crthigh:', ihigh
-        var = self.Var
-        for sgnna, sgnbs in sgnkops.iteritems():
-            sgnid = sgnna.split('_')[0]
-            if sgnid in self.SgnVarPos_Dic:
-                svpinf = self.SgnVarPos_Dic[sgnid]  # 策略持仓信息
-            else:
-                svpinf = None
-
-            sdop = sgnbs.sdop
-            sdsp = sgnbs.sdsp
-            sdtp = sgnbs.sdtp
-            psn = sgnbs.psn
-            msn = sgnbs.msn
-            if sgnbs.bsdir>0:
-                stp = sdop - sdsp if sdsp else None
-                tpl = sdtp - sdop if sdtp else None
-            else:
-                stp = -sdop + sdsp if sdsp else None
-                tpl = -sdtp + sdop if sdtp else None
-
-            if abs(sdop - sk_close[ski]) >  sk_atr[ski] * sk_close[ski] * 6:
-                continue
-
-            #--同类信号开仓次数不能超限
-            if svpinf and  svpinf.EntNum >= 1:
-                continue
-            # 已经开了tdk2/6则不再开tdk4
-            if sgnid == 'tdk4-bbl' and ('tdk2-bbl' in self.SgnVarPos_Dic or 'tdk6-bbl' in self.SgnVarPos_Dic):
-                continue
-            if sgnid == 'tdk4-ttl' and ('tdk2-ttl' in self.SgnVarPos_Dic or 'tdk6-ttl' in self.SgnVarPos_Dic):
-                continue
-            if sgnid == 'tdk4-sa' and ('tdk2-sa' in self.SgnVarPos_Dic or 'tdk6-sa' in self.SgnVarPos_Dic):
-                continue
-            if sgnid == 'tdk4-sd' and ('tdk2-sd' in self.SgnVarPos_Dic or 'tdk6-sd' in self.SgnVarPos_Dic):
-                continue
-            # 已经开了tdk1则不再开tdk3
-            if sgnid == 'tdk3-bbl' and 'tdk1-bbl' in self.SgnVarPos_Dic :
-                continue
-            if sgnid == 'tdk3-ttl' and 'tdk1-ttl' in self.SgnVarPos_Dic :
-                continue
-            if sgnid == 'tdk3-sa' and 'tdk1-sa' in self.SgnVarPos_Dic :
-                continue
-            if sgnid == 'tdk3-sd' and 'tdk1-sd' in self.SgnVarPos_Dic :
-                continue
-            etcn = 1
-            iMsp = self.Networth * 0.1 / etcn
-            if iMsp != iMsp:
-                continue
-            imsize = round(iMsp * 1.0 / sdop / self.Multiplier[var])  # 单次开仓最大用1倍杠杆
-            # 通过风险比例分配策略下单量
-            # iRsp = iMsp * 0.01   # 单次风险最大 1%
-            # perstp = stp * self.Multiplier[var] if stp else None
-            # ifsize = round(iRsp / perstp) if perstp else None
-
-            # entsize = min(ifsize, imsize) if ifsize else imsize
-
-            entsize = imsize
-            entsize = entsize * sgnbs.bsdir
-            ordtyp = sgnbs.ordtyp
-
-            self.sendord(var, entsize, 0, sdop, ordtyp, idtime, Offset='open', EntSki=iski, OrdSp=sdsp, OrdTp=sdtp, Psn= psn, Msn = msn, OrdFlg=sgnna)
-
-            # if isgn not in self.SgnVarLstSdop_Dic:
-            #     self.SgnVarLstSdop_Dic[isgn] = {}
-            # self.SgnVarLstSdop_Dic[isgn][var] = {'sdsize': entsize, 'sdop': sdop}
-            
-            '''
 
 
 

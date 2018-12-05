@@ -2383,7 +2383,7 @@ class Sgnkop(object):
         self.msn = msn
         self.mark = mark
         self.prio = prio
-        self.oso = oco
+        self.oco = oco
 #------------------------Ö¹ËðÆ½²ÖÐÅºÅ-----
 class Sgncst(object):
     def __init__(self, sgnna=None, sgntyp=None, bsdir=None, sdsp=None, mark=None, prio=0):

@@ -761,7 +761,7 @@ class TSBacktest(object):
             if idtm[11:13] =='15' and (nxtdtmhh =='09' or nxtdtmhh =='21'):
                 self.endOfDay(idtm, self.bar.close)
 
-        self.strategy.showfas()
+        # self.strategy.showfas()
 
     # -------------------------------------------
     def crossords(self, bar, ski=None):

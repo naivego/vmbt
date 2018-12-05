@@ -452,11 +452,11 @@ if __name__ == '__main__':
     TS_Config['Time_Param'] = ['2016-03-05', '2017-04-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
-    TS_Config['MiniT'] = 'M'
+    TS_Config['MiniT'] = 'M5'
 
 
     setting = {}
-    setting['msdpset'] = {'te': 'M15', 'ma': 'M30', 'su': 'd'}
+    setting['msdpset'] = {'te': 'M30', 'ma': 'M30', 'su': 'd'}
 
 
     # ---子策略ostp设置
@@ -501,12 +501,12 @@ if __name__ == '__main__':
     setting['tedaet'] = ['ma', 'su']
     setting['tdkopset'] = {
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 1},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
+            'sekop': {'sal': 1, 'rdl': 2, 'mdl': 2},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1},
-            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 1}
+            'sekop': {'sal': 1, 'rdl': 2, 'mdl': 2},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         }
     }
 
@@ -530,3 +530,4 @@ if __name__ == '__main__':
         engine.initStrategy(GrstStrategy, setting)
         engine.runBacktesting()
         engine.Show_SaveResult()
+        engine.strategy.showfas()

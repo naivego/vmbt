@@ -91,25 +91,35 @@ class GrstStrategy(CtaTemplate):
             ctaEngine.Mida = None
             print 'ctaEngine.Mida load_Dombar error'
         self.Teda = None
+        self.Terst = None
+        # --------------------------------------
+        self.vada0 = None
+        self.Karst = None
+        #--------------------------------------
         self.vada1 = None
         self.Marst = None
+        # --------------------------------------
         self.vada2 = None
         self.Surst = None
+
         self.tedaet = setting['tedaet']
 
+        self.tedast = setting['tedast']
+        if self.tedast:
+            Period = self.setting['msdpset'][self.tedast]
+            self.Teda = Barda(trdvar, Period, self.tedaOnbar)
+        else:
+            self.Teda = None
         self.skatetl = None
-
         # -------------------vada0
-        if len(self.tedaet)>0:
-            try:
-                Period = self.setting['msdpset']['te']
-                self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
-                # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
-                self.Teda = Barda(trdvar, Period, self.tedaOnbar)
-                self.Teda.dat = self.vada0
-                self.tedaInit()
-            except:
-                self.vada0 = None
+        try:
+            Period = self.setting['msdpset']['ka']
+            self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
+            # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
+            self.Karst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada0, fid='ka')
+            self.Karst.grst_init(setting=setting, btconfig=TS_Config)
+        except:
+            self.vada0 = None
 
         # -------------------vada1
         try:
@@ -131,65 +141,52 @@ class GrstStrategy(CtaTemplate):
         except:
             self.vada2 = None
 
+        self.tedaInit()
 
         print 'strategy init finished'
     #------------------------------------------------------------------------------------------
-    # 将 Marst和Surst中的信号映射到Teda中
+    # 将 Karst|Marst|Surst中的信号映射到Teda中
     def tedaInit(self):
-        print 'tedaInit'
+        print 'tedastInit'
         if type(self.Teda) is type(None):
             return
-        skdata = self.Teda.dat
-        self.sk_open = skdata['open'].values
-        self.sk_high = skdata['high'].values
-        self.sk_low = skdata['low'].values
-        self.sk_close = skdata['close'].values
-        self.sk_volume = skdata['volume'].values
-        self.sk_time = skdata.index
+        if self.tedast == 'ka':
+            self.Terst = self.Karst
+        elif self.tedast == 'ma':
+            self.Terst = self.Marst
+        elif self.tedast == 'su':
+            self.Terst = self.Surst
 
-        self.sk_ma = skdata['close'].rolling(10).mean()
-        self.sk_mid = skdata['close'].rolling(20).mean()
-        self.sk_std = skdata['close'].rolling(20).std()
-        self.sk_upl = self.sk_mid + 2 * self.sk_std
-        self.sk_dwl = self.sk_mid - 2 * self.sk_std
-
-        Dat_bar = pd.DataFrame(index=skdata.index)
-        Dat_bar['TR1'] = skdata['high'] - skdata['low']
-        Dat_bar['TR2'] = abs(skdata['high'] - skdata['close'].shift(1))
-        Dat_bar['TR3'] = abs(skdata['low'] - skdata['close'].shift(1))
-        TR = Dat_bar.loc[:, ['TR1', 'TR2', 'TR3']].max(axis=1)
-        ATR = TR.rolling(14).mean() / skdata['close'].shift(1)
-        self.sk_atr = ATR
-        self.sk_ckl = []
-
-
-        skbgi = 20
-        if self.sk_close.size <= skbgi:
-            self.crtski = 0
+        if not self.Terst:
+            print 'No Terst'
             return
-        for i in range(0, skbgi):
-            self.sk_ckl.append(None)
-        if self.sk_close[skbgi] >= self.sk_open[skbgi]:
-            ckli = 1
-            cksdh = self.sk_close[skbgi]
-            cksdl = self.sk_open[skbgi]
-            cklhp = self.sk_high[skbgi]
-            ckllp = self.sk_low[skbgi]
-        else:
-            ckli = -1
-            cksdl = self.sk_close[skbgi]
-            cksdh = self.sk_open[skbgi]
-            cklhp = self.sk_high[skbgi]
-            ckllp = self.sk_low[skbgi]
-        self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, skbgi))
-        self.crtski = skbgi
-        self.crtidtm = self.sk_time[skbgi]
+        self.Teda.dat = self.Terst.bada.dat
+        self.sk_open = self.Terst.sk_open
+        self.sk_high = self.Terst.sk_high
+        self.sk_low = self.Terst.sk_low
+        self.sk_close = self.Terst.sk_close
+        self.sk_volume = self.Terst.sk_volume
+        self.sk_time = self.Terst.sk_time
+
+        self.sk_ma = self.Terst.sk_ma
+        self.sk_mid = self.Terst.sk_mid
+        self.sk_std = self.Terst.sk_std
+        self.sk_upl = self.Terst.sk_upl
+        self.sk_dwl = self.Terst.sk_dwl
+        self.sk_atr = self.Terst.sk_atr
+        self.sk_ckl = self.Terst.sk_ckl
+
+        self.crtski = self.Terst.skbgi
+        self.crtidtm = self.sk_time[self.crtski]
 
         self.Teda.crtnum = self.crtski + 1
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
         if len(self.tedaet):
-            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl)
+            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                           self.sk_atr, self.sk_ckl)
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
+
+    # ------------------------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda上
@@ -216,57 +213,14 @@ class GrstStrategy(CtaTemplate):
     # ------------------------------------------------------------------------------------------
     # 将 Marst和Surst中的信号映射到Teda中
     def tedaOnbar(self, i):
-        print 'tedaOnbar'
+        print 'tedaOnbar: ', i
         self.crtski = i
-        sk_ckdtpst = 0.05  # 0.05倍平均涨幅作为涨跌柱子的公差
-        avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
-        if self.sk_ckl[i - 1][0] > 0:
-            if self.sk_close[i] >= self.sk_close[i - 1] - sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
-                        i - 1]:  # self.sk_open[i] - sk_ckdtpst * self.sk_atr[i]:  #
-                ckli = self.sk_ckl[i - 1][0] + 1
-                cksdh = max(self.sk_ckl[i - 1][1], self.sk_close[i])
-                cksdl = self.sk_ckl[i - 1][2]
-                cklhp = max(self.sk_ckl[i - 1][3], self.sk_high[i])
-                ckllp = min(self.sk_ckl[i - 1][4], self.sk_low[i])
-                cklbi = self.sk_ckl[i - 1][5]
-                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, cklbi))
-            else:
-                ckli = -1
-                cksdh = self.sk_ckl[i - 1][1]
-                cksdl = self.sk_close[i]
-                cklhp = max(self.sk_high[i], cksdh)
-                ckllp = self.sk_low[i]
-                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
-
-        else:
-            if self.sk_close[i] <= self.sk_close[i - 1] + sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
-                        i - 1]:  # self.sk_open[i] + sk_ckdtpst * self.sk_atr[i]:  #
-                ckli = self.sk_ckl[i - 1][0] - 1
-                cksdl = min(self.sk_ckl[i - 1][2], self.sk_close[i])
-                cksdh = self.sk_ckl[i - 1][1]
-                cklhp = max(self.sk_ckl[i - 1][3], self.sk_high[i])
-                ckllp = min(self.sk_ckl[i - 1][4], self.sk_low[i])
-                cklbi = self.sk_ckl[i - 1][5]
-                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, cklbi))
-
-            else:
-                ckli = 1
-                cksdl = self.sk_ckl[i - 1][2]
-                cksdh = self.sk_close[i]
-                cklhp = self.sk_high[i]
-                ckllp = min(self.sk_low[i], cksdl)
-                self.sk_ckl.append((ckli, cksdh, cksdl, cklhp, ckllp, i))
-
-        #----------------------------------------------------------------
-
         #----------------------------------------------------------------
         for fa in self.tedaet:
             if fa == 'ma':
                 farst = self.Marst
-
             elif fa == 'su':
                 farst = self.Surst
-
             else:
                 farst = None
 
@@ -407,16 +361,15 @@ class GrstStrategy(CtaTemplate):
         if bar.datetime >= '2017-07-05':
             print 'chk'
 
+        self.Karst.bada.newbar(bar, islastbar)
         self.Marst.bada.newbar(bar, islastbar)
         self.Surst.bada.newbar(bar, islastbar)
+
         if self.Teda:
             self.Teda.newbar(bar, islastbar)
 
         #----------------------------------
         # 撮合前，若有信号更新需要相应的将原来的信号清除， 涉及4种信号 maetl, masel, suetl, susel
-
-
-
         self.ctaEngine.crossords(bar, ski)
 
         # 发出状态更新事件
@@ -449,16 +402,15 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2016-03-05', '2017-04-15']
+    TS_Config['Time_Param'] = ['2015-03-05', '2017-04-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
 
-
     setting = {}
-    setting['msdpset'] = {'te': 'M30', 'ma': 'M30', 'su': 'd'}
-
-
+    setting['msdpset'] = {'ka': 'M15', 'ma': 'M30', 'su': 'd'}
+    setting['tedast']  = 'ka'
+    setting['tedaet'] = ['ma','su']
     # ---子策略ostp设置
     setting['ostpn_Dic'] = {
         'Grst':
@@ -494,19 +446,24 @@ if __name__ == '__main__':
     }
 
     # --------------------backtest------------------------
-    # mfaset = {'sal': True, 'rdl': True, 'mdl': True, 'upl': True, 'dwl': True, 'mir': True}
-    setting['mfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
-    setting['sfaset'] = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
+    setting['faset'] = {
+        'ka':{'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False},
+        'ma': {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False},
+        'su':{'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
+    }
 
-    setting['tedaet'] = ['ma', 'su']
     setting['tdkopset'] = {
+        'ka': {
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
+        },
         'ma': {
             'sekop': {'sal': 1, 'rdl': 2, 'mdl': 2},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'su': {
-            'sekop': {'sal': 1, 'rdl': 2, 'mdl': 2},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
         }
     }
 
@@ -528,6 +485,7 @@ if __name__ == '__main__':
         TS_Config['Symbol'] = var
         engine = TSBacktest(TS_Config)
         engine.initStrategy(GrstStrategy, setting)
+        engine.initbacktest()
         engine.runBacktesting()
         engine.Show_SaveResult()
         engine.strategy.showfas()

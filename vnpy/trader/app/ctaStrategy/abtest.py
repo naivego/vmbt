@@ -726,7 +726,6 @@ class TSBacktest(object):
 
     # -------------------------------------------
     def runBacktesting(self):
-        self.initbacktest()
         if type(self.Mida) == type(None):
             print 'Mida is None'
             return
@@ -743,15 +742,9 @@ class TSBacktest(object):
                 if k in self.bar.__dict__:
                     self.bar.__dict__[k] = ds[k]
 
-            # 1、 coross ords
-            # self.crossords(self.bar, ski= i)
-
-            # 2、 更新各级数据周期下的信号
+            # 更新各级数据周期下的信号并生成订单
             islastbar = (i == self.Mida.index.size-1)
             self.strategy.onBar(self.bar, ski= i, islastbar=islastbar)
-
-            # 3、 在指定的周期下修正信号生成订单
-
 
             #----------------------------------------------逐日盯市
             try:

@@ -3286,26 +3286,22 @@ class Grst_Factor(object):
 
             self.quotes['time'] = self.quotes.index
         Dat_bar  =self.quotes.loc[:]
-        '''
-        Dat_open = self.quotes.loc[:,'open']
-        Dat_high = self.quotes.loc[:, 'high']
-        Dat_low = self.quotes.loc[:, 'low']
-        Dat_close = self.quotes.loc[:, 'close']
-        
-        '''
 
         Dat_bar['TR1'] = Dat_bar['high']-Dat_bar['low']
         Dat_bar['TR2'] = abs(Dat_bar['high'] - Dat_bar['close'].shift(1))
         Dat_bar['TR3'] = abs(Dat_bar['low'] - Dat_bar['close'].shift(1))
         TR = Dat_bar.loc[:,['TR1', 'TR2','TR3']].max(axis=1)
         ATR= TR.rolling(14).mean()/Dat_bar['close'].shift(1)
-        self.quotes['ATR']=ATR
+        self.quotes['atr'] = ATR
+
         Ma = Dat_bar['close'].rolling(10).mean()
         Boll_mid = Dat_bar['close'].rolling(20).mean()
         Std = Dat_bar['close'].rolling(20).std()
         Boll_upl = Boll_mid + 2 * Std
         Boll_dwl = Boll_mid - 2 * Std
+
         self.quotes['ma'] = Ma
+        self.quotes['std'] = Std
         self.quotes['mid'] = Boll_mid
         self.quotes['upl'] = Boll_upl
         self.quotes['dwl'] = Boll_dwl
@@ -3384,9 +3380,6 @@ class Grst_Factor(object):
                 kcn += 1
         self.quotes.loc[:, 'dkcn'].fillna(method='pad', inplace=True)
         # print 'ok'
-
-
-
 
 
     # ----------------------
@@ -3919,11 +3912,9 @@ class Grst_Factor(object):
 
     # -----------------------------------------------------------
     def grst_init(self, setting = {}, btconfig = {}):
-
         self.crtski = 0
-        # self.mosi = 0 # 记录Mrst的当前sk相对subrst最新sk偏移的数目
-
         skbgi = 20  # 起始点
+        self.skbgi = skbgi
         self.teix = [0] * (skbgi + 1)  # 当前sk在teda周期下对应sk的索引
         self.tekn = [1] * (skbgi + 1)  # 记录当前sk包括多少个teda sk
 
@@ -3933,10 +3924,16 @@ class Grst_Factor(object):
         self.sk_close = self.quotes['close'].values
         self.sk_volume = self.quotes['volume'].values
         self.sk_time = self.quotes['time'].values
-        self.sk_atr = self.quotes['ATR'].values
+        self.sk_atr = self.quotes['atr'].values
+
+        self.sk_ma = self.quotes['ma'].values
+        self.sk_mid = self.quotes['mid'].values
+        self.sk_std = self.quotes['std'].values
+        self.sk_upl = self.quotes['upl'].values
+        self.sk_dwl = self.quotes['dwl'].values
 
         # ----------------------------------------------
-        self.faset = setting['mfaset']
+        self.faset = setting['faset'][self.fid]
         # self.tdkopset = setting['tdkopset']
 
         self.sk_ckl = []  # 与ck同步，由元组（ckli,cksdh,cksdl）构成的队列，记录当前的sk链所包括的sk数目和实体部分的区间

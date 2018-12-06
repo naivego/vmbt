@@ -2643,7 +2643,11 @@ class Intsgnbs(object):
         # 2、调整同源持仓的止损和目标
         # 3、根据信号源之间的优先关系调整异源信号开仓和持仓
         self.cmbkops = {}
-        xskl = self.skatl[fid]
+        if seet == 'se':
+            xskl = self.skatl[fid]
+        else:
+            xskl = self.skatl['te']
+
         kopsdic = xskl.trpkops
         sgni = xskl.sgni
         for sgn, kop in kopsdic.iteritems():

@@ -682,6 +682,11 @@ class TSBacktest(object):
         Rep_Dic['Sortino_Ratio'] = Asmreport['Sortino_Ratio']
         Rep_Dic['Calmar_Ratio'] = Asmreport['Calmar_Ratio']
         Rep_Dic['Remark'] = self.Remark
+        # 写入策略的特征参数
+        try:
+            Rep_Dic['Feargs'] = self.strategy.feargs_Dic
+        except:
+            Rep_Dic['Feargs'] = None
 
         with open(self.Result_Dir + '/' + self.testname + '_Report' + '.json', 'a') as Reportfile:
             json.dump(Rep_Dic, Reportfile, ensure_ascii=False, indent=4)

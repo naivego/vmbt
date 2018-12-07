@@ -72,6 +72,13 @@ class GrstStrategy(CtaTemplate):
         self.Ostpn_Dic = setting['ostpn_Dic']
         self.Sgnwt_Dic = setting['sgnwt_Dic']
         self.ctaEngine.intedsgn.tdkopset = setting['tdkopset']
+
+        # 保存特征参数，用于写入绩效报告中做归因分析
+        self.feargs_Dic = OrderedDict()
+        for fe in setting['feargs']:
+            if fe in setting:
+                self.feargs_Dic[fe] = setting[fe]
+
         # ----------------------------------------------------------------------数据列表设置
 
         DB_Rt_Dir = ctaEngine.DB_Rt_Dir
@@ -402,7 +409,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2015-03-05', '2017-04-15']
+    TS_Config['Time_Param'] = ['2013-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -458,7 +465,7 @@ if __name__ == '__main__':
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 2, 'mdl': 2},
+            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 1},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'su': {
@@ -467,6 +474,8 @@ if __name__ == '__main__':
         }
     }
 
+    #----特征参数，用于写入绩效报告做归因分析
+    setting['feargs'] = ['msdpset','tedast', 'tedaet','tdkopset']
 
     DB_Rt_Dir = TS_Config['DB_Rt_Dir']
     Host = TS_Config['Host']

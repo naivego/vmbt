@@ -275,7 +275,7 @@ class GrstStrategy(CtaTemplate):
         self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna = True)
         self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
 
-        extfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']     # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        extfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']     # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         self.tedasgn(self.Surst.quotes, extfas, fid='su', fillna = False)
         self.tedasgn(self.Marst.quotes, extfas, fid='ma', fillna = False)
 
@@ -461,7 +461,7 @@ if __name__ == '__main__':
 
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1},
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'ma': {
@@ -470,7 +470,7 @@ if __name__ == '__main__':
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         }
     }
 

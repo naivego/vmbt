@@ -1665,6 +1665,8 @@ def getsdi3(bi, bp, ski, skp, lkp, rkp):
 
 
 def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
+    # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
+    rklmt = [0.02, 0.4]
     tbl = socna.split('_')[0]
     bi = bi
     bp = bp
@@ -1673,7 +1675,7 @@ def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
     mrline = Trpline(trpb, trpd, atr, tbl)
-    if not (0.02 <= mrline.rk * mrline.dir <= 0.4):
+    if not (rklmt[0] <= mrline.rk * mrline.dir <= rklmt[1]):
         return None
     mrline.socna = socna
     mrline.fsocna = socna
@@ -1690,8 +1692,10 @@ def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
     return mrline
 
 def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
-    tbl = socna.split('_')[0]
-    tbl = 'bbl' if tbl=='sa' else 'ttl'
+    # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
+    rklmt = [0.02, 0.6]
+    tbl = socna.split('_')[1]
+    tbl = 'bbl' if tbl == 'sa' else 'ttl'
     bi = bi
     bp = bp
     ei = sad2.mi
@@ -1699,14 +1703,14 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
     saline = Trpline(trpb, trpd, atr, tbl)
-    if saline.rk * saline.dir <= 0.02:
-        ei = sad2.mi+1
+    if saline.rk * saline.dir < rklmt[0]:
+        ei = sad2.mi + 1
         ep = rkp
         trpd = Extrp(ei, ep, 0)
         saline = Trpline(trpb, trpd, atr, tbl)
-        if saline.rk * saline.dir <= 0.02:
+        if not (rklmt[0] < saline.rk * saline.dir < rklmt[1]):  # 斜率太小或太大
             return None
-    elif saline.rk * saline.dir > 0.9:
+    elif saline.rk * saline.dir > rklmt[1]:  # 斜率太大
         return None
 
     saline.socna = socna
@@ -3220,7 +3224,7 @@ class Rstsa(object):
         self.rstdir = rstdir
         self.trpi = trpi    # 转折起点 极值点
         self.rstbi = rstbi  # 转折确认点
-        self.rsti = None  # 回阻ski
+        self.rsti = None  # 回阻ski  # 从极值点到确认点之间实体最大的sk开盘价
         self.rstp = None  # 回阻skp
         self.mexi = None
         self.mexp = None

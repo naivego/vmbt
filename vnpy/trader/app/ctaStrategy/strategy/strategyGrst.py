@@ -461,7 +461,7 @@ if __name__ == '__main__':
 
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1},
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'ma': {

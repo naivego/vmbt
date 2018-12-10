@@ -461,16 +461,16 @@ if __name__ == '__main__':
 
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'ma': {
             'sekop': {'sal': 1, 'rdl': 1, 'mdl': 1},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
         }
     }
 

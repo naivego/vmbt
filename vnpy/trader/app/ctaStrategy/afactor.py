@@ -2711,10 +2711,14 @@ class Intsgnbs(object):
                 rek3s = sgnpos['rek3_'+seet]
                 for pos in rek3s:
                     if not pos.EntSp or (bek2op and ( pos.EntSp - bek2op ) * pos.EntSize < 0 ):
+                        # ÐÞ¸ÄÖ¹Ëð
                         pos.EntSp = bek2op
+                        pos.SpFlg = 'bek2op'
 
                     if not pos.EntTp or (bek1op and ( pos.EntTp - bek1op ) * pos.EntSize > 0 ):
+                        # ÐÞ¸ÄÖ¹Ó¯
                         pos.EntTp = bek1op
+                        pos.TpFlg = 'bek1op'
             except:
                 pass
 

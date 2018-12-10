@@ -916,7 +916,7 @@ class TSBacktest(object):
         else:
             crtdwr = None
 
-        self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)
+        self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并可能调整持仓的止损和止盈设置
         # 更新相应的发单信号
 
         self.OrdMkt_Dic[soda] = []
@@ -934,7 +934,7 @@ class TSBacktest(object):
                     psn = pos.Psn
                     msn = pos.Msn
                     sgnna = entflg
-                    # -------------------止损单
+                    # ===========================================================================止损单
                     sdsp = pos.EntSp
                     sdflg = pos.SpFlg
                     # --------------------------平保止损
@@ -998,19 +998,24 @@ class TSBacktest(object):
                             sdsp = sgnsp
                             sdflg = spflg
 
+                    if not sdflg:
+                        sdflg = 'sp0'
                     if sdsp and abs(sdsp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
-                        self.sendord(soda, var, -entsize, 0, sdsp, 'Stp', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
+                        spfid = 'pos_' + str(pos.Posid) + '_sp_' + sdflg
+                        self.sendord(soda, var, -entsize, 0, sdsp, 'Stp', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=spfid)
                         pos.EntSp = sdsp
                         pos.SpFlg = sdflg
-                    # --------------------限价平仓止盈单
-                    sdtp = None
 
-                    if True or not sdtp:
-                        sdtp = pos.EntTp
+                    # =========================================================================限价平仓止盈单
+                    sdtp = pos.EntTp
+                    sdflg = pos.TpFlg
+                    if not sdflg:
                         sdflg = 'tp0'
                     if sdtp and abs(sdtp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
-                        self.sendord(soda, var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=sdflg)
-
+                        tpfid = 'pos_' + str(pos.Posid) + '_tp_' + sdflg
+                        self.sendord(soda, var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=tpfid)
+                        pos.EntTp = sdtp
+                        pos.TpFlg = sdflg
         # --------------------------------------------------------开仓逻辑
         for socna, sgnkops in self.intedsgn.cmbkops.iteritems():
             for sgnid, koplist in sgnkops.iteritems():

@@ -278,6 +278,7 @@ class TSBacktest(object):
         self.Networth = self.Init_Capital
         self.Record_Frame = pd.DataFrame([[Init_Capital, 0, Init_Capital, 0, 0]], index=['Init'],
                                          columns=['Free', 'Margin', 'Networth', 'Max_Holding_Ratio','Net_Holding_Ratio'])
+        self.Record_FrameD = self.Record_Frame.copy()
         self.Transaction_Rate = pd.Series([0.0] * len(self.Variety_List), index=self.Variety_List)
         self.Transaction_Rate_Same_Day = pd.Series([0.0] * len(self.Variety_List), index=self.Variety_List)
         self.Transaction_Fee = pd.Series([0.0] * len(self.Variety_List), index=self.Variety_List)
@@ -320,6 +321,7 @@ class TSBacktest(object):
         self.Trdslogfile = ''
         self.CldPoslogfile = ''
         self.NetValuefile = ''
+        self.DNetValuefile = ''
         self.Remark = TS_Config['Remark']
 
     # ----------------------------------------------------------------------
@@ -417,7 +419,8 @@ class TSBacktest(object):
         self.strategy.onStart()
 
     # ----------------------------------------------------------------------
-    def endOfDay(self, dtm, setp):
+    def endOfDay(self, bar):
+        self.update_posinfo(bar, dayendcal =True)
         pass
         # self.posmkv = 0
         # self.unsetpnl = 0
@@ -551,7 +554,7 @@ class TSBacktest(object):
                 self.ShortEnt_Df.at[pos.Symbol, 'size'] -= pos.EntSize
                 self.ShortEnt_Df.at[pos.Symbol, 'mktvalue'] -= pos.MktValue
 
-    def update_posinfo(self, bar):  # 更新统计持仓、盈亏、资产、保证金、杠杆水平
+    def update_posinfo(self, bar, dayendcal = False):  # 更新统计持仓、盈亏、资产、保证金、杠杆水平
         sk_time  = bar.datetime
         idtime = sk_time[:10]
 
@@ -584,15 +587,15 @@ class TSBacktest(object):
                 self.ShortEnt_Df['mktvalue'] += pos.MktValue
 
             #------------------------------------------------------------统计各子策略中各品种持仓信息
-            sgnid = '_'.join(Flag.split('_')[0:2])
-            if sgnid in self.SgnVarPos_Dic:
+            sgnid = '_'.join(Flag.split('_')[0:2])          # sgnid = bek3_se | bek3_et
+            if sgnid in self.SgnVarPos_Dic:                 # SgnVarPos_Dic 基于信号类别来分组
                 self.SgnVarPos_Dic[sgnid].addpos(pos)
             else:
                 self.SgnVarPos_Dic[sgnid] = Sgnposinf(sgnid, Symbol)
                 self.SgnVarPos_Dic[sgnid].addpos(pos)
 
-            socna = Flag.split('-')[1]
-            if socna in self.SocPos_Dic:
+            socna = Flag.split('-')[1]                      # socna = ma_sa_73_0 | ma_rdl_73
+            if socna in self.SocPos_Dic:                    # SocPos_Dic 基于信号源来分组， {socna： {sgnid：[poslist]}
                 if sgnid in self.SocPos_Dic[socna]:
                     self.SocPos_Dic[socna][sgnid].append(pos)
                 else:
@@ -606,8 +609,10 @@ class TSBacktest(object):
         self.Networth = self.Init_Capital + self.PAL + self.CldPAL
         maxRatio = (self.Long_MktValue - self.Short_MktValue) / self.Networth
         netRatio = (self.MktValue) / self.Networth
-        self.Record_Frame.loc[idtime, :] = [self.Free_Money, self.Margin, self.Networth, maxRatio, netRatio]
-
+        if not dayendcal:
+            self.Record_Frame.loc[idtime, :] = [self.Free_Money, self.Margin, self.Networth, maxRatio, netRatio]
+        else:
+            self.Record_FrameD.loc[idtime, :] = [self.Free_Money, self.Margin, self.Networth, maxRatio, netRatio]
         if len(nullpvarlist)>0:
             nullpvarlist.insert(0, idtime)
             self.write_to_csv_file(r'D:\temp\nullvar.csv', nullpvarlist)
@@ -645,6 +650,7 @@ class TSBacktest(object):
 
     def Show_SaveResult(self):
         self.Record_Frame.to_csv(self.NetValuefile)
+        self.Record_FrameD.to_csv(self.DNetValuefile)
         PosID = 0
         with open(self.CldPoslogfile, 'ab+') as Csvfile:
             Csv_Writer = csv.writer(Csvfile, delimiter=',')
@@ -652,9 +658,9 @@ class TSBacktest(object):
             for pos in self.CldPosition_List:
                 PosID += 1
                 Csv_Writer.writerow(
-                    [PosID, pos.Symbol, pos.EntSize, pos.EntSize * pos.EntPrice, pos.EntPrice, pos.EntTime, pos.EntSp, pos.EntTp, pos.CldPrice, pos.CldTime, pos.PAL, pos.EntFlg, pos.CldFlg])
+                    [pos.Posid, pos.Symbol, pos.EntSize, pos.EntSize * pos.EntPrice, pos.EntPrice, pos.EntTime, pos.EntSp, pos.EntTp, pos.CldPrice, pos.CldTime, pos.PAL, pos.EntFlg, pos.CldFlg])
 
-        Networth_Series = self.Record_Frame['Networth']
+        Networth_Series = self.Record_FrameD['Networth']
         Asmreport = calc_metrics(Networth_Series)
 
         Fact_cfg_str = 'grst'
@@ -693,8 +699,8 @@ class TSBacktest(object):
 
         matplotlib.style.use('ggplot')
         fig, (ax1, ax2) = plt.subplots(2, sharex=True)
-        Res_Networth = self.Record_Frame.loc[:, ['Networth']]
-        Res_MkvRatio = self.Record_Frame.loc[:, ['Max_Holding_Ratio', 'Net_Holding_Ratio']]
+        Res_Networth = self.Record_FrameD.loc[:, ['Networth']]
+        Res_MkvRatio = self.Record_FrameD.loc[:, ['Max_Holding_Ratio', 'Net_Holding_Ratio']]
 
         Res_Networth.plot(ax=ax1, title='Total Networth')
         Res_MkvRatio.plot(ax=ax2, title='MkvRatio')
@@ -713,11 +719,13 @@ class TSBacktest(object):
         if not (os.path.exists(self.Result_Dir)):
             os.makedirs(self.Result_Dir)
 
-        self.testname = 'TS_' + strftime("%Y-%m-%d_%H_%M_%S", localtime())
+        self.testname = 'TS_' + strftime("%Y-%m-%d_%H_%M_%S", localtime())+ '_' + self.Var
         self.Ordslogfile = self.Result_Dir + '/' + self.testname + '_Ords' + '.csv'
         self.Trdslogfile = self.Result_Dir + '/' + self.testname + '_Trds' + '.csv'
         self.CldPoslogfile = self.Result_Dir + '/' + self.testname + '_CldPos' + '.csv'
         self.NetValuefile = self.Result_Dir + '/' + self.testname + '_NetValue' + '.csv'
+        self.DNetValuefile = self.Result_Dir + '/' + self.testname + '_DNetValue' + '.csv'
+
         self.write_to_csv_file(self.Ordslogfile, self.LogOrds.columns)
         self.write_to_csv_file(self.Trdslogfile, self.LogTrds.columns)
         self.write_to_csv_file(self.CldPoslogfile, self.LogCldPos.columns)
@@ -757,7 +765,7 @@ class TSBacktest(object):
             except:
                 nxtdtmhh = '09'
             if idtm[11:13] =='15' and (nxtdtmhh =='09' or nxtdtmhh =='21'):
-                self.endOfDay(idtm, self.bar.close)
+                self.endOfDay(self.bar)
 
         # self.strategy.showfas()
 
@@ -899,7 +907,7 @@ class TSBacktest(object):
         print 'backtest: trade on ', idtime
         iski  = ski
         ihigh = sk_high[ski]
-        if '2014-11-17' in idtime:
+        if '2015-01-10 00:30:00' in idtime:
             print ' iski:', iski, 'crtdate:', idtime[:10], 'crttime:', idtime
 
 
@@ -925,6 +933,8 @@ class TSBacktest(object):
         # --------------------------------------------------------平仓逻辑 止损 止盈
         for socna, sgnpos in self.SocPos_Dic.iteritems():
             for sgnid, poslist in sgnpos.iteritems():
+                if seet != sgnid.split('_')[-1]:
+                    continue
                 for pos in poslist:
                     entski = pos.EntSki
                     entsize = pos.EntSize

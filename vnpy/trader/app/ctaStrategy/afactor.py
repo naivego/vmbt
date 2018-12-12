@@ -2367,6 +2367,30 @@ class Skatline(object):
                     prio = 0
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
 
+    def sgnskatrssd(self, rstssd, i, eti=None, mosi=0, mosn=1):
+
+        # 信号命名格式： 信号类_se/et_信号点-tdl名称    eg: rsk2_se_65-ma_rdl_bbl_60, bek1_et_65-ma_sa_45_2
+        atr = self.sk_atr[i] * self.sk_close[i]
+        det = self.det
+        rdet = self.rdet
+        mdet = self.mdet
+        usrpsn = 4
+        usrmsn = 1
+
+        # bek1/bek2多选一成交信号
+        ocobek12 = Ocosta()
+        # rek2/rek3多选一成交信号
+        ocorek23 = Ocosta()
+
+        self.rek0 = None
+        self.rek1 = None
+        self.rek2 = None
+        self.rek3 = None
+        self.bek0 = None
+        self.bek1 = None
+        self.bek2 = None
+        self.bek3 = None
+        self.bek4 = None
 #---------------------------------------------------------------------------
 
 class Ocosta(object):

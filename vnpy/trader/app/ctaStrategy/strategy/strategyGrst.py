@@ -421,7 +421,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2013-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -482,7 +482,7 @@ if __name__ == '__main__':
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         }
     }
 

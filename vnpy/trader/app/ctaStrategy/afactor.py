@@ -1695,7 +1695,7 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
     rklmt = [0.02, 0.6]
     tbl = socna.split('_')[1]
-    tbl = 'bbl' if tbl=='sa' else 'ttl'
+    tbl = 'bbl' if tbl == 'sa' else 'ttl'
     bi = bi
     bp = bp
     ei = sad2.mi
@@ -1704,13 +1704,13 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     trpd = Extrp(ei, ep, 0)
     saline = Trpline(trpb, trpd, atr, tbl)
     if saline.rk * saline.dir < rklmt[0]:
-        ei = sad2.mi+1
+        ei = sad2.mi + 1
         ep = rkp
         trpd = Extrp(ei, ep, 0)
         saline = Trpline(trpb, trpd, atr, tbl)
         if not (rklmt[0] < saline.rk * saline.dir < rklmt[1]):  # 斜率太小或太大
             return None
-    elif saline.rk * saline.dir > rklmt[1]:     # 斜率太大
+    elif saline.rk * saline.dir > rklmt[1]:  # 斜率太大
         return None
 
     saline.socna = socna
@@ -2711,10 +2711,14 @@ class Intsgnbs(object):
                 rek3s = sgnpos['rek3_'+seet]
                 for pos in rek3s:
                     if not pos.EntSp or (bek2op and ( pos.EntSp - bek2op ) * pos.EntSize < 0 ):
+                        # 修改止损
                         pos.EntSp = bek2op
+                        pos.SpFlg = 'bek2op'
 
                     if not pos.EntTp or (bek1op and ( pos.EntTp - bek1op ) * pos.EntSize > 0 ):
+                        # 修改止盈
                         pos.EntTp = bek1op
+                        pos.TpFlg = 'bek1op'
             except:
                 pass
 
@@ -3224,7 +3228,7 @@ class Rstsa(object):
         self.rstdir = rstdir
         self.trpi = trpi    # 转折起点 极值点
         self.rstbi = rstbi  # 转折确认点
-        self.rsti = None  # 回阻ski # 从极值点到确认点之间实体最大的sk开盘价
+        self.rsti = None  # 回阻ski  # 从极值点到确认点之间实体最大的sk开盘价
         self.rstp = None  # 回阻skp
         self.mexi = None
         self.mexp = None

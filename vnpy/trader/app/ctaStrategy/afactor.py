@@ -2368,8 +2368,7 @@ class Skatline(object):
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
 
     def sgnskatrssd(self, rstssd, i, eti=None, mosi=0, mosn=1):
-
-        # 信号命名格式： 信号类_se/et_信号点-tdl名称    eg: rsk2_se_65-ma_rdl_bbl_60, bek1_et_65-ma_sa_45_2
+        # 信号命名格式： 信号类_se_信号点-信号源名称    eg: rsk1_se_65-ma_rstssna,
         atr = self.sk_atr[i] * self.sk_close[i]
         det = self.det
         rdet = self.rdet
@@ -2377,20 +2376,25 @@ class Skatline(object):
         usrpsn = 4
         usrmsn = 1
 
-        # bek1/bek2多选一成交信号
-        ocobek12 = Ocosta()
-        # rek2/rek3多选一成交信号
-        ocorek23 = Ocosta()
+        self.rsk1 = None
+        self.rsk2 = None
+        if rstssd.mexsta < 2:
+            self.rsk1 = rstssd.mexp
+        if self.rsk1:
+            sgnna = 'rsk1' + '_se_' + str(i) + '-' + rstssd.rssna
+            sgntyp = 'rsk1'
+            bsdir = rstssd.rstdir
+            sdop = self.rsk1
+            ordtyp = 'Lmt'
+            sdsp = rstssd.cexp - bsdir * det * atr
+            sdtp = None
+            psn = usrpsn
+            msn = usrmsn
+            mark = i
+            prio = 0
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
 
-        self.rek0 = None
-        self.rek1 = None
-        self.rek2 = None
-        self.rek3 = None
-        self.bek0 = None
-        self.bek1 = None
-        self.bek2 = None
-        self.bek3 = None
-        self.bek4 = None
+
 #---------------------------------------------------------------------------
 
 class Ocosta(object):
@@ -2573,14 +2577,19 @@ class Intsgnbs(object):
             skatsel.sgnskatl(pret_mdl, i)
 
         if len(upsas) > 0:
-            crtupr = upsas.values()[-1]
+            crtuprs = upsas.values()[-1]
         else:
-            crtupr = None
+            crtuprs = None
         if len(dwsas) > 0:
-            crtdwr = dwsas.values()[-1]
+            crtdwrs = dwsas.values()[-1]
         else:
-            crtdwr = None
+            crtdwrs = None
 
+        if 'rss' in kopset:
+            if crtuprs:
+                skatsel.sgnskatrssd(crtuprs, i)
+            if crtdwrs:
+                skatsel.sgnskatrssd(crtdwrs, i)
     # ------------------------------------------
     def etsgnbs(self, fid, i, eti, mosi = 0, mosn=1):
         kopset = self.tdkopset[fid]['etkop']
@@ -3243,7 +3252,8 @@ class Stepchain(object):
 # ---------------------------------------------------------------------------
 # 勺子形态
 class Rstsa(object):
-    def __init__(self, sk_open, sk_high, sk_low, sk_close, sk_atr, rstdir, trpi, rstbi):
+    def __init__(self, rssna, sk_open, sk_high, sk_low, sk_close, sk_atr, rstdir, trpi, rstbi):
+        self.rssna = rssna
         self.sk_open = sk_open
         self.sk_high = sk_high
         self.sk_low = sk_low
@@ -3260,6 +3270,7 @@ class Rstsa(object):
         self.cexi = None  # 勺子生长过程中勺柄次级最大实体根部
         self.cexp = None
         self.mexsta = 0  # sk 穿越回望区的状态标记 回望区 rssd: [cexp--mexp]
+        self.trdsta = 0  # 交易成交状态
 
     def getrst(self):
         msdki = self.trpi
@@ -3284,27 +3295,32 @@ class Rstsa(object):
         sdk = self.rstdir * (self.sk_close[ski] - self.sk_open[ski])
         if not self.mexi:
             msdi = self.rsti
+            self.mexp = self.rstp
             msdk = self.rstdir * (self.sk_close[self.rsti] - self.sk_open[self.rsti])
         else:
             msdi = self.mexi
             msdk = self.rstdir * (self.sk_close[self.mexi] - self.sk_open[self.mexi])
+
         if msdk < sdk:
             self.cexi = msdi
             self.cexp = self.mexp
             self.mexi = ski
             self.mexp = self.sk_open[ski]
             self.mexsta = 0
+            self.trdsta = 0
         else:
             if self.rstdir>0:  # self.mexsta % 2 == 0 sk在回望区上方  self.mexsta % 2 == 1 sk触及回望区
                 if self.mexsta % 2 == 0 and self.sk_low[ski] <= self.mexp:
-                    self.mexsta +=1
+                    self.mexsta += 1
+                    self.trdsta = 1
                 elif self.mexsta % 2 == 1 and self.sk_low[ski] > self.mexp:
-                    self.mexsta +=1
+                    self.mexsta += 1
             if self.rstdir<0:  # self.mexsta % 2 == 0 sk在回望区下方  self.mexsta % 2 == 1 sk触及回望区
                 if self.mexsta % 2 == 0 and self.sk_high[ski] >= self.mexp:
-                    self.mexsta +=1
+                    self.mexsta += 1
+                    self.trdsta = 1
                 elif self.mexsta % 2 == 1 and self.sk_high[ski] < self.mexp:
-                    self.mexsta +=1
+                    self.mexsta += 1
 
 
 class Grst_Factor(object):
@@ -3873,10 +3889,10 @@ class Grst_Factor(object):
                 if not self.crtsad.rsti:
                     self.crtsad.rsti = ski
                 crtrstna = self.dwrstsas.keys()[-1]
-                rstna = crtrstna + '_' + str(len(self.sads)-1)
-                nrstsa = Rstsa(sk_open, sk_high, sk_low, sk_close, sk_atr, self.rstdir, self.crtsad.mi, self.crtsad.ei)
+                rssna = crtrstna + '_' + str(len(self.sads.values()[-1]))
+                nrstsa = Rstsa(rssna, sk_open, sk_high, sk_low, sk_close, sk_atr, self.rstdir, self.crtsad.mi, self.crtsad.ei)
                 nrstsa.getrst()
-                self.dwrstsas[crtrstna][rstna] = nrstsa
+                self.dwrstsas[crtrstna][rssna] = nrstsa
 
         elif self.rstdir > 0:
             if not self.tepsad:
@@ -3961,10 +3977,10 @@ class Grst_Factor(object):
                 if not self.crtsad.rsti:
                     self.crtsad.rsti = ski
                 crtrstna = self.uprstsas.keys()[-1]
-                rstna = crtrstna + '_' + str(len(self.sads)-1)
-                nrstsa = Rstsa(sk_open, sk_high, sk_low, sk_close, sk_atr, self.rstdir, self.crtsad.mi, self.crtsad.ei)
+                rssna = crtrstna + '_' + str(len(self.sads.values()[-1]))
+                nrstsa = Rstsa(rssna, sk_open, sk_high, sk_low, sk_close, sk_atr, self.rstdir, self.crtsad.mi, self.crtsad.ei)
                 nrstsa.getrst()
-                self.uprstsas[crtrstna][rstna] = nrstsa
+                self.uprstsas[crtrstna][rssna] = nrstsa
 
     # -----------------------------------------------------------
     def updt_newbar(self):
@@ -5130,9 +5146,10 @@ class Grst_Factor(object):
             self.ctp = Extrp(i, self.sk_high[i], 1)
             if self.cbp:
                 self.botms.append(self.cbp)
-                nrstsa = Rstsa(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.rstdir, self.cbp.ski, i)
                 rstna = self.uprstsas.keys()[-1]
-                self.uprstsas[rstna][rstna] = nrstsa
+                rssna = rstna + '_' + str(len(self.sads.values()[-1]))
+                nrstsa = Rstsa(rssna, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.rstdir, self.cbp.ski, i)
+                self.uprstsas[rstna][rssna] = nrstsa
                 nrstsa.getrst()
                 nrstsa.uptmex(i)
 
@@ -5183,9 +5200,10 @@ class Grst_Factor(object):
             self.cbp = Extrp(i, self.sk_low[i], -1)
             if self.ctp:
                 self.tops.append(self.ctp)
-                nrstsa = Rstsa(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.rstdir, self.ctp.ski, i)
                 rstna = self.dwrstsas.keys()[-1]
-                self.dwrstsas[rstna][rstna] = nrstsa
+                rssna = rstna + '_' + str(len(self.sads.values()[-1]))
+                nrstsa = Rstsa(rssna, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.rstdir, self.ctp.ski, i)
+                self.dwrstsas[rstna][rssna] = nrstsa
                 nrstsa.getrst()
                 nrstsa.uptmex(i)
 

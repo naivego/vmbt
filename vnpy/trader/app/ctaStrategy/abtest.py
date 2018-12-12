@@ -586,7 +586,7 @@ class TSBacktest(object):
                 self.LongEnt_Df['mktvalue'] += pos.MktValue
                 self.ShortEnt_Df['mktvalue'] += pos.MktValue
 
-            #------------------------------------------------------------统计各子策略中各品种持仓信息
+            #------------------------------------------------------------统计各子策略中各信号类别持仓信息
             sgnid = '_'.join(Flag.split('_')[0:2])          # sgnid = bek3_se | bek3_et
             if sgnid in self.SgnVarPos_Dic:                 # SgnVarPos_Dic 基于信号类别来分组
                 self.SgnVarPos_Dic[sgnid].addpos(pos)
@@ -916,13 +916,13 @@ class TSBacktest(object):
 
         rstdir = xfas['rstdir']
         if len(xfas['upsas']) > 0:
-            crtupr = xfas['upsas'].values()[-1]
+            crtuprs = xfas['upsas'].values()[-1]
         else:
-            crtupr = None
+            crtuprs = None
         if len(xfas['dwsas']) > 0:
-            crtdwr = xfas['dwsas'].values()[-1]
+            crtdwrs = xfas['dwsas'].values()[-1]
         else:
-            crtdwr = None
+            crtdwrs = None
 
         self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并可能调整持仓的止损和止盈设置
         # 更新相应的发单信号
@@ -966,14 +966,14 @@ class TSBacktest(object):
                                 msp = sk_close[ski] + msn * atr
                         else:
                             # --------------------------基于sads的移动止损
-                            if entsize > 0 and rstdir > 0 and crtupr:
-                                rsti = crtupr.values()[-1].rsti
-                                if rsti:
-                                    msp = crtupr.values()[-1].mexp - 0.4 * atr
-                            elif entsize < 0 and rstdir < 0 and crtdwr:
-                                rsti = crtdwr.values()[-1].rsti
-                                if rsti:
-                                    msp = crtdwr.values()[-1].mexp + 0.4 * atr
+                            if entsize > 0 and rstdir > 0 and crtuprs:
+                                cexi = crtuprs.values()[-1].cexi
+                                if cexi:
+                                    msp = crtuprs.values()[-1].cexp - 0.4 * atr
+                            elif entsize < 0 and rstdir < 0 and crtdwrs:
+                                cexi = crtdwrs.values()[-1].cexi
+                                if cexi:
+                                    msp = crtdwrs.values()[-1].cexp + 0.4 * atr
 
                     # --------------------------信号止损
                     sgnbs = None

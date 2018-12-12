@@ -123,7 +123,7 @@ class GrstStrategy(CtaTemplate):
             Period = self.setting['msdpset']['ka']
             self.vada0 = load_Dombar(trdvar, Period, Time_Param, Datain=Datain, Host=Host, DB_Rt_Dir=DB_Rt_Dir, Dom='DomContract', Adj=True)
             # plotsdk(self.vada0, symbol=trdvar, disfactors=[''], has2wind=False, period=Period)
-            self.Karst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada0, fid='ka')
+            self.Karst = Grst_Factor(self.ctaEngine, trdvar, Period, self.vada0, fid='ka',teda = self.Teda)
             self.Karst.grst_init(setting=setting, btconfig=TS_Config)
         except:
             self.vada0 = None
@@ -188,7 +188,7 @@ class GrstStrategy(CtaTemplate):
 
         self.Teda.crtnum = self.crtski + 1
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
-        if len(self.tedaet):
+        if len(self.tedaet)>0:
             self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
                                                            self.sk_atr, self.sk_ckl)
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
@@ -196,8 +196,10 @@ class GrstStrategy(CtaTemplate):
     # ------------------------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------
-    # 将 Marst和Surst中的信号映射到Teda上
+    # 将Karst、 Marst和Surst中的信号映射到Teda上
     def tedasgn(self, sgndat, sgnids, fid='ma', fillna = False):
+        if self.tedast == fid:  # self.Teda.dat 就是 sgndat 不需要映射
+            return
         xsgns = [isgn + '_' + fid for isgn in sgnids]
         extqts = []
         for isgn in xsgns:
@@ -228,6 +230,8 @@ class GrstStrategy(CtaTemplate):
                 farst = self.Marst
             elif fa == 'su':
                 farst = self.Surst
+            elif fa == 'ka':
+                farst = self.Karst
             else:
                 farst = None
 
@@ -268,16 +272,21 @@ class GrstStrategy(CtaTemplate):
                 self.ctaEngine.sgntotrd(fa, 'et', i, farst.crtski, farst.teofi, farst.teofn)
     # ----------------------------------------------------------------------
     def showfas(self, showset = {}):
-
+        self.Karst.colfas()
         self.Marst.colfas()
         self.Surst.colfas()
 
-        self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna = True)
+        self.tedasgn(self.Karst.quotes, ['tekn'], fid='ka', fillna=True)
         self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
+        self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna=True)
 
-        extfas = ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']     # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        self.tedasgn(self.Surst.quotes, extfas, fid='su', fillna = False)
-        self.tedasgn(self.Marst.quotes, extfas, fid='ma', fillna = False)
+        kaextfas = ['disrst', 'sal', 'alp1', 'dlp1']
+        maextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        suextfas = ['disrst', 'sal', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+
+        self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
+        self.tedasgn(self.Marst.quotes, maextfas, fid='ma', fillna = False)
+        self.tedasgn(self.Surst.quotes, suextfas, fid='su', fillna = False)
 
         afc = []
         for col in self.Teda.dat.columns:
@@ -291,19 +300,22 @@ class GrstStrategy(CtaTemplate):
             for idtm in self.Teda.dat.index[1:]:
                 for col in afc:
                     fid = col.split('_')[-1]
-                    if np.isnan(self.Teda.dat.loc[idtm, col]):
-                        self.Teda.dat.loc[idtm, col] = self.Teda.dat.loc[fidtm, col] + self.Teda.dat.loc[
-                            fidtm, 'ak_' + col] * 1.0 / self.Teda.dat.loc[fidtm, 'tekn_'+fid]
+                    try:
+                        if np.isnan(self.Teda.dat.loc[idtm, col]):
+                            self.Teda.dat.loc[idtm, col] = self.Teda.dat.loc[fidtm, col] + self.Teda.dat.loc[
+                                fidtm, 'ak_' + col] * 1.0 / self.Teda.dat.loc[fidtm, 'tekn_'+fid]
+                    except:
+                        print 'np.nan'
                 fidtm = idtm
 
         self.Teda.dat.fillna(method='pad', inplace=True)
         quotesk = self.Teda.dat
 
-        shwmafas = [fas + '_ma' for fas in extfas]
+        shwkafas = [fas + '_ka' for fas in kaextfas]
+        shwmafas = [fas + '_ma' for fas in maextfas]
+        shwsufas = [fas + '_su' for fas in suextfas]
 
-        shwsufas = [fas + '_su' for fas in extfas]
-
-        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwmafas+shwsufas, period= self.Teda.period)
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas, period= self.Teda.period)
 
     # ----------------------------------------------------------------------
     def onInit(self):
@@ -417,7 +429,7 @@ if __name__ == '__main__':
     setting = {}
     setting['msdpset'] = {'ka': 'M15', 'ma': 'M30', 'su': 'd'}
     setting['tedast']  = 'ka'
-    setting['tedaet'] = ['ma','su']
+    setting['tedaet'] = ['ka','ma','su']
     # ---子策略ostp设置
     setting['ostpn_Dic'] = {
         'Grst':
@@ -461,16 +473,16 @@ if __name__ == '__main__':
 
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         },
         'ma': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
+            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 0},
+            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 1}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1}
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
         }
     }
 

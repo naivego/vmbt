@@ -969,11 +969,11 @@ class TSBacktest(object):
                             if entsize > 0 and rstdir > 0 and crtupr:
                                 rsti = crtupr.values()[-1].rsti
                                 if rsti:
-                                    msp = crtupr.values()[-1].rstp - 0.4 * atr
+                                    msp = crtupr.values()[-1].mexp - 0.4 * atr
                             elif entsize < 0 and rstdir < 0 and crtdwr:
                                 rsti = crtdwr.values()[-1].rsti
                                 if rsti:
-                                    msp = crtdwr.values()[-1].rstp + 0.4 * atr
+                                    msp = crtdwr.values()[-1].mexp + 0.4 * atr
 
                     # --------------------------信号止损
                     sgnbs = None

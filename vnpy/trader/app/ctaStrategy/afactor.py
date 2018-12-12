@@ -2367,6 +2367,30 @@ class Skatline(object):
                     prio = 0
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
 
+    def sgnskatrssd(self, rstssd, i, eti=None, mosi=0, mosn=1):
+
+        # 信号命名格式： 信号类_se/et_信号点-tdl名称    eg: rsk2_se_65-ma_rdl_bbl_60, bek1_et_65-ma_sa_45_2
+        atr = self.sk_atr[i] * self.sk_close[i]
+        det = self.det
+        rdet = self.rdet
+        mdet = self.mdet
+        usrpsn = 4
+        usrmsn = 1
+
+        # bek1/bek2多选一成交信号
+        ocobek12 = Ocosta()
+        # rek2/rek3多选一成交信号
+        ocorek23 = Ocosta()
+
+        self.rek0 = None
+        self.rek1 = None
+        self.rek2 = None
+        self.rek3 = None
+        self.bek0 = None
+        self.bek1 = None
+        self.bek2 = None
+        self.bek3 = None
+        self.bek4 = None
 #---------------------------------------------------------------------------
 
 class Ocosta(object):
@@ -3217,6 +3241,7 @@ class Stepchain(object):
 #---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
+# 勺子形态
 class Rstsa(object):
     def __init__(self, sk_open, sk_high, sk_low, sk_close, sk_atr, rstdir, trpi, rstbi):
         self.sk_open = sk_open
@@ -3225,13 +3250,16 @@ class Rstsa(object):
         self.sk_close = sk_close
         self.sk_atr = sk_atr
 
-        self.rstdir = rstdir
-        self.trpi = trpi    # 转折起点 极值点
+        self.rstdir = rstdir # 勺子方向
+        self.trpi = trpi    # 转折起点 极值点 勺子极点
         self.rstbi = rstbi  # 转折确认点
-        self.rsti = None  # 回阻ski  # 从极值点到确认点之间实体最大的sk开盘价
+        self.rsti = None  # 回阻ski  # 从极值点到确认点之间实体最大的sk开盘价 形成勺子时勺柄最大实体根部
         self.rstp = None  # 回阻skp
-        self.mexi = None
+        self.mexi = None  # 勺子生长过程中勺柄最大实体根部
         self.mexp = None
+        self.cexi = None  # 勺子生长过程中勺柄次级最大实体根部
+        self.cexp = None
+        self.mexsta = 0  # sk 穿越回望区的状态标记 回望区 rssd: [cexp--mexp]
 
     def getrst(self):
         msdki = self.trpi
@@ -3243,20 +3271,40 @@ class Rstsa(object):
                 msdk = sdk
         self.rsti = msdki
         self.rstp = self.sk_open[self.rsti]
+        self.mexi = self.rsti
+        self.mexp = self.rstp
+        self.mexsta = 0
+        self.cexi = self.trpi
+        if self.rstdir>0:
+            self.cexp = self.sk_low[self.cexi]
+        else:
+            self.cexp = self.sk_high[self.cexi]
 
     def uptmex(self, ski):
         sdk = self.rstdir * (self.sk_close[ski] - self.sk_open[ski])
         if not self.mexi:
+            msdi = self.rsti
             msdk = self.rstdir * (self.sk_close[self.rsti] - self.sk_open[self.rsti])
         else:
+            msdi = self.mexi
             msdk = self.rstdir * (self.sk_close[self.mexi] - self.sk_open[self.mexi])
         if msdk < sdk:
+            self.cexi = msdi
+            self.cexp = self.mexp
             self.mexi = ski
             self.mexp = self.sk_open[ski]
+            self.mexsta = 0
         else:
-            if not self.mexi:
-                self.mexi = self.rsti
-                self.mexp = self.rstp
+            if self.rstdir>0:  # self.mexsta % 2 == 0 sk在回望区上方  self.mexsta % 2 == 1 sk触及回望区
+                if self.mexsta % 2 == 0 and self.sk_low[ski] <= self.mexp:
+                    self.mexsta +=1
+                elif self.mexsta % 2 == 1 and self.sk_low[ski] > self.mexp:
+                    self.mexsta +=1
+            if self.rstdir<0:  # self.mexsta % 2 == 0 sk在回望区下方  self.mexsta % 2 == 1 sk触及回望区
+                if self.mexsta % 2 == 0 and self.sk_high[ski] >= self.mexp:
+                    self.mexsta +=1
+                elif self.mexsta % 2 == 1 and self.sk_high[ski] < self.mexp:
+                    self.mexsta +=1
 
 
 class Grst_Factor(object):
@@ -3269,7 +3317,7 @@ class Grst_Factor(object):
         self.bada.dat = skdata
         self.teda = teda
 
-        self.quotes = skdata.loc[:]
+        self.quotes = skdata.loc[:] # 注意 self.quotes 和 skdata是同一个 dataframe，即self.quotes就是self.vadax
         if not sdt:
             Column0 = self.quotes.columns[0]
             if '_' not in Column0:
@@ -5203,6 +5251,7 @@ class Grst_Factor(object):
                 # self.sk_rstspl.append(self.sk_rstspl[-1])
                 # self.sk_rstsph.append(self.sk_rstsph[-1])
 
+            #------------------更新 uprstsas 和 dwrstsas
             if self.rstdir > 0:
                 if len(self.uprstsas) > 0 and len(self.uprstsas.values()[-1].values()) > 0:
                     self.uprstsas.values()[-1].values()[-1].uptmex(i)

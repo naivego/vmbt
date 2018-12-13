@@ -189,7 +189,7 @@ class GrstStrategy(CtaTemplate):
         self.Teda.crtnum = self.crtski + 1
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
         if len(self.tedaet)>0:
-            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+            self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.tedast, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
                                                            self.sk_atr, self.sk_ckl)
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
@@ -282,7 +282,7 @@ class GrstStrategy(CtaTemplate):
 
         kaextfas = ['disrst', 'sal', 'alp1', 'dlp1']
         maextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        suextfas = ['disrst', 'sal', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        suextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
         self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
         self.tedasgn(self.Marst.quotes, maextfas, fid='ma', fillna = False)
@@ -471,18 +471,19 @@ if __name__ == '__main__':
         'su':{'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
     }
 
+    # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 0},
-            'etkop': {'sal': 0, 'rdl': 1, 'mdl': 1}
+            'sekop': {'sal': 3, 'rdl': 3, 'mdl': 0, 'rss':0},
+            'etkop': {'sal': 3, 'rdl': 3, 'mdl': 0, 'rss':0}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0},
+            'etkop': {'sal': 3, 'rdl': 3, 'mdl': 0, 'rss':0}
         }
     }
 

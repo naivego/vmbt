@@ -885,8 +885,7 @@ class TSBacktest(object):
         if fid not in self.intedsgn.fas:
             return
         xfas = self.intedsgn.fas[fid]
-        # --根据因子信号设置委托单
-        if seet == 'et':
+        if seet=='et':
             xskl = self.intedsgn.skatl['te']
         else:
             xskl = self.intedsgn.skatl[fid]
@@ -902,6 +901,15 @@ class TSBacktest(object):
         sk_ckl = xskl.sk_ckl
         kopsdic = xskl.trpkops
 
+        etskl = self.intedsgn.skatl['te']
+        etfid = etskl.fid
+        etfas = self.intedsgn.fas[etfid]
+        et_close = etskl.sk_close
+        et_atr = xskl.sk_atr
+        if eti>0:
+            eatr = et_atr[eti] * et_close[eti]
+        else:
+            eatr = atr
         #-----------------------------------------------------------------
         idtime = sk_time[ski]
         print 'backtest: trade on ', idtime
@@ -910,19 +918,29 @@ class TSBacktest(object):
         if '2015-01-10 00:30:00' in idtime:
             print ' iski:', iski, 'crtdate:', idtime[:10], 'crttime:', idtime
 
-
         self.SdCld_dic = {}
         self.SdOpen_dic = {}
 
-        rstdir = xfas['rstdir']
+        # --------------------------外部信号et
+        etrstdir = etfas['rstdir']
+        if len(etfas['upsas']) > 0:
+            etuprs = etfas['upsas'].values()[-1]
+        else:
+            etuprs = None
+        if len(etfas['dwsas']) > 0:
+            etdwrs = etfas['dwsas'].values()[-1]
+        else:
+            etdwrs = None
+        # -------------------------本部信号se
+        serstdir = xfas['rstdir']
         if len(xfas['upsas']) > 0:
-            crtuprs = xfas['upsas'].values()[-1]
+            seuprs = xfas['upsas'].values()[-1]
         else:
-            crtuprs = None
+            seuprs = None
         if len(xfas['dwsas']) > 0:
-            crtdwrs = xfas['dwsas'].values()[-1]
+            sedwrs = xfas['dwsas'].values()[-1]
         else:
-            crtdwrs = None
+            sedwrs = None
 
         self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并可能调整持仓的止损和止盈设置
         # 更新相应的发单信号
@@ -958,7 +976,7 @@ class TSBacktest(object):
                     # --------------------------移动止损
                     msp = None
                     if msn:
-                        if msn>1:
+                        if msn>=1:
                             # --------------------------简单移动止损
                             if entsize > 0 and sdsp and sdsp < sk_close[ski] - msn * atr and entprice < sk_close[ski] - msn * atr:
                                 msp = sk_close[ski] - msn * atr
@@ -966,14 +984,31 @@ class TSBacktest(object):
                                 msp = sk_close[ski] + msn * atr
                         else:
                             # --------------------------基于sads的移动止损
-                            if entsize > 0 and rstdir > 0 and crtuprs:
-                                cexi = crtuprs.values()[-1].cexi
-                                if cexi:
-                                    msp = crtuprs.values()[-1].cexp - 0.4 * atr
-                            elif entsize < 0 and rstdir < 0 and crtdwrs:
-                                cexi = crtdwrs.values()[-1].cexi
-                                if cexi:
-                                    msp = crtdwrs.values()[-1].cexp + 0.4 * atr
+                            # 1、rss开仓信号止损采用本身周期的Rstsa移动止损
+                            # 2、se|et开仓信号止损采用外部周期的Rstsa移动止损
+                            if 'rsk' in sgnid.split('_')[0]:
+                                rstdir  = serstdir
+                                crtuprs = seuprs
+                                crtdwrs = sedwrs
+                                catr = atr
+                            else:
+                                rstdir  = etrstdir
+                                crtuprs = etuprs
+                                crtdwrs = etdwrs
+                                catr = eatr
+
+                            if entsize > 0 and rstdir > 0 and crtuprs and len(crtuprs)>0:
+                                upssd = crtuprs.values()[-1]
+                                if upssd.mexsta >= 2:
+                                    msp = upssd.mexp - 0.4 * catr
+                                else:
+                                    msp = upssd.cexp - 0.4 * catr
+                            elif entsize < 0 and rstdir < 0 and crtdwrs and len(crtdwrs) > 0:
+                                dwssd = crtdwrs.values()[-1]
+                                if dwssd.mexsta >= 2:
+                                    msp = dwssd.mexp + 0.4 * catr
+                                else:
+                                    msp = dwssd.cexp + 0.4 * catr
 
                     # --------------------------信号止损
                     sgnbs = None

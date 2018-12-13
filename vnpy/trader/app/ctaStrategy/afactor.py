@@ -1728,7 +1728,8 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     return saline
 
 class Skatline(object):
-    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, setting =None):
+    def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, setting =None):
+        self.fid = fid
         if setting is None:
             self.det = 0.2
             self.rdet = 0.05
@@ -2513,8 +2514,7 @@ class Intsgnbs(object):
         bbls_dic = xfas['bbls']
         ttls_dic = xfas['ttls']
         sals_dic = xfas['sals']
-        upsas = xfas['upsas']
-        dwsas = xfas['dwsas']
+
 
         skatsel.trpkops = {}
         if skatsel.sgni != i:
@@ -2550,61 +2550,61 @@ class Intsgnbs(object):
             pret_rdl = ttls_dic.values()[-2]['rdl']
             pret_mdl = ttls_dic.values()[-2]['mdl']
 
-        if 'sal' in kopset and  kopset['sal'] >=1 and crtsal:
+        if 'sal' in kopset and  (kopset['sal'] ==1 or kopset['sal'] ==3) and crtsal:
             skatsel.sgnskatl(crtsal, i)
-        if 'sal' in kopset and  kopset['sal'] >=2 and presal:
+        if 'sal' in kopset and  (kopset['sal'] ==2 or kopset['sal'] ==3) and presal:
             skatsel.sgnskatl(presal, i)
         # ----------------------------------
-        if 'rdl' in kopset and  kopset['rdl'] >=1 and crtb_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==1 or kopset['rdl'] ==3) and crtb_rdl:
             skatsel.sgnskatl(crtb_rdl, i)
-        if 'rdl' in kopset and  kopset['rdl'] >=1 and crtt_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==1 or kopset['rdl'] ==3) and crtt_rdl:
             skatsel.sgnskatl(crtt_rdl, i)
         #----------------------------------
-        if 'rdl' in kopset and  kopset['rdl'] >=2 and preb_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==2 or kopset['rdl'] ==3) and preb_rdl:
             skatsel.sgnskatl(preb_rdl, i)
-        if 'rdl' in kopset and  kopset['rdl'] >=2 and pret_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==2 or kopset['rdl'] ==3) and pret_rdl:
             skatsel.sgnskatl(pret_rdl, i)
 
         # ----------------------------------
-        if 'mdl' in kopset and  kopset['mdl'] >=1 and crtb_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==1 or kopset['mdl'] ==3) and crtb_mdl:
             skatsel.sgnskatl(crtb_mdl, i)
-        if 'mdl' in kopset and  kopset['mdl'] >=1 and crtt_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==1 or kopset['mdl'] ==3) and crtt_mdl:
             skatsel.sgnskatl(crtt_mdl, i)
         # ----------------------------------
-        if 'mdl' in kopset and  kopset['mdl'] >=2 and preb_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3) and preb_mdl:
             skatsel.sgnskatl(preb_mdl, i)
-        if 'mdl' in kopset and  kopset['mdl'] >=2 and pret_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3) and pret_mdl:
             skatsel.sgnskatl(pret_mdl, i)
 
+        upsas = xfas['upsas']
+        dwsas = xfas['dwsas']
         if len(upsas) > 0:
-            crtuprs = upsas.values()[-1]
+            crtuprs = upsas.values()[-1].values()
         else:
             crtuprs = None
         if len(dwsas) > 0:
-            crtdwrs = dwsas.values()[-1]
+            crtdwrs = dwsas.values()[-1].values()
         else:
             crtdwrs = None
 
-        if 'rss' in kopset:
-            if crtuprs:
-                skatsel.sgnskatrssd(crtuprs, i)
-            if crtdwrs:
-                skatsel.sgnskatrssd(crtdwrs, i)
+        if 'rss' in kopset and kopset['rss'] >=1:
+            if crtuprs and len(crtuprs)>0:
+                skatsel.sgnskatrssd(crtuprs[-1], i)
+            if crtdwrs and len(crtdwrs)>0:
+                skatsel.sgnskatrssd(crtdwrs[-1], i)
     # ------------------------------------------
     def etsgnbs(self, fid, i, eti, mosi = 0, mosn=1):
         kopset = self.tdkopset[fid]['etkop']
         if fid not in self.fas:
             return
         xfas = self.fas[fid]
-        skatetl = self.skatl['te']
-
         rstdir = xfas['rstdir']
         bbls_dic = xfas['bbls']
         ttls_dic = xfas['ttls']
         sals_dic = xfas['sals']
-        upsas = xfas['upsas']
-        dwsas = xfas['dwsas']
 
+        skatetl = self.skatl['te']
+        etfid = skatetl.fid
         if skatetl.sgni != i:
             skatetl.trpkops = {}
             skatetl.sgni = i
@@ -2639,40 +2639,48 @@ class Intsgnbs(object):
             pret_rdl = ttls_dic.values()[-2]['rdl']
             pret_mdl = ttls_dic.values()[-2]['mdl']
 
-        if 'sal' in kopset and  kopset['sal'] >=1 and crtsal:
+        if 'sal' in kopset and (kopset['sal'] ==1 or kopset['sal'] ==3)  and crtsal:
             skatetl.sgnskatl(crtsal, i, eti, mosi, mosn)
-        if 'sal' in kopset and  kopset['sal'] >=2 and presal:
+        if 'sal' in kopset and (kopset['sal'] ==2 or kopset['sal'] ==3)  and presal:
             skatetl.sgnskatl(presal, i, eti, mosi, mosn)
         # ----------------------------------
-        if 'rdl' in kopset and  kopset['rdl'] >=1 and crtb_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==1 or kopset['rdl'] ==3)  and crtb_rdl:
             skatetl.sgnskatl(crtb_rdl, i, eti, mosi, mosn)
-        if 'rdl' in kopset and  kopset['rdl'] >=1 and crtt_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==1 or kopset['rdl'] ==3)  and crtt_rdl:
             skatetl.sgnskatl(crtt_rdl, i, eti, mosi, mosn)
         # ----------------------------------
-        if 'rdl' in kopset and  kopset['rdl'] >=2 and preb_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==2 or kopset['rdl'] ==3)  and preb_rdl:
             skatetl.sgnskatl(preb_rdl, i, eti, mosi, mosn)
-        if 'rdl' in kopset and  kopset['rdl'] >=2 and pret_rdl:
+        if 'rdl' in kopset and (kopset['rdl'] ==2 or kopset['rdl'] ==3)  and pret_rdl:
             skatetl.sgnskatl(pret_rdl, i, eti, mosi, mosn)
         # ----------------------------------
-        if 'mdl' in kopset and  kopset['mdl'] >=1 and crtb_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==1 or kopset['mdl'] ==3)  and crtb_mdl:
             skatetl.sgnskatl(crtb_mdl, i, eti, mosi, mosn)
-        if 'mdl' in kopset and  kopset['mdl'] >=1 and crtt_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==1 or kopset['mdl'] ==3)  and crtt_mdl:
             skatetl.sgnskatl(crtt_mdl, i, eti, mosi, mosn)
         # ----------------------------------
-        if 'mdl' in kopset and  kopset['mdl'] >=2 and preb_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3)  and preb_mdl:
             skatetl.sgnskatl(preb_mdl, i, eti, mosi, mosn)
-        if 'mdl' in kopset and  kopset['mdl'] >=2 and pret_mdl:
+        if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3)  and pret_mdl:
             skatetl.sgnskatl(pret_mdl, i, eti, mosi, mosn)
 
+        etfas=self.fas[etfid]
+        upsas = etfas['upsas']
+        dwsas = etfas['dwsas']
         if len(upsas) > 0:
-            crtupr = upsas.values()[-1]
+            crtuprs = upsas.values()[-1].values()
         else:
-            crtupr = None
+            crtuprs = None
         if len(dwsas) > 0:
-            crtdwr = dwsas.values()[-1]
+            crtdwrs = dwsas.values()[-1].values()
         else:
-            crtdwr = None
+            crtdwrs = None
 
+        if 'rss' in kopset and kopset['rss'] >=1:
+            if crtuprs and len(crtuprs) > 0:
+                skatetl.sgnskatrssd(crtuprs[-1], i)
+            if crtdwrs and len(crtdwrs) > 0:
+                skatetl.sgnskatrssd(crtdwrs[-1], i)
 
     # ------------------------------------------根据新开仓信号和持仓整合新进场和出场信号
     def cmbsgn(self, fid, seet, socpos_dic):
@@ -4121,7 +4129,7 @@ class Grst_Factor(object):
         self.sk_sgn = []
 
 
-        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl)
+        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl)
         self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:

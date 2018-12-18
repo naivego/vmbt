@@ -3341,7 +3341,7 @@ class Grst_Factor(object):
         self.bada.dat = skdata
         self.teda = teda
 
-        self.quotes = skdata.loc[:] # 注意 self.quotes 和 skdata是同一个 dataframe，即self.quotes就是self.vadax
+        self.quotes = skdata.loc[:] # 注意 self.quotes 和 skdata (self.bada.dat)是同一个 dataframe，即self.quotes就是self.vadax
         if not sdt:
             Column0 = self.quotes.columns[0]
             if '_' not in Column0:

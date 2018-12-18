@@ -167,6 +167,9 @@ class GrstStrategy(CtaTemplate):
         if not self.Terst:
             print 'No Terst'
             return
+
+        # self.Teda.dat 共享了 ka|ma|su 的 bada.dat （也同quotes），但 self.Teda 自己维护了除.dat以外的其他属性
+
         self.Teda.dat = self.Terst.bada.dat
         self.sk_open = self.Terst.sk_open
         self.sk_high = self.Terst.sk_high
@@ -188,7 +191,7 @@ class GrstStrategy(CtaTemplate):
 
         self.Teda.crtnum = self.crtski + 1
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
-        if len(self.tedaet)>0:
+        if len(self.tedaet)>0:    # self.tedaet = ['ka','ma','su']
             self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.tedast, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
                                                            self.sk_atr, self.sk_ckl)
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
@@ -270,52 +273,7 @@ class GrstStrategy(CtaTemplate):
 
                 self.ctaEngine.intedsgn.etsgnbs(fa, i, farst.crtski, farst.teofi, farst.teofn)
                 self.ctaEngine.sgntotrd(fa, 'et', i, farst.crtski, farst.teofi, farst.teofn)
-    # ----------------------------------------------------------------------
-    def showfas(self, showset = {}):
-        self.Karst.colfas()
-        self.Marst.colfas()
-        self.Surst.colfas()
 
-        self.tedasgn(self.Karst.quotes, ['tekn'], fid='ka', fillna=True)
-        self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
-        self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna=True)
-
-        kaextfas = ['disrst', 'sal', 'alp1', 'dlp1']
-        maextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        suextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-
-        self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
-        self.tedasgn(self.Marst.quotes, maextfas, fid='ma', fillna = False)
-        self.tedasgn(self.Surst.quotes, suextfas, fid='su', fillna = False)
-
-        afc = []
-        for col in self.Teda.dat.columns:
-            if 'ak_' + col in self.Teda.dat.columns:
-                afc.append(col)
-
-        for col in afc:
-            self.Teda.dat.loc[:, 'ak_' + col].fillna(method='pad', inplace=True)
-        if len(afc) > 0:
-            fidtm = self.Teda.dat.index[0]
-            for idtm in self.Teda.dat.index[1:]:
-                for col in afc:
-                    fid = col.split('_')[-1]
-                    try:
-                        if np.isnan(self.Teda.dat.loc[idtm, col]):
-                            self.Teda.dat.loc[idtm, col] = self.Teda.dat.loc[fidtm, col] + self.Teda.dat.loc[
-                                fidtm, 'ak_' + col] * 1.0 / self.Teda.dat.loc[fidtm, 'tekn_'+fid]
-                    except:
-                        print 'np.nan'
-                fidtm = idtm
-
-        self.Teda.dat.fillna(method='pad', inplace=True)
-        quotesk = self.Teda.dat
-
-        shwkafas = [fas + '_ka' for fas in kaextfas]
-        shwmafas = [fas + '_ma' for fas in maextfas]
-        shwsufas = [fas + '_su' for fas in suextfas]
-
-        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas, period= self.Teda.period)
 
     # ----------------------------------------------------------------------
     def onInit(self):
@@ -404,7 +362,55 @@ class GrstStrategy(CtaTemplate):
         # 发出状态更新事件
         self.putEvent()
 
+    # ----------------------------------------------------------------------
+    def showfas(self, showset = {}):
+        self.Karst.colfas()
+        self.Marst.colfas()
+        self.Surst.colfas()
 
+        self.tedasgn(self.Karst.quotes, ['tekn'], fid='ka', fillna=True)
+        self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
+        self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna=True)
+
+        kaextfas = ['disrst', 'sal', 'alp1', 'dlp1']
+        maextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        suextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+
+        self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
+        self.tedasgn(self.Marst.quotes, maextfas, fid='ma', fillna = False)
+        self.tedasgn(self.Surst.quotes, suextfas, fid='su', fillna = False)
+
+        afc = []
+        for col in self.Teda.dat.columns:
+            if 'ak_' + col in self.Teda.dat.columns:
+                afc.append(col)
+
+        for col in afc:
+            self.Teda.dat.loc[:, 'ak_' + col].fillna(method='pad', inplace=True)
+        if len(afc) > 0:
+            fidtm = self.Teda.dat.index[0]
+            for idtm in self.Teda.dat.index[1:]:
+                for col in afc:
+                    fid = col.split('_')[-1]
+                    try:
+                        if np.isnan(self.Teda.dat.loc[idtm, col]):
+                            self.Teda.dat.loc[idtm, col] = self.Teda.dat.loc[fidtm, col] + self.Teda.dat.loc[
+                                fidtm, 'ak_' + col] * 1.0 / self.Teda.dat.loc[fidtm, 'tekn_'+fid]
+                    except:
+                        print 'np.nan'
+                fidtm = idtm
+
+        self.Teda.dat.fillna(method='pad', inplace=True)
+        quotesk = self.Teda.dat
+
+        shwkafas = [fas + '_ka' for fas in kaextfas]
+        shwmafas = [fas + '_ma' for fas in maextfas]
+        shwsufas = [fas + '_su' for fas in suextfas]
+
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas, period= self.Teda.period)
+
+
+# ----------------------------------------------------------------------
 if __name__ == '__main__':
     # 提供直接双击回测的功能
     # 导入PyQt4的包是为了保证matplotlib使用PyQt4而不是PySide，防止初始化出错
@@ -478,12 +484,12 @@ if __name__ == '__main__':
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0}
         },
         'ma': {
-            'sekop': {'sal': 3, 'rdl': 3, 'mdl': 0, 'rss':0},
-            'etkop': {'sal': 3, 'rdl': 3, 'mdl': 0, 'rss':0}
+            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'rss':0},
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'rss':0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0},
-            'etkop': {'sal': 3, 'rdl': 3, 'mdl': 0, 'rss':0}
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'rss':0}
         }
     }
 

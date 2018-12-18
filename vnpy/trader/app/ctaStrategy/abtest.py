@@ -950,6 +950,9 @@ class TSBacktest(object):
         self.OrdStp_Dic[soda] = []
         # --------------------------------------------------------平仓逻辑 止损 止盈
         for socna, sgnpos in self.SocPos_Dic.iteritems():
+            socfid = socna.split('_')[0]
+            if socfid != fid:
+                continue
             for sgnid, poslist in sgnpos.iteritems():
                 if seet != sgnid.split('_')[-1]:
                     continue
@@ -976,7 +979,7 @@ class TSBacktest(object):
                     # --------------------------移动止损
                     msp = None
                     if msn:
-                        if msn>=1:
+                        if msn>1:
                             # --------------------------简单移动止损
                             if entsize > 0 and sdsp and sdsp < sk_close[ski] - msn * atr and entprice < sk_close[ski] - msn * atr:
                                 msp = sk_close[ski] - msn * atr

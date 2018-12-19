@@ -89,9 +89,79 @@ class Sadl(object):
         print 'uptsta'
 
 # ---------------------------------------------------------------------------
-class Rsline(object):
-    def __init__(self, linesk, trpb, trpd, atr, tbl):
-        pass
+# (ckli, cksdh, cksdl, cklhp, ckllp, cklbi)
+class Consks(object):
+    def __init__(self, consn = 1, bi=0, ei = 0, bp=0, ep = 0):
+        self.consn = consn # 连续波动的sk数量
+        self.atn = 1       # 波动幅度是atr的倍数
+        self.bi = bi
+        self.ei = ei
+        self.bp = bp     # 起始极点
+        self.ep = ep     # 终止极点
+        self.bep = ep-bp
+        self.hp = max(bp, ep)
+        self.lp = min(bp, ep)
+
+class Skchain(object):
+    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_atr):
+        self.sk_time = sk_time
+        self.sk_open = sk_open
+        self.sk_high = sk_high
+        self.sk_low = sk_low
+        self.sk_close = sk_close
+        self.sk_atr = sk_atr
+
+        self.mdet = 0.05 # 0.05 个atr
+        self.chains = []
+        self.consk = None
+        self.crti = 0
+
+    def onbar(self, i):
+        avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
+        if not self.consk:
+            if self.sk_close[i] > self.sk_open[i]:
+                self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i])
+                self.consk.atn = self.consk.bep/avgski
+            else:
+                self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i])
+                self.consk.atn = self.consk.bep /avgski
+            self.chains.append(self.consk)
+            self.crti = i
+        else:
+            if self.consk.consn > 0:
+                # self.sk_close[i] >= self.sk_open[i] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
+                if self.sk_close[i] >= self.sk_close[i - 1] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
+                    self.consk.consn += 1
+                    self.consk.ei = i
+                    self.consk.ep = self.sk_high[i]
+                    self.consk.bep = self.consk.ep - self.consk.bp
+                    self.consk.hp = max(self.consk.hp, self.sk_high[i])
+                    self.consk.lp = min(self.consk.lp, self.sk_low[i])
+                    self.consk.atn = self.consk.bep / avgski
+                else:
+                    self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i])
+                    self.consk.atn = self.consk.bep / avgski
+                    self.chains.append(self.consk)
+            else:
+                # self.sk_close[i] >= self.sk_open[i] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
+                if self.sk_close[i] <= self.sk_close[i - 1] + self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
+                    self.consk.consn += -1
+                    self.consk.ei = i
+                    self.consk.ep = self.sk_low[i]
+                    self.consk.bep = self.consk.ep - self.consk.bp
+                    self.consk.hp = max(self.consk.hp, self.sk_high[i])
+                    self.consk.lp = min(self.consk.lp, self.sk_low[i])
+                    self.consk.atn = self.consk.bep / avgski
+                else:
+                    self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i])
+                    self.consk.atn = self.consk.bep / avgski
+                    self.chains.append(self.consk)
+
+
+class Trdphd(object):
+    def __init__(self, dir=1, hdi=0 ):
+        self.dir = dir
+        self.hdi = hdi
 
 
 #---------------------------------------------------------------------------
@@ -4266,6 +4336,10 @@ class Grst_Factor(object):
         cklsd = ckli * (cksdh - cksdl)
         self.ckls.append([cklbi, cklei, cklbp, cklep, cklsd])
 
+
+        self.ckchn = Skchain(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr)
+        self.sk_chn = [None] * (skbgi + 1)
+
         # self.sk_cklsm=[] #在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls),最近的3段ckls
         ckltp = ckli
         ickls0 = tuple(self.ckls[-1])
@@ -4304,6 +4378,8 @@ class Grst_Factor(object):
         self.crtidtm = idtm
         self.crtidate = self.crtidtm[:10]
 
+        self.ckchn.onbar(i)
+        self.sk_chn.append(copy(self.ckchn.consk))
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if self.sk_ckl[i - 1][0] > 0:
             if self.sk_close[i] >= self.sk_close[i - 1] - sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[

@@ -91,24 +91,28 @@ class Sadl(object):
 # ---------------------------------------------------------------------------
 # (ckli, cksdh, cksdl, cklhp, ckllp, cklbi)
 class Consks(object):
-    def __init__(self, consn = 1, bi=0, ei = 0, bp=0, ep = 0):
-        self.consn = consn # 连续波动的sk数量
+    def __init__(self, dirn = 1, bi=0, ei = 0, bp=0, ep = 0, cp=0):
+        self.dirn = dirn   # 连续波动的sk数量
         self.atn = 1       # 波动幅度是atr的倍数
         self.bi = bi
         self.ei = ei
         self.bp = bp     # 起始极点
         self.ep = ep     # 终止极点
-        self.bep = ep-bp
+        self.bep = ep - bp
         self.hp = max(bp, ep)
         self.lp = min(bp, ep)
+        self.jpa = bp
+        self.jpc = bp
+        self.cp = cp
 
 class Skchain(object):
-    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_atr):
+    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr):
         self.sk_time = sk_time
         self.sk_open = sk_open
         self.sk_high = sk_high
-        self.sk_low = sk_low
-        self.sk_close = sk_close
+        self.sk_low  = sk_low
+        self.sk_close  = sk_close
+        self.sk_volume = sk_volume
         self.sk_atr = sk_atr
 
         self.mdet = 0.05 # 0.05 个atr
@@ -120,49 +124,93 @@ class Skchain(object):
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if not self.consk:
             if self.sk_close[i] > self.sk_open[i]:
-                self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i])
+                self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i], self.sk_close[i])
                 self.consk.atn = self.consk.bep/avgski
             else:
-                self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i])
+                self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i], self.sk_close[i])
                 self.consk.atn = self.consk.bep /avgski
             self.chains.append(self.consk)
             self.crti = i
         else:
-            if self.consk.consn > 0:
+            if self.consk.dirn > 0:
                 # self.sk_close[i] >= self.sk_open[i] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
                 if self.sk_close[i] >= self.sk_close[i - 1] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
-                    self.consk.consn += 1
+                    self.consk.dirn += 1
                     self.consk.ei = i
                     self.consk.ep = self.sk_high[i]
+                    self.consk.cp = max(self.consk.cp, self.sk_close[i])
                     self.consk.bep = self.consk.ep - self.consk.bp
                     self.consk.hp = max(self.consk.hp, self.sk_high[i])
                     self.consk.lp = min(self.consk.lp, self.sk_low[i])
                     self.consk.atn = self.consk.bep / avgski
                 else:
-                    self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i])
+                    self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i], self.sk_close[i])
                     self.consk.atn = self.consk.bep / avgski
+                    self.consk.jpc = max(self.sk_high[i], self.sk_high[i-1])
+                    self.consk.jpa = max(self.sk_open[i], self.sk_close[i - 1])
                     self.chains.append(self.consk)
             else:
                 # self.sk_close[i] >= self.sk_open[i] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
                 if self.sk_close[i] <= self.sk_close[i - 1] + self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
-                    self.consk.consn += -1
+                    self.consk.dirn += -1
                     self.consk.ei = i
                     self.consk.ep = self.sk_low[i]
+                    self.consk.cp = min(self.consk.cp, self.sk_close[i])
                     self.consk.bep = self.consk.ep - self.consk.bp
                     self.consk.hp = max(self.consk.hp, self.sk_high[i])
                     self.consk.lp = min(self.consk.lp, self.sk_low[i])
                     self.consk.atn = self.consk.bep / avgski
                 else:
-                    self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i])
+                    self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i], self.sk_close[i])
                     self.consk.atn = self.consk.bep / avgski
+                    self.consk.jpc = min(self.sk_low[i], self.sk_low[i - 1])
+                    self.consk.jpa = min(self.sk_open[i], self.sk_close[i - 1])
                     self.chains.append(self.consk)
 
-
 class Trdphd(object):
-    def __init__(self, dir=1, hdi=0 ):
-        self.dir = dir
-        self.hdi = hdi
+    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_chn):
+        self.sk_time = sk_time
+        self.sk_open = sk_open
+        self.sk_high = sk_high
+        self.sk_low = sk_low
+        self.sk_close = sk_close
+        self.sk_volume = sk_volume
+        self.sk_atr = sk_atr
+        self.sk_chn = sk_chn
+        self.plevs = []
+        self.upti = 0
 
+    def update(self, i):
+        if self.upti>=i:
+            return
+        self.upti = i
+        if len(self.plevs) <=0:
+            self.plevs.append(self.sk_chn[i])
+            self.dirn = self.sk_chn[i].dirn
+            self.hdi = i
+        else:
+            if self.plevs[-1].dirn * self.sk_chn[i].dirn>0:  # 单链递进，更新末级趋势前沿
+                self.plevs[-1] = self.sk_chn[i]
+            else:                                            # 新的单链形成末级趋势前沿
+                self.plevs.append(self.sk_chn[i])
+
+        while(1):
+            laphd = self.plevs[-1]
+            if len(self.plevs) < 2:
+                return
+            faphd = self.plevs[-2]
+            if laphd.dirn * faphd.dirn > 0:
+                self.plevs.remove(faphd)
+            else:
+                if laphd.dirn > 0 and laphd.cp >= faphd.jpc: # 趋势突破
+                    self.plevs.remove(faphd)
+                    # 标记交易信号
+
+                elif laphd.dirn < 0 and laphd.cp <= faphd.jpc: # 趋势突破
+                    self.plevs.remove(faphd)
+                    # 标记交易信号
+                else:  # 趋势突破只可以从末级向第一级逐级传导
+                    return
 
 #---------------------------------------------------------------------------
 class Trpline(object):
@@ -3147,14 +3195,14 @@ class Sgn_Rst(object):
             self.sgn_qs2c = sklreach(sk_open, sk_high, sk_low, sk_close, self.rsp_qs2c, dir=rsdir, atr=sk_atr)
 
 class Sgn_Ans(object):
-    def __init__(self, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_itp, sk_disrst, sk_zsh, sk_zsl, sk_bsh, sk_bsl, sk_rstn, sk_rstspl, sk_rstsph, sk_sgn):
+    def __init__(self, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_itp, sk_drsp, sk_zsh, sk_zsl, sk_bsh, sk_bsl, sk_rstn, sk_rstspl, sk_rstsph, sk_sgn):
         self.sk_open = sk_open
         self.sk_high = sk_high
         self.sk_low  = sk_low
         self.sk_close= sk_close
         self.sk_atr  = sk_atr
 
-        self.sk_disrst = sk_disrst
+        self.sk_drsp = sk_drsp
         self.sk_itp    = sk_itp
         self.sk_zsh    = sk_zsh
         self.sk_zsl    = sk_zsl
@@ -3258,7 +3306,7 @@ class Sgn_Ans(object):
         elif self.sk_itp[-1] * self.sk_itp[-2] <=0:
             self.qsp = self.sk_close[i]
 
-        self.disrst = self.sk_disrst[-1]
+        self.disrst = self.sk_drsp[-1]
         self.rstn = self.sk_rstn[-1]
         if self.itp >0:
             self.b_rstp = max(self.sk_rstsph[-1], self.sk_rstspl[-1])
@@ -3873,7 +3921,7 @@ class Grst_Factor(object):
         return -1
 
     # -------------------------------------
-    def uptsads(self, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, sk_disrst, ski):
+    def uptsads(self, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, sk_drsp, ski):
         atr = sk_close[ski] * sk_atr[ski]
         det = atr * 0.05
         mdet = 5 * atr
@@ -3884,8 +3932,8 @@ class Grst_Factor(object):
 
         if self.rstdir<0:
             if not self.tepsad:
-                if sk_low[ski - 1] -det <= sk_disrst[ski] <= sk_high[ski]:
-                    self.tepsad = Sadl(1, bi=ski, bap= sk_disrst[ski])
+                if sk_low[ski - 1] -det <= sk_drsp[ski] <= sk_high[ski]:
+                    self.tepsad = Sadl(1, bi=ski, bap= sk_drsp[ski])
                     self.tepsad.sdp += max(sk_close[ski] - self.tepsad.bap, 0.0)
                     if sk_low[ski] >= self.tepsad.bap + ldet:
                         self.tepsad.cn += 1
@@ -3921,7 +3969,7 @@ class Grst_Factor(object):
                                 self.crtsad.chg = 1
 
                             if self.tepsad.bap < sk_high[ski]:
-                                self.tepsad = Sadl(1, bi=ski, bap=sk_disrst[ski])
+                                self.tepsad = Sadl(1, bi=ski, bap=sk_drsp[ski])
                                 self.tepsad.sdp += max(sk_close[ski] - self.tepsad.bap, 0.0)
                             else:
                                 self.tepsad = None
@@ -3933,7 +3981,7 @@ class Grst_Factor(object):
                     if self.tepsad and sk_low[ski] <= self.tepsad.bap:
                         if self.tepsad.cn < mcn:
                             # self.tepsad = None
-                            self.tepsad = Sadl(1, bi=ski, bap=sk_disrst[ski])
+                            self.tepsad = Sadl(1, bi=ski, bap=sk_drsp[ski])
                             self.tepsad.sdp += max(sk_close[ski] - self.tepsad.bap, 0.0)
             if self.crtsad and self.crtsad.upti < ski:
                 if not self.crtsad.ei:
@@ -3957,8 +4005,8 @@ class Grst_Factor(object):
                         self.crtsad.mret = mret
                     if self.crtsad.mret <= rtp:
                         self.crtsad.ei = ski
-                        if sk_disrst[ski] < sk_high[ski]:
-                            self.tepsad = Sadl(1, bi=ski, bap= sk_disrst[ski])
+                        if sk_drsp[ski] < sk_high[ski]:
+                            self.tepsad = Sadl(1, bi=ski, bap= sk_drsp[ski])
                             self.tepsad.sdp += max(sk_close[ski] - self.tepsad.bap, 0.0)
                         else:
                             self.tepsad = None
@@ -3974,8 +4022,8 @@ class Grst_Factor(object):
 
         elif self.rstdir > 0:
             if not self.tepsad:
-                if sk_high[ski - 1] + det >= sk_disrst[ski] >= sk_low[ski]:
-                    self.tepsad = Sadl(-1, bi=ski, bap=sk_disrst[ski])
+                if sk_high[ski - 1] + det >= sk_drsp[ski] >= sk_low[ski]:
+                    self.tepsad = Sadl(-1, bi=ski, bap=sk_drsp[ski])
                     self.tepsad.sdp += min(sk_close[ski] - self.tepsad.bap, 0.0)
                     if sk_high[ski] <= self.tepsad.bap - ldet:
                         self.tepsad.cn += 1
@@ -4010,7 +4058,7 @@ class Grst_Factor(object):
                                 self.crtsad.chg = 1
 
                             if self.tepsad.bap > sk_low[ski]:
-                                self.tepsad = Sadl(-1, bi=ski, bap=sk_disrst[ski])
+                                self.tepsad = Sadl(-1, bi=ski, bap=sk_drsp[ski])
                                 self.tepsad.sdp += min(sk_close[ski] - self.tepsad.bap, 0.0)
                             else:
                                 self.tepsad = None
@@ -4022,7 +4070,7 @@ class Grst_Factor(object):
                     if self.tepsad and sk_high[ski] >= self.tepsad.bap:
                         if self.tepsad.cn < mcn:
                             # self.tepsad = None
-                            self.tepsad = Sadl(-1, bi=ski, bap=sk_disrst[ski])
+                            self.tepsad = Sadl(-1, bi=ski, bap=sk_drsp[ski])
                             self.tepsad.sdp += min(sk_close[ski] - self.tepsad.bap, 0.0)
             if self.crtsad and self.crtsad.upti < ski:
                 if not self.crtsad.ei:
@@ -4045,8 +4093,8 @@ class Grst_Factor(object):
                         self.crtsad.mret = mret
                     if self.crtsad.mret <= rtp:
                         self.crtsad.ei = ski
-                        if sk_disrst[ski] > sk_low[ski]:
-                            self.tepsad = Sadl(-1, bi=ski, bap=sk_disrst[ski])
+                        if sk_drsp[ski] > sk_low[ski]:
+                            self.tepsad = Sadl(-1, bi=ski, bap=sk_drsp[ski])
                             self.tepsad.sdp += min(sk_close[ski] - self.tepsad.bap, 0.0)
                         else:
                             self.tepsad = None
@@ -4145,8 +4193,9 @@ class Grst_Factor(object):
         self.sk_qswr = []  # 指示当前价格在趋势前沿中枢相对ATR得到宽度
         self.sk_rsl = []  # 指示当前价格在趋势前沿中枢中的价格水平
         self.sk_itp = []
-        self.sk_disrst = []
+        self.sk_drsp = []
 
+        self.sk_phd = []
         self.sk_sal = []   # sal
         self.sk_bbl = []   # rdl
         self.sk_ttl = []   # rdl
@@ -4225,30 +4274,31 @@ class Grst_Factor(object):
             self.sk_rsl.append(0)
             self.sk_itp.append(0)
 
-            self.sk_disrst.append(self.sk_low[i])
-            self.sk_sal.append(self.sk_disrst[-1])
-            self.sk_ttl.append(self.sk_disrst[-1])
-            self.sk_bbl.append(self.sk_disrst[-1])
-            self.sk_obbl.append(self.sk_disrst[-1])
-            self.sk_ottl.append(self.sk_disrst[-1])
+            self.sk_phd.append(self.sk_close[i])
+            self.sk_drsp.append(self.sk_low[i])
+            self.sk_sal.append(self.sk_drsp[-1])
+            self.sk_ttl.append(self.sk_drsp[-1])
+            self.sk_bbl.append(self.sk_drsp[-1])
+            self.sk_obbl.append(self.sk_drsp[-1])
+            self.sk_ottl.append(self.sk_drsp[-1])
             self.ak_sal.append(0)
             self.ak_ttl.append(0)
             self.ak_bbl.append(0)
             self.ak_obbl.append(0)
             self.ak_ottl.append(0)
 
-            self.sk_alp1.append(self.sk_disrst[-1])
-            self.sk_alp2.append(self.sk_disrst[-1])
-            self.sk_alp3.append(self.sk_disrst[-1])
-            self.sk_alp4.append(self.sk_disrst[-1])
-            self.sk_alp5.append(self.sk_disrst[-1])
-            self.sk_alp6.append(self.sk_disrst[-1])
-            self.sk_dlp1.append(self.sk_disrst[-1])
-            self.sk_dlp2.append(self.sk_disrst[-1])
-            self.sk_dlp3.append(self.sk_disrst[-1])
-            self.sk_dlp4.append(self.sk_disrst[-1])
-            self.sk_dlp5.append(self.sk_disrst[-1])
-            self.sk_dlp6.append(self.sk_disrst[-1])
+            self.sk_alp1.append(self.sk_drsp[-1])
+            self.sk_alp2.append(self.sk_drsp[-1])
+            self.sk_alp3.append(self.sk_drsp[-1])
+            self.sk_alp4.append(self.sk_drsp[-1])
+            self.sk_alp5.append(self.sk_drsp[-1])
+            self.sk_alp6.append(self.sk_drsp[-1])
+            self.sk_dlp1.append(self.sk_drsp[-1])
+            self.sk_dlp2.append(self.sk_drsp[-1])
+            self.sk_dlp3.append(self.sk_drsp[-1])
+            self.sk_dlp4.append(self.sk_drsp[-1])
+            self.sk_dlp5.append(self.sk_drsp[-1])
+            self.sk_dlp6.append(self.sk_drsp[-1])
             # -----------------
             self.sk_zs1c.append(self.sk_close[i])
             self.sk_zs1a.append(self.sk_close[i])
@@ -4277,30 +4327,31 @@ class Grst_Factor(object):
         self.sk_rsl.append(0)
         self.sk_itp.append(0)
 
-        self.sk_disrst.append(self.sk_low[skbgi])
-        self.sk_sal.append(self.sk_disrst[-1])
-        self.sk_ttl.append(self.sk_disrst[-1])
-        self.sk_bbl.append(self.sk_disrst[-1])
-        self.sk_ottl.append(self.sk_disrst[-1])
-        self.sk_obbl.append(self.sk_disrst[-1])
+        self.sk_phd.append(self.sk_close[i])
+        self.sk_drsp.append(self.sk_low[skbgi])
+        self.sk_sal.append(self.sk_drsp[-1])
+        self.sk_ttl.append(self.sk_drsp[-1])
+        self.sk_bbl.append(self.sk_drsp[-1])
+        self.sk_ottl.append(self.sk_drsp[-1])
+        self.sk_obbl.append(self.sk_drsp[-1])
         self.ak_sal.append(0)
         self.ak_ttl.append(0)
         self.ak_bbl.append(0)
         self.ak_obbl.append(0)
         self.ak_ottl.append(0)
 
-        self.sk_alp1.append(self.sk_disrst[-1])
-        self.sk_alp2.append(self.sk_disrst[-1])
-        self.sk_alp3.append(self.sk_disrst[-1])
-        self.sk_alp4.append(self.sk_disrst[-1])
-        self.sk_alp5.append(self.sk_disrst[-1])
-        self.sk_alp6.append(self.sk_disrst[-1])
-        self.sk_dlp1.append(self.sk_disrst[-1])
-        self.sk_dlp2.append(self.sk_disrst[-1])
-        self.sk_dlp3.append(self.sk_disrst[-1])
-        self.sk_dlp4.append(self.sk_disrst[-1])
-        self.sk_dlp5.append(self.sk_disrst[-1])
-        self.sk_dlp6.append(self.sk_disrst[-1])
+        self.sk_alp1.append(self.sk_drsp[-1])
+        self.sk_alp2.append(self.sk_drsp[-1])
+        self.sk_alp3.append(self.sk_drsp[-1])
+        self.sk_alp4.append(self.sk_drsp[-1])
+        self.sk_alp5.append(self.sk_drsp[-1])
+        self.sk_alp6.append(self.sk_drsp[-1])
+        self.sk_dlp1.append(self.sk_drsp[-1])
+        self.sk_dlp2.append(self.sk_drsp[-1])
+        self.sk_dlp3.append(self.sk_drsp[-1])
+        self.sk_dlp4.append(self.sk_drsp[-1])
+        self.sk_dlp5.append(self.sk_drsp[-1])
+        self.sk_dlp6.append(self.sk_drsp[-1])
 
         self.sk_zs1c.append(self.sk_close[skbgi])
         self.sk_zs1a.append(self.sk_close[skbgi])
@@ -4336,9 +4387,10 @@ class Grst_Factor(object):
         cklsd = ckli * (cksdh - cksdl)
         self.ckls.append([cklbi, cklei, cklbp, cklep, cklsd])
 
-
-        self.ckchn = Skchain(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr)
+        self.ckchn = Skchain(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr)
         self.sk_chn = [None] * (skbgi + 1)
+
+        self.trdphd = Trdphd(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_chn)
 
         # self.sk_cklsm=[] #在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls),最近的3段ckls
         ckltp = ckli
@@ -4379,7 +4431,10 @@ class Grst_Factor(object):
         self.crtidate = self.crtidtm[:10]
 
         self.ckchn.onbar(i)
-        self.sk_chn.append(copy(self.ckchn.consk))
+        self.sk_chn.append(deepcopy(self.ckchn.consk))
+        self.trdphd.update(i)
+        self.sk_phd.append(self.trdphd.plevs[0].jpa)
+
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if self.sk_ckl[i - 1][0] > 0:
             if self.sk_close[i] >= self.sk_close[i - 1] - sk_ckdtpst * self.sk_atr[i - 1] * self.sk_close[
@@ -5176,7 +5231,7 @@ class Grst_Factor(object):
             self.sk_qsl.append(self.sk_qspds[-1][7])
             self.sk_qswr.append((self.sk_high[i] - self.zslp) / self.zslp / self.sk_atr[i - 1])
             self.sk_rsl.append(0.2 + (self.sk_qsh[-1] - self.sk_close[i]) / (self.sk_qsh[-1] - self.sk_qsl[-1]))
-            self.sk_disrst.append(self.sk_qsh[-1])
+            self.sk_drsp.append(self.sk_qsh[-1])
 
             # ---------------------------------------------------------------------------------------------------trdline
             if self.ctp:
@@ -5189,7 +5244,7 @@ class Grst_Factor(object):
             self.sk_qsl.append(self.sk_qspds[-1][8])
             self.sk_qswr.append((self.sk_low[i] - self.zshp) / self.zshp / self.sk_atr[i - 1])
             self.sk_rsl.append(-0.2 + (self.sk_qsl[-1] - self.sk_close[i]) / (self.sk_qsh[-1] - self.sk_qsl[-1]))
-            self.sk_disrst.append(self.sk_qsl[-1])
+            self.sk_drsp.append(self.sk_qsl[-1])
 
             # ---------------------------------------------------------------------------------------------------trdline
             if self.cbp:
@@ -5201,17 +5256,17 @@ class Grst_Factor(object):
             self.sk_qsl.append(self.sk_qspds[-1][8])
             self.sk_qswr.append(0)
             self.sk_rsl.append(0)
-            self.sk_disrst.append(self.sk_qsl[-1])
+            self.sk_drsp.append(self.sk_qsl[-1])
 
-        # ----------------------------------------------基于 self.sk_disrst 生成 sadl序列
-        self.uptsads(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.sk_disrst, i)
+        # ----------------------------------------------基于 self.sk_drsp 生成 sadl序列
+        self.uptsads(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.sk_drsp, i)
         if len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] > 0 and self.sk_qspds[-2][2] < 0:  # 向上转换
             self.rstdir = 1
             self.sads['sa_' + str(i)] = []
             self.uprstsas['upr_' + str(i)] = OrderedDict()
 
             self.crtsad = None
-            self.tepsad = Sadl(-1, bi=i, bap=self.sk_disrst[i])
+            self.tepsad = Sadl(-1, bi=i, bap=self.sk_drsp[i])
 
             sgn_rsti = i
             sgn_rstp = self.sk_qspds[-2][7]
@@ -5265,7 +5320,7 @@ class Grst_Factor(object):
             self.sads['sd_' + str(i)] = []
             self.dwrstsas['dwr_' + str(i)] = OrderedDict()
             self.crtsad = None
-            self.tepsad = Sadl(1, bi=i, bap=self.sk_disrst[i])
+            self.tepsad = Sadl(1, bi=i, bap=self.sk_drsp[i])
 
             sgn_rsti = i
             sgn_rstp = self.sk_qspds[-2][7]
@@ -5806,7 +5861,9 @@ class Grst_Factor(object):
         self.quotes['rsl' + aflg] = self.sk_rsl
         self.quotes['itp' + aflg] = self.sk_itp
 
-        self.quotes['disrst' + aflg] = self.sk_disrst
+        self.quotes['drst' + aflg] = self.sk_drsp
+        self.quotes['phd'  + aflg] = self.sk_phd
+
         self.quotes['sal' + aflg] = self.sk_sal
         self.quotes['brdl' + aflg] = self.sk_bbl
         self.quotes['trdl' + aflg] = self.sk_ttl

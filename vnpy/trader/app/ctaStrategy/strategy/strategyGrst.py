@@ -372,9 +372,13 @@ class GrstStrategy(CtaTemplate):
         self.tedasgn(self.Marst.quotes, ['tekn'], fid='ma', fillna = True)
         self.tedasgn(self.Surst.quotes, ['tekn'], fid='su', fillna=True)
 
-        kaextfas = ['disrst', 'sal', 'alp1', 'dlp1']
-        maextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-        suextfas = ['disrst', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        # kaextfas = ['drsp', 'sal', 'alp1', 'dlp1']
+        # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+        # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+
+        kaextfas = ['phd']
+        maextfas = ['sal', 'phd', 'brdl', 'trdl']
+        suextfas = ['sal', 'phd', 'brdl', 'trdl']
 
         self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
         self.tedasgn(self.Marst.quotes, maextfas, fid='ma', fillna = False)
@@ -407,7 +411,7 @@ class GrstStrategy(CtaTemplate):
         shwmafas = [fas + '_ma' for fas in maextfas]
         shwsufas = [fas + '_su' for fas in suextfas]
 
-        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas, period= self.Teda.period)
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas+shwsufas, period= self.Teda.period)
 
 
 # ----------------------------------------------------------------------
@@ -427,7 +431,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2013-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'

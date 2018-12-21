@@ -376,9 +376,9 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['phd']
-        maextfas = ['sal', 'phd', 'brdl', 'trdl']
-        suextfas = ['sal', 'phd', 'brdl', 'trdl']
+        kaextfas = ['phd', 'bsp', 'rtp']
+        maextfas = ['sal', 'brdl', 'trdl']
+        suextfas = ['sal', 'brdl', 'trdl']
 
         self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
         self.tedasgn(self.Marst.quotes, maextfas, fid='ma', fillna = False)

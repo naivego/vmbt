@@ -134,7 +134,7 @@ class Skchain(object):
         else:
             if self.consk.dirn > 0:
                 # self.sk_close[i] >= self.sk_open[i] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
-                if self.sk_close[i] >= self.sk_close[i - 1] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
+                if self.sk_close[i] >= self.sk_close[i - 1] - self.mdet * avgski:
                     self.consk.dirn += 1
                     self.consk.ei = i
                     self.consk.ep = self.sk_high[i]
@@ -146,12 +146,12 @@ class Skchain(object):
                 else:
                     self.consk = Consks(-1, i, i, self.sk_high[i], self.sk_low[i], self.sk_close[i])
                     self.consk.atn = self.consk.bep / avgski
-                    self.consk.jpc = max(self.sk_high[i], self.sk_high[i-1])
+                    self.consk.jpc = self.sk_high[i] + self.mdet * avgski
                     self.consk.jpa = max(self.sk_open[i], self.sk_close[i - 1])
                     self.chains.append(self.consk)
             else:
                 # self.sk_close[i] >= self.sk_open[i] - self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
-                if self.sk_close[i] <= self.sk_close[i - 1] + self.mdet * self.sk_atr[i - 1] * self.sk_close[i - 1]:
+                if self.sk_close[i] <= self.sk_close[i - 1] + self.mdet * avgski:
                     self.consk.dirn += -1
                     self.consk.ei = i
                     self.consk.ep = self.sk_low[i]
@@ -163,7 +163,7 @@ class Skchain(object):
                 else:
                     self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i], self.sk_close[i])
                     self.consk.atn = self.consk.bep / avgski
-                    self.consk.jpc = min(self.sk_low[i], self.sk_low[i - 1])
+                    self.consk.jpc = self.sk_low[i] - self.mdet * avgski
                     self.consk.jpa = min(self.sk_open[i], self.sk_close[i - 1])
                     self.chains.append(self.consk)
 
@@ -179,24 +179,45 @@ class Trdphd(object):
         self.sk_chn = sk_chn
         self.plevs = []
         self.upti = 0
+        self.sta  = 0 # 前沿变更状态：前沿递进1，前沿步进2，前沿反转3
+        self.dirn = 0
+        self.mdet = 0.1  # x 个atr
+        self.bsp = 0
+        self.rtp = 0
 
     def update(self, i):
         if self.upti>=i:
             return
         self.upti = i
+        self.sta = 0
+        avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if len(self.plevs) <=0:
             self.plevs.append(self.sk_chn[i])
             self.dirn = self.sk_chn[i].dirn
-            self.hdi = i
+            self.sta = 0
+            self.bsp = self.sk_chn[i].bp
+            self.rtp = self.sk_chn[i].ep
+            return
         else:
             if self.plevs[-1].dirn * self.sk_chn[i].dirn>0:  # 单链递进，更新末级趋势前沿
                 self.plevs[-1] = self.sk_chn[i]
             else:                                            # 新的单链形成末级趋势前沿
                 self.plevs.append(self.sk_chn[i])
 
+        if len(self.plevs) < 2:
+            self.dirn = self.plevs[-1].dirn
+            self.sta = 1
+            return
         while(1):
             laphd = self.plevs[-1]
             if len(self.plevs) < 2:
+                if self.dirn * laphd.dirn > 0:  # 一级前沿步进
+                    self.sta = 2
+                else:                           # 一级前沿反转
+                    self.sta = 3
+                self.dirn = laphd.dirn
+                self.bsp = laphd.jpa
+                self.rtp = laphd.ep + laphd.dirn / abs(laphd.dirn) * self.mdet * avgski
                 return
             faphd = self.plevs[-2]
             if laphd.dirn * faphd.dirn > 0:
@@ -4195,7 +4216,10 @@ class Grst_Factor(object):
         self.sk_itp = []
         self.sk_drsp = []
 
-        self.sk_phd = []
+        self.sk_phd = []   # phd多空临界线
+        self.sk_bsp = []   # phd
+        self.sk_rtp = []   # phd
+
         self.sk_sal = []   # sal
         self.sk_bbl = []   # rdl
         self.sk_ttl = []   # rdl
@@ -4275,6 +4299,8 @@ class Grst_Factor(object):
             self.sk_itp.append(0)
 
             self.sk_phd.append(self.sk_close[i])
+            self.sk_bsp.append(self.sk_close[i])
+            self.sk_rtp.append(self.sk_close[i])
             self.sk_drsp.append(self.sk_low[i])
             self.sk_sal.append(self.sk_drsp[-1])
             self.sk_ttl.append(self.sk_drsp[-1])
@@ -4328,6 +4354,8 @@ class Grst_Factor(object):
         self.sk_itp.append(0)
 
         self.sk_phd.append(self.sk_close[i])
+        self.sk_bsp.append(self.sk_close[i])
+        self.sk_rtp.append(self.sk_close[i])
         self.sk_drsp.append(self.sk_low[skbgi])
         self.sk_sal.append(self.sk_drsp[-1])
         self.sk_ttl.append(self.sk_drsp[-1])
@@ -4433,7 +4461,9 @@ class Grst_Factor(object):
         self.ckchn.onbar(i)
         self.sk_chn.append(deepcopy(self.ckchn.consk))
         self.trdphd.update(i)
-        self.sk_phd.append(self.trdphd.plevs[0].jpa)
+        self.sk_phd.append(self.trdphd.plevs[0].jpc)
+        self.sk_bsp.append(self.trdphd.bsp)
+        self.sk_rtp.append(self.trdphd.rtp)
 
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if self.sk_ckl[i - 1][0] > 0:
@@ -5863,6 +5893,8 @@ class Grst_Factor(object):
 
         self.quotes['drst' + aflg] = self.sk_drsp
         self.quotes['phd'  + aflg] = self.sk_phd
+        self.quotes['bsp' + aflg] = self.sk_bsp
+        self.quotes['rtp' + aflg] = self.sk_rtp
 
         self.quotes['sal' + aflg] = self.sk_sal
         self.quotes['brdl' + aflg] = self.sk_bbl

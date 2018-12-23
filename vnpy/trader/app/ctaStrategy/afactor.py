@@ -185,6 +185,8 @@ class Trdphd(object):
         self.bsp = 0
         self.rtp = 0
 
+
+
     def update(self, i):
         if self.upti>=i:
             return
@@ -1832,6 +1834,7 @@ def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
 
 def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
+    # 先用bbl-ttl连线，若斜率不适合，将右侧点向右移动一根K线到sk实体处价格
     rklmt = [0.02, 0.6]
     tbl = socna.split('_')[1]
     tbl = 'bbl' if tbl == 'sa' else 'ttl'
@@ -3634,6 +3637,9 @@ class Grst_Factor(object):
 
     def new_supline2(self, fidna, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_time, sk_atr, sk_ckl, i, eti = None):
         # --calc new new_supline2
+        # 连线方式 ：0--常规bbl-ttl， 1 - 右侧连接点偏向sk实体
+        kkltpye = 0
+
         mbdi = 5
         wrsk = 1.5
         tdls = {}
@@ -3675,7 +3681,11 @@ class Grst_Factor(object):
             skp = min(sk_open[ei], sk_close[ei])
             lkp = min(sk_open[ei - 1], sk_close[ei - 1])
             rkp = min(sk_open[ei + 1], sk_close[ei + 1])
-            sdpt = getsdi(bi, sk_low[bi], ei, skp, lkp, rkp, 1)
+            if kkltpye > 0:
+                sdpt = getsdi(bi, sk_low[bi], ei, skp, lkp, rkp, 1)
+            else:
+                sdpt = (ei, sk_low[ei])
+
             if not sdpt:
                 continue
             mri = sdpt[0]
@@ -3713,6 +3723,9 @@ class Grst_Factor(object):
 
     def new_resline2(self, fidna, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_time, sk_atr, sk_ckl, i, eti = None):
         # --calc new new_resline2
+        # 连线方式 ：0--常规bbl-ttl， 1 - 右侧连接点偏向sk实体
+        kkltpye = 0
+
         mbdi = 5
         wrsk = 1.5
         tdls = {}
@@ -3755,7 +3768,10 @@ class Grst_Factor(object):
             skp = max(sk_open[ei], sk_close[ei])
             lkp = max(sk_open[ei - 1], sk_close[ei - 1])
             rkp = max(sk_open[ei + 1], sk_close[ei + 1])
-            sdpt = getsdi(bi, sk_high[bi], ei, skp, lkp, rkp, -1)
+            if kkltpye > 0:
+                sdpt = getsdi(bi, sk_high[bi], ei, skp, lkp, rkp, -1)
+            else:
+                sdpt = (ei, sk_high[ei])
             if not sdpt:
                 continue
             mri = sdpt[0]

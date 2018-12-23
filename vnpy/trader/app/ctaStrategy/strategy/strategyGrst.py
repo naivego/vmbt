@@ -411,7 +411,7 @@ class GrstStrategy(CtaTemplate):
         shwmafas = [fas + '_ma' for fas in maextfas]
         shwsufas = [fas + '_su' for fas in suextfas]
 
-        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas+shwsufas, period= self.Teda.period)
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas, period= self.Teda.period)
 
 
 # ----------------------------------------------------------------------
@@ -431,7 +431,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2015-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'

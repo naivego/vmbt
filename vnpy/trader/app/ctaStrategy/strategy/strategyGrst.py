@@ -376,8 +376,8 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['phd', 'bsp', 'rtp']
-        maextfas = ['sal', 'brdl', 'trdl']
+        kaextfas = ['phd', 'bsp', 'rtp','brdl', 'trdl']
+        maextfas = ['sal']
         suextfas = ['sal', 'brdl', 'trdl']
 
         self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
@@ -431,7 +431,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2015-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2013-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -484,12 +484,12 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0},
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1, 'rss':0},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'rss':0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'rss':0}
+            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'rss':0},
+            'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'rss':0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0},

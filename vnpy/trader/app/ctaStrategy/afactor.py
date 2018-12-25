@@ -184,9 +184,11 @@ class Trdphd(object):
         self.mdet = 0.1  # x 个atr
         self.bsp = 0
         self.rtp = 0
+        self.lbsp = 0  # 浅幅回看  次级前沿被突破的中枢附近
+        self.dbsp = 0  # 深幅回看  主级前沿的中枢附近
 
 
-
+    #-----------------------------------------------------
     def update(self, i):
         if self.upti>=i:
             return
@@ -199,6 +201,8 @@ class Trdphd(object):
             self.sta = 0
             self.bsp = self.sk_chn[i].bp
             self.rtp = self.sk_chn[i].ep
+            self.lbsp = self.sk_chn[i].bp
+            self.dbsp = self.sk_chn[i].bp
             return
         else:
             if self.plevs[-1].dirn * self.sk_chn[i].dirn>0:  # 单链递进，更新末级趋势前沿
@@ -220,16 +224,33 @@ class Trdphd(object):
                 self.dirn = laphd.dirn
                 self.bsp = laphd.jpa
                 self.rtp = laphd.ep + laphd.dirn / abs(laphd.dirn) * self.mdet * avgski
+
+                if self.dirn > 0:
+                    self.dbsp = min(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
+                elif self.dirn < 0:
+                    self.dbsp = max(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
                 return
             faphd = self.plevs[-2]
             if laphd.dirn * faphd.dirn > 0:
                 self.plevs.remove(faphd)
             else:
                 if laphd.dirn > 0 and laphd.cp >= faphd.jpc: # 趋势突破
+                    if len(self.plevs) == 2: # 主趋势即将反转
+                        self.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+
+                    if len(self.plevs) == 3: # 主趋势即将步进
+                        self.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+
                     self.plevs.remove(faphd)
                     # 标记交易信号
 
                 elif laphd.dirn < 0 and laphd.cp <= faphd.jpc: # 趋势突破
+                    if len(self.plevs) == 2: # 主趋势即将反转
+                        self.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+
+                    if len(self.plevs) == 3: # 主趋势即将步进
+                        self.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+
                     self.plevs.remove(faphd)
                     # 标记交易信号
                 else:  # 趋势突破只可以从末级向第一级逐级传导
@@ -4234,6 +4255,8 @@ class Grst_Factor(object):
 
         self.sk_phd = []   # phd多空临界线
         self.sk_bsp = []   # phd
+        self.sk_lbsp = []  # phd
+        self.sk_dbsp = []  # phd
         self.sk_rtp = []   # phd
 
         self.sk_sal = []   # sal
@@ -4316,6 +4339,8 @@ class Grst_Factor(object):
 
             self.sk_phd.append(self.sk_close[i])
             self.sk_bsp.append(self.sk_close[i])
+            self.sk_lbsp.append(self.sk_close[i])
+            self.sk_dbsp.append(self.sk_close[i])
             self.sk_rtp.append(self.sk_close[i])
             self.sk_drsp.append(self.sk_low[i])
             self.sk_sal.append(self.sk_drsp[-1])
@@ -4371,6 +4396,8 @@ class Grst_Factor(object):
 
         self.sk_phd.append(self.sk_close[i])
         self.sk_bsp.append(self.sk_close[i])
+        self.sk_lbsp.append(self.sk_close[i])
+        self.sk_dbsp.append(self.sk_close[i])
         self.sk_rtp.append(self.sk_close[i])
         self.sk_drsp.append(self.sk_low[skbgi])
         self.sk_sal.append(self.sk_drsp[-1])
@@ -4479,6 +4506,9 @@ class Grst_Factor(object):
         self.trdphd.update(i)
         self.sk_phd.append(self.trdphd.plevs[0].jpc)
         self.sk_bsp.append(self.trdphd.bsp)
+        self.sk_lbsp.append(self.trdphd.lbsp)
+        self.sk_dbsp.append(self.trdphd.dbsp)
+
         self.sk_rtp.append(self.trdphd.rtp)
 
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
@@ -5910,6 +5940,8 @@ class Grst_Factor(object):
         self.quotes['drst' + aflg] = self.sk_drsp
         self.quotes['phd'  + aflg] = self.sk_phd
         self.quotes['bsp' + aflg] = self.sk_bsp
+        self.quotes['lbsp' + aflg] = self.sk_lbsp
+        self.quotes['dbsp' + aflg] = self.sk_dbsp
         self.quotes['rtp' + aflg] = self.sk_rtp
 
         self.quotes['sal' + aflg] = self.sk_sal

@@ -167,6 +167,19 @@ class Skchain(object):
                     self.consk.jpa = min(self.sk_open[i], self.sk_close[i - 1])
                     self.chains.append(self.consk)
 
+
+# ---------------------------------------------------------------------------
+class Snphd(object):
+    def __init__(self, ):
+        self.rsti = 0
+        self.phdi = 0
+        self.dirn = 0
+        self.bsp = 0
+        self.rtp = 0
+        self.lbsp = 0  # 浅幅回看  次级前沿被突破的中枢附近
+        self.dbsp = 0  # 深幅回看  主级前沿的中枢附近
+
+# ---------------------------------------------------------------------------
 class Trdphd(object):
     def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_chn):
         self.sk_time = sk_time
@@ -178,15 +191,20 @@ class Trdphd(object):
         self.sk_atr = sk_atr
         self.sk_chn = sk_chn
         self.plevs = []
+
+        self.mdet = 0.1  # x 个atr
+        self.crtphd = Snphd()
+        self.lgphd = []  # 历史前沿序列存档
+        self.stphd = []  # 历史前沿序列存档
+
         self.upti = 0
         self.sta  = 0 # 前沿变更状态：前沿递进1，前沿步进2，前沿反转3
-        self.dirn = 0
-        self.mdet = 0.1  # x 个atr
-        self.bsp = 0
-        self.rtp = 0
-        self.lbsp = 0  # 浅幅回看  次级前沿被突破的中枢附近
-        self.dbsp = 0  # 深幅回看  主级前沿的中枢附近
 
+        # self.dirn = 0
+        # self.bsp = 0
+        # self.rtp = 0
+        # self.lbsp = 0  # 浅幅回看  次级前沿被突破的中枢附近
+        # self.dbsp = 0  # 深幅回看  主级前沿的中枢附近
 
     #-----------------------------------------------------
     def update(self, i):
@@ -197,12 +215,14 @@ class Trdphd(object):
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if len(self.plevs) <=0:
             self.plevs.append(self.sk_chn[i])
-            self.dirn = self.sk_chn[i].dirn
+            self.crtphd.dirn = self.sk_chn[i].dirn
+            self.crtphd.bsp = self.sk_chn[i].bp
+            self.crtphd.rtp = self.sk_chn[i].ep
+            self.crtphd.lbsp = self.sk_chn[i].bp
+            self.crtphd.dbsp = self.sk_chn[i].bp
+            self.crtphd.rsti = i
+            self.crtphd.phdi = i
             self.sta = 0
-            self.bsp = self.sk_chn[i].bp
-            self.rtp = self.sk_chn[i].ep
-            self.lbsp = self.sk_chn[i].bp
-            self.dbsp = self.sk_chn[i].bp
             return
         else:
             if self.plevs[-1].dirn * self.sk_chn[i].dirn>0:  # 单链递进，更新末级趋势前沿
@@ -211,24 +231,37 @@ class Trdphd(object):
                 self.plevs.append(self.sk_chn[i])
 
         if len(self.plevs) < 2:
-            self.dirn = self.plevs[-1].dirn
+            # 一级前沿递进
+            self.crtphd.dirn = self.plevs[-1].dirn
+            self.crtphd.phdi = i
             self.sta = 1
             return
         while(1):
             laphd = self.plevs[-1]
             if len(self.plevs) < 2:
-                if self.dirn * laphd.dirn > 0:  # 一级前沿步进
+                # 一级前沿步进或反转
+                if self.crtphd.dirn>0:
+                    self.lgphd.append(self.crtphd)
+                else:
+                    self.stphd.append(self.crtphd)
+
+                # 新生产一个前沿
+                self.crtphd = deepcopy(self.crtphd)
+                if self.crtphd.dirn * laphd.dirn > 0:  # 一级前沿步进
                     self.sta = 2
                 else:                           # 一级前沿反转
                     self.sta = 3
-                self.dirn = laphd.dirn
-                self.bsp = laphd.jpa
-                self.rtp = laphd.ep + laphd.dirn / abs(laphd.dirn) * self.mdet * avgski
 
-                if self.dirn > 0:
-                    self.dbsp = min(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
-                elif self.dirn < 0:
-                    self.dbsp = max(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
+                self.crtphd.rsti = i
+                self.crtphd.phdi = i
+                self.crtphd.dirn = laphd.dirn
+                self.crtphd.bsp = laphd.jpa
+                self.crtphd.rtp = laphd.ep + laphd.dirn / abs(laphd.dirn) * self.mdet * avgski
+
+                if self.crtphd.dirn > 0:
+                    self.crtphd.dbsp = min(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
+                elif self.crtphd.dirn < 0:
+                    self.crtphd.dbsp = max(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
                 return
             faphd = self.plevs[-2]
             if laphd.dirn * faphd.dirn > 0:
@@ -236,20 +269,20 @@ class Trdphd(object):
             else:
                 if laphd.dirn > 0 and laphd.cp >= faphd.jpc: # 趋势突破
                     if len(self.plevs) == 2: # 主趋势即将反转
-                        self.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+                        self.crtphd.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
                     if len(self.plevs) == 3: # 主趋势即将步进
-                        self.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+                        self.crtphd.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
                     self.plevs.remove(faphd)
                     # 标记交易信号
 
                 elif laphd.dirn < 0 and laphd.cp <= faphd.jpc: # 趋势突破
                     if len(self.plevs) == 2: # 主趋势即将反转
-                        self.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+                        self.crtphd.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
                     if len(self.plevs) == 3: # 主趋势即将步进
-                        self.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
+                        self.crtphd.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
                     self.plevs.remove(faphd)
                     # 标记交易信号
@@ -4504,12 +4537,14 @@ class Grst_Factor(object):
         self.ckchn.onbar(i)
         self.sk_chn.append(deepcopy(self.ckchn.consk))
         self.trdphd.update(i)
-        self.sk_phd.append(self.trdphd.plevs[0].jpc)
-        self.sk_bsp.append(self.trdphd.bsp)
-        self.sk_lbsp.append(self.trdphd.lbsp)
-        self.sk_dbsp.append(self.trdphd.dbsp)
 
-        self.sk_rtp.append(self.trdphd.rtp)
+
+        self.sk_phd.append(self.trdphd.plevs[0].jpc)
+        self.sk_bsp.append(self.trdphd.crtphd.bsp)
+        self.sk_lbsp.append(self.trdphd.crtphd.lbsp)
+        self.sk_dbsp.append(self.trdphd.crtphd.dbsp)
+
+        self.sk_rtp.append(self.trdphd.crtphd.rtp)
 
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
         if self.sk_ckl[i - 1][0] > 0:

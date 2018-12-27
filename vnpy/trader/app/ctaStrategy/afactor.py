@@ -172,6 +172,7 @@ class Skchain(object):
 class Snphd(object):
     def __init__(self, ):
         self.rsti = 0
+        self.phdna = 'xphd' +'_' + self.rsti
         self.phdi = 0
         self.dirn = 0
         self.bsp = 0
@@ -194,17 +195,10 @@ class Trdphd(object):
 
         self.mdet = 0.1  # x 个atr
         self.crtphd = Snphd()
-        self.lgphd = []  # 历史前沿序列存档
-        self.stphd = []  # 历史前沿序列存档
+        self.phds= OrderedDict()
 
         self.upti = 0
         self.sta  = 0 # 前沿变更状态：前沿递进1，前沿步进2，前沿反转3
-
-        # self.dirn = 0
-        # self.bsp = 0
-        # self.rtp = 0
-        # self.lbsp = 0  # 浅幅回看  次级前沿被突破的中枢附近
-        # self.dbsp = 0  # 深幅回看  主级前沿的中枢附近
 
     #-----------------------------------------------------
     def update(self, i):
@@ -240,12 +234,7 @@ class Trdphd(object):
             laphd = self.plevs[-1]
             if len(self.plevs) < 2:
                 # 一级前沿步进或反转
-                if self.crtphd.dirn>0:
-                    self.lgphd.append(self.crtphd)
-                else:
-                    self.stphd.append(self.crtphd)
-
-                # 新生产一个前沿
+                # 新生成一个前沿
                 self.crtphd = deepcopy(self.crtphd)
                 if self.crtphd.dirn * laphd.dirn > 0:  # 一级前沿步进
                     self.sta = 2
@@ -260,14 +249,17 @@ class Trdphd(object):
 
                 if self.crtphd.dirn > 0:
                     self.crtphd.dbsp = min(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
+                    self.crtphd.phdna = 'lphd_' + str(self.crtphd.rsti)
                 elif self.crtphd.dirn < 0:
                     self.crtphd.dbsp = max(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
+                    self.crtphd.phdna = 'sphd_' + str(self.crtphd.rsti)
+                self.phds[self.crtphd.phdna] = self.crtphd
                 return
             faphd = self.plevs[-2]
             if laphd.dirn * faphd.dirn > 0:
                 self.plevs.remove(faphd)
             else:
-                if laphd.dirn > 0 and laphd.cp >= faphd.jpc: # 趋势突破
+                if laphd.dirn > 0 and laphd.cp >= faphd.jpa + self.mdet * avgski: # 趋势突破  jpa/jpc
                     if len(self.plevs) == 2: # 主趋势即将反转
                         self.crtphd.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
@@ -277,7 +269,7 @@ class Trdphd(object):
                     self.plevs.remove(faphd)
                     # 标记交易信号
 
-                elif laphd.dirn < 0 and laphd.cp <= faphd.jpc: # 趋势突破
+                elif laphd.dirn < 0 and laphd.cp <= faphd.jpa - self.mdet * avgski: # 趋势突破 jpa/jpc
                     if len(self.plevs) == 2: # 主趋势即将反转
                         self.crtphd.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 

@@ -172,14 +172,18 @@ class Skchain(object):
 class Snphd(object):
     def __init__(self, ):
         self.rsti = 0
-        self.phdna = 'xphd' +'_' + self.rsti
+        self.phdna = 'xphd_' + str(self.rsti)
         self.phdi = 0
         self.dirn = 0
-        self.bsp = 0
         self.rtp = 0
         self.lbsp = 0  # 浅幅回看  次级前沿被突破的中枢附近
         self.dbsp = 0  # 深幅回看  主级前沿的中枢附近
+        self.fbsp = 0
 
+        self.rti  = None
+        self.lbsi = None
+        self.dbsi = None
+        self.fbsi = None
 # ---------------------------------------------------------------------------
 class Trdphd(object):
     def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_chn):
@@ -210,10 +214,10 @@ class Trdphd(object):
         if len(self.plevs) <=0:
             self.plevs.append(self.sk_chn[i])
             self.crtphd.dirn = self.sk_chn[i].dirn
-            self.crtphd.bsp = self.sk_chn[i].bp
             self.crtphd.rtp = self.sk_chn[i].ep
             self.crtphd.lbsp = self.sk_chn[i].bp
             self.crtphd.dbsp = self.sk_chn[i].bp
+            self.crtphd.fbsp = self.sk_chn[i].bp
             self.crtphd.rsti = i
             self.crtphd.phdi = i
             self.sta = 0
@@ -230,6 +234,31 @@ class Trdphd(object):
             self.crtphd.phdi = i
             self.sta = 1
             return
+        # ------------------------先更新当前sk触及原前沿的状态
+        if not self.crtphd.rsti:
+            if self.crtphd.dirn > 0 and self.sk_high[i]>= self.crtphd.rtp:
+                self.crtphd.rsti = i
+            elif self.crtphd.dirn < 0 and self.sk_low[i]<= self.crtphd.rtp:
+                self.crtphd.rsti = i
+        if not self.crtphd.lbsi:
+            if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.lbsp:
+                self.crtphd.lbsi = i
+            elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.lbsp:
+                self.crtphd.lbsi = i
+
+        if not self.crtphd.fbsi:
+            if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.fbsp:
+                self.crtphd.fbsi = i
+            elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.fbsp:
+                self.crtphd.fbsi = i
+
+        if not self.crtphd.dbsi:
+            if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.dbsp:
+                self.crtphd.dbsi = i
+            elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.dbsp:
+                self.crtphd.dbsi = i
+
+        # -------------------------更新新前沿
         while(1):
             laphd = self.plevs[-1]
             if len(self.plevs) < 2:
@@ -244,8 +273,13 @@ class Trdphd(object):
                 self.crtphd.rsti = i
                 self.crtphd.phdi = i
                 self.crtphd.dirn = laphd.dirn
-                self.crtphd.bsp = laphd.jpa
+                self.crtphd.fbsp = laphd.jpc
                 self.crtphd.rtp = laphd.ep + laphd.dirn / abs(laphd.dirn) * self.mdet * avgski
+
+                self.crtphd.rti  = None
+                self.crtphd.lbsi = None
+                self.crtphd.dbsi = None
+                self.crtphd.fbsi = None
 
                 if self.crtphd.dirn > 0:
                     self.crtphd.dbsp = min(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
@@ -2235,8 +2269,8 @@ class Skatline(object):
         det = self.det
         rdet = self.rdet
         mdet = self.mdet
-        usrpsn = 4
-        usrmsn = 1
+        usrpsn = 4  # 平保止损
+        usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
 
         # bek1/bek2多选一成交信号
         ocobek12 = Ocosta()
@@ -2563,7 +2597,7 @@ class Skatline(object):
         rdet = self.rdet
         mdet = self.mdet
         usrpsn = 4
-        usrmsn = 1
+        usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
 
         self.rsk1 = None
         self.rsk2 = None
@@ -2583,6 +2617,102 @@ class Skatline(object):
             prio = 0
             self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
 
+    def sgnskatphd(self, crtphd, i, eti=None, mosi=0, mosn=1):
+        # 信号命名格式： 信号类_se_信号点-信号源名称    eg: psk2_se_65-ma_phdna, 信号：psk2 | bsk1 | bsk3 | bsk5
+        atr = self.sk_atr[i] * self.sk_close[i]
+        det = self.det
+        rdet = self.rdet
+        mdet = self.mdet
+        usrpsn = 4
+        usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrspn = 1  # 硬止损 回看极限位以外1个atr
+
+        # psk2/bsk1多选一成交信号
+        ocopsk21 = Ocosta()
+        # psk2/bsk3多选一成交信号
+        ocopsk23 = Ocosta()
+        # psk2/bsk5多选一成交信号
+        ocopsk25 = Ocosta()
+
+        self.psk2 = None
+        self.bsk1 = None
+        self.bsk3 = None
+        self.bsk5 = None
+
+        if not crtphd.rti:
+            self.psk2 = crtphd.rtp
+
+        if not crtphd.lbsi and  0 :
+            self.bsk1 = crtphd.lbsp
+
+        if not crtphd.dbsi:
+            self.bsk3 = crtphd.dbsp
+
+        if not crtphd.fbsi:
+            self.bsk5 = crtphd.fbsp
+        # ---------------------------------------------
+        if self.psk2:
+            sgnna = 'psk2' + '_se_' + str(i) + '-' + crtphd.phdna
+            sgntyp = 'psk2'
+            bsdir = crtphd.dirn/abs(crtphd.dirn)
+            sdop = self.psk2
+            ordtyp = 'Stp'
+            sdsp = crtphd.fbsp - bsdir * usrspn * atr
+            sdtp = None
+            psn = usrpsn
+            msn = usrmsn
+            mark = i
+            prio = 0
+            oco = None
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+
+        # ---------------------------------------------
+        if self.bsk1:
+            sgnna = 'bsk1' + '_se_' + str(i) + '-' + crtphd.phdna
+            sgntyp = 'bsk1'
+            bsdir = crtphd.dirn/abs(crtphd.dirn)
+            sdop = self.bsk1
+            ordtyp = 'Lmt'
+            sdsp = crtphd.fbsp - bsdir * usrspn * atr
+            sdtp = None
+            psn = usrpsn
+            msn = usrmsn
+            mark = i
+            prio = 0
+            oco = None
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+
+        # ---------------------------------------------
+        if self.bsk3:
+            sgnna = 'bsk3' + '_se_' + str(i) + '-' + crtphd.phdna
+            sgntyp = 'bsk3'
+            bsdir = crtphd.dirn / abs(crtphd.dirn)
+            sdop = self.bsk3
+            ordtyp = 'Lmt'
+            sdsp = crtphd.fbsp - bsdir * usrspn * atr
+            sdtp = None
+            psn = usrpsn
+            msn = usrmsn
+            mark = i
+            prio = 0
+            oco = None
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+
+        # ---------------------------------------------
+        if self.bsk5:
+            sgnna = 'bsk5' + '_se_' + str(i) + '-' + crtphd.phdna
+            sgntyp = 'bsk5'
+            bsdir = crtphd.dirn / abs(crtphd.dirn)
+            sdop = self.bsk5
+            ordtyp = 'Lmt'
+            sdsp = crtphd.fbsp - bsdir * usrspn * atr
+            sdtp = None
+            psn = usrpsn
+            msn = usrmsn
+            mark = i
+            prio = 0
+            oco = None
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
 
 #---------------------------------------------------------------------------
 
@@ -2702,7 +2832,7 @@ class Intsgnbs(object):
         bbls_dic = xfas['bbls']
         ttls_dic = xfas['ttls']
         sals_dic = xfas['sals']
-
+        phds_dic = xfas['phds']
 
         skatsel.trpkops = {}
         if skatsel.sgni != i:
@@ -2780,6 +2910,16 @@ class Intsgnbs(object):
                 skatsel.sgnskatrssd(crtuprs[-1], i)
             if crtdwrs and len(crtdwrs)>0:
                 skatsel.sgnskatrssd(crtdwrs[-1], i)
+
+        if len(phds_dic)>0:
+            crtphd = phds_dic.values()[-1].values()
+        else:
+            crtphd = None
+        if 'phd' in kopset and kopset['phd'] >= 1:
+            if crtphd:
+                skatsel.sgnskatphd(crtphd, i)
+
+
     # ------------------------------------------
     def etsgnbs(self, fid, i, eti, mosi = 0, mosn=1):
         kopset = self.tdkopset[fid]['etkop']
@@ -2900,6 +3040,16 @@ class Intsgnbs(object):
                     continue
                 else:
                     ckpos = kop
+
+            # 同一个data中，同源phd中若已经 开仓 bsk1/3/5, 则不再开psk2
+            elif sgnid in ['psk2_'+seet]:
+                if socna not in socpos_dic:
+                    ckpos = kop
+                elif 'bsk1_'+seet in socpos_dic[socna] or 'bsk3_'+seet in socpos_dic[socna] or 'bsk5_'+seet in socpos_dic[socna]:
+                    continue
+                else:
+                    ckpos = kop
+
             else:
                 try:
                     pos = socpos_dic[socna][sgnid][-1]
@@ -4530,9 +4680,8 @@ class Grst_Factor(object):
         self.sk_chn.append(deepcopy(self.ckchn.consk))
         self.trdphd.update(i)
 
-
         self.sk_phd.append(self.trdphd.plevs[0].jpc)
-        self.sk_bsp.append(self.trdphd.crtphd.bsp)
+        self.sk_bsp.append(self.trdphd.crtphd.fbsp)
         self.sk_lbsp.append(self.trdphd.crtphd.lbsp)
         self.sk_dbsp.append(self.trdphd.crtphd.dbsp)
 
@@ -5943,7 +6092,7 @@ class Grst_Factor(object):
         # -----------------------------------------------------------------------
 
         self.ctaEngine.intedsgn.fas[self.fid] = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines,
-                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas}
+                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas, 'phds': self.trdphd.phds}
         self.ctaEngine.intedsgn.sesgnbs(self.fid, i)
         self.ctaEngine.sgntotrd(self.fid, 'se', i)
 
@@ -5966,7 +6115,7 @@ class Grst_Factor(object):
 
         self.quotes['drst' + aflg] = self.sk_drsp
         self.quotes['phd'  + aflg] = self.sk_phd
-        self.quotes['bsp' + aflg] = self.sk_bsp
+        self.quotes['fbsp' + aflg] = self.sk_bsp
         self.quotes['lbsp' + aflg] = self.sk_lbsp
         self.quotes['dbsp' + aflg] = self.sk_dbsp
         self.quotes['rtp' + aflg] = self.sk_rtp

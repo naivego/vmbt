@@ -921,7 +921,8 @@ class TSBacktest(object):
         self.SdCld_dic = {}
         self.SdOpen_dic = {}
 
-        # --------------------------外部信号et
+        #====================================================
+        # sads--------------------------外部信号et
         etrstdir = etfas['rstdir']
         if len(etfas['upsas']) > 0:
             etuprs = etfas['upsas'].values()[-1]
@@ -931,7 +932,7 @@ class TSBacktest(object):
             etdwrs = etfas['dwsas'].values()[-1]
         else:
             etdwrs = None
-        # -------------------------本部信号se
+        # sads-------------------------本部信号se
         serstdir = xfas['rstdir']
         if len(xfas['upsas']) > 0:
             seuprs = xfas['upsas'].values()[-1]
@@ -942,7 +943,20 @@ class TSBacktest(object):
         else:
             sedwrs = None
 
-        self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并可能调整持仓的止损和止盈设置
+        # ====================================================
+        # phds--------------------------外部信号et
+        if len(etfas['phds']) > 0:
+            etphd = etfas['phds'].values()[-1]
+        else:
+            etphd = None
+
+        # phds-------------------------本部信号se
+        if len(xfas['phds']) > 0:
+            sephd = xfas['phds'].values()[-1]
+        else:
+            sephd = None
+
+        self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并调整持仓的止损和止盈设置
         # 更新相应的发单信号
 
         self.OrdMkt_Dic[soda] = []
@@ -979,13 +993,13 @@ class TSBacktest(object):
                     # --------------------------移动止损
                     msp = None
                     if msn:
-                        if msn>1:
+                        if msn==1:
                             # --------------------------简单移动止损
                             if entsize > 0 and sdsp and sdsp < sk_close[ski] - msn * atr and entprice < sk_close[ski] - msn * atr:
                                 msp = sk_close[ski] - msn * atr
                             elif entsize < 0 and sdsp and sdsp > sk_close[ski] + msn * atr and entprice > sk_close[ski] + msn * atr:
                                 msp = sk_close[ski] + msn * atr
-                        else:
+                        elif msn==2:
                             # --------------------------基于sads的移动止损
                             # 1、rss开仓信号止损采用本身周期的Rstsa移动止损
                             # 2、se|et开仓信号止损采用外部周期的Rstsa移动止损
@@ -1001,6 +1015,34 @@ class TSBacktest(object):
                                 catr = eatr
 
                             if entsize > 0 and rstdir > 0 and crtuprs and len(crtuprs)>0:
+                                upssd = crtuprs.values()[-1]
+                                if upssd.mexsta >= 2:
+                                    msp = upssd.mexp - 0.4 * catr
+                                else:
+                                    msp = upssd.cexp - 0.4 * catr
+                            elif entsize < 0 and rstdir < 0 and crtdwrs and len(crtdwrs) > 0:
+                                dwssd = crtdwrs.values()[-1]
+                                if dwssd.mexsta >= 2:
+                                    msp = dwssd.mexp + 0.4 * catr
+                                else:
+                                    msp = dwssd.cexp + 0.4 * catr
+
+                        elif msn == 3:
+                            # --------------------------基于phds的移动止损
+                            # 1、phd开仓信号止损采用本身周期的crtphd移动止损
+                            # 2、se|et开仓信号止损采用外部周期的crtphd移动止损
+                            if 'rsk' in sgnid.split('_')[0]:
+                                rstdir = serstdir
+                                crtuprs = seuprs
+                                crtdwrs = sedwrs
+                                catr = atr
+                            else:
+                                rstdir = etrstdir
+                                crtuprs = etuprs
+                                crtdwrs = etdwrs
+                                catr = eatr
+
+                            if entsize > 0 and rstdir > 0 and crtuprs and len(crtuprs) > 0:
                                 upssd = crtuprs.values()[-1]
                                 if upssd.mexsta >= 2:
                                     msp = upssd.mexp - 0.4 * catr

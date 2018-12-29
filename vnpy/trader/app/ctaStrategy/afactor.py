@@ -236,29 +236,26 @@ class Trdphd(object):
             self.sta = 1
             return
         # ------------------------先更新当前sk触及原前沿的状态
-        if not self.crtphd.rsti:
+        if not self.crtphd.rti:
             if self.crtphd.dirn > 0 and self.sk_high[i]>= self.crtphd.rtp:
-                self.crtphd.rsti = i
+                self.crtphd.rti = i
             elif self.crtphd.dirn < 0 and self.sk_low[i]<= self.crtphd.rtp:
-                self.crtphd.rsti = i
+                self.crtphd.rti = i
         if not self.crtphd.lbsi:
             if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.lbsp:
                 self.crtphd.lbsi = i
             elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.lbsp:
                 self.crtphd.lbsi = i
-
-        if not self.crtphd.fbsi:
-            if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.fbsp:
-                self.crtphd.fbsi = i
-            elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.fbsp:
-                self.crtphd.fbsi = i
-
         if not self.crtphd.dbsi:
             if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.dbsp:
                 self.crtphd.dbsi = i
             elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.dbsp:
                 self.crtphd.dbsi = i
-
+        if not self.crtphd.fbsi:
+            if self.crtphd.dirn > 0 and self.sk_low[i] <= self.crtphd.fbsp:
+                self.crtphd.fbsi = i
+            elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.fbsp:
+                self.crtphd.fbsi = i
         # -------------------------更新新前沿
         while(1):
             laphd = self.plevs[-1]

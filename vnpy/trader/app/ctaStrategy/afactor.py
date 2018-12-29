@@ -122,6 +122,7 @@ class Skchain(object):
 
     def onbar(self, i):
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
+
         if not self.consk:
             if self.sk_close[i] > self.sk_open[i]:
                 self.consk = Consks(1, i, i, self.sk_low[i], self.sk_high[i], self.sk_close[i])
@@ -2912,9 +2913,10 @@ class Intsgnbs(object):
                 skatsel.sgnskatrssd(crtdwrs[-1], i)
 
         if len(phds_dic)>0:
-            crtphd = phds_dic.values()[-1].values()
+            crtphd = phds_dic.values()[-1]
         else:
             crtphd = None
+
         if 'phd' in kopset and kopset['phd'] >= 1:
             if crtphd:
                 skatsel.sgnskatphd(crtphd, i)
@@ -3713,7 +3715,7 @@ class Grst_Factor(object):
         Dat_bar['TR2'] = abs(Dat_bar['high'] - Dat_bar['close'].shift(1))
         Dat_bar['TR3'] = abs(Dat_bar['low'] - Dat_bar['close'].shift(1))
         TR = Dat_bar.loc[:,['TR1', 'TR2','TR3']].max(axis=1)
-        ATR= TR.rolling(14).mean()/Dat_bar['close'].shift(1)
+        ATR= TR.rolling(55).mean()/Dat_bar['close'].shift(1)
         self.quotes['atr'] = ATR
 
         Ma = Dat_bar['close'].rolling(10).mean()
@@ -4348,7 +4350,7 @@ class Grst_Factor(object):
     # -----------------------------------------------------------
     def grst_init(self, setting = {}, btconfig = {}):
         self.crtski = 0
-        skbgi = 20  # 起始点
+        skbgi = 60  # 起始点
         self.skbgi = skbgi
         self.teix = [0] * (skbgi + 1)  # 当前sk在teda周期下对应sk的索引
         self.tekn = [1] * (skbgi + 1)  # 记录当前sk包括多少个teda sk

@@ -484,8 +484,8 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1, 'rss':0, 'phd':1},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0, 'phd':1}
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1, 'rss': 0, 'phd': 1},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss': 0, 'phd': 0}
         },
         'ma': {
             'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'rss':0},

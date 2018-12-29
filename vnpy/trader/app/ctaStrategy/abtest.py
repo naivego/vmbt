@@ -950,11 +950,12 @@ class TSBacktest(object):
         else:
             etphd = None
 
-        # phds-------------------------本部信号se
+        # phds-------------------------内部信号se
         if len(xfas['phds']) > 0:
             sephd = xfas['phds'].values()[-1]
         else:
             sephd = None
+        phdir = 0
 
         self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并调整持仓的止损和止盈设置
         # 更新相应的发单信号
@@ -1031,29 +1032,19 @@ class TSBacktest(object):
                             # --------------------------基于phds的移动止损
                             # 1、phd开仓信号止损采用本身周期的crtphd移动止损
                             # 2、se|et开仓信号止损采用外部周期的crtphd移动止损
-                            if 'rsk' in sgnid.split('_')[0]:
-                                rstdir = serstdir
-                                crtuprs = seuprs
-                                crtdwrs = sedwrs
+                            if 'psk' in sgnid.split('_')[0] or 'bsk' in sgnid.split('_')[0] and sephd:
+                                phddir = sephd.dirn
                                 catr = atr
-                            else:
-                                rstdir = etrstdir
-                                crtuprs = etuprs
-                                crtdwrs = etdwrs
+                                phdmsp = sephd.fbsp - phddir * catr
+                            elif etphd:
+                                phddir = etphd.dirn
                                 catr = eatr
+                                phdmsp = etphd.fbsp - phddir * catr
 
-                            if entsize > 0 and rstdir > 0 and crtuprs and len(crtuprs) > 0:
-                                upssd = crtuprs.values()[-1]
-                                if upssd.mexsta >= 2:
-                                    msp = upssd.mexp - 0.4 * catr
-                                else:
-                                    msp = upssd.cexp - 0.4 * catr
-                            elif entsize < 0 and rstdir < 0 and crtdwrs and len(crtdwrs) > 0:
-                                dwssd = crtdwrs.values()[-1]
-                                if dwssd.mexsta >= 2:
-                                    msp = dwssd.mexp + 0.4 * catr
-                                else:
-                                    msp = dwssd.cexp + 0.4 * catr
+                            if entsize > 0 and phddir > 0:
+                                msp = phdmsp
+                            elif entsize < 0 and phddir < 0:
+                                msp = phdmsp
 
                     # --------------------------信号止损
                     sgnbs = None

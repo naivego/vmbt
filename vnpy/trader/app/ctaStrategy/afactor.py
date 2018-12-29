@@ -187,7 +187,8 @@ class Snphd(object):
         self.fbsi = None
 # ---------------------------------------------------------------------------
 class Trdphd(object):
-    def __init__(self, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_chn):
+    def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_chn):
+        self.fid = fid
         self.sk_time = sk_time
         self.sk_open = sk_open
         self.sk_high = sk_high
@@ -281,10 +282,10 @@ class Trdphd(object):
 
                 if self.crtphd.dirn > 0:
                     self.crtphd.dbsp = min(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
-                    self.crtphd.phdna = 'lphd_' + str(self.crtphd.rsti)
+                    self.crtphd.phdna = self.fid + '_lphd_' + str(self.crtphd.rsti)
                 elif self.crtphd.dirn < 0:
                     self.crtphd.dbsp = max(self.sk_close[laphd.bi], self.sk_open[laphd.bi - 1])
-                    self.crtphd.phdna = 'sphd_' + str(self.crtphd.rsti)
+                    self.crtphd.phdna = self.fid + '_sphd_' + str(self.crtphd.rsti)
                 self.phds[self.crtphd.phdna] = self.crtphd
                 return
             faphd = self.plevs[-2]
@@ -4635,7 +4636,7 @@ class Grst_Factor(object):
         self.ckchn = Skchain(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr)
         self.sk_chn = [None] * (skbgi + 1)
 
-        self.trdphd = Trdphd(self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_chn)
+        self.trdphd = Trdphd(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_chn)
 
         # self.sk_cklsm=[] #在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls),最近的3段ckls
         ckltp = ckli

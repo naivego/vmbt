@@ -2599,7 +2599,7 @@ class Skatline(object):
         rdet = self.rdet
         mdet = self.mdet
         usrpsn = 4
-        usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrmsn = 2  # 1--简单移动止损 2--基于sads  3--基于phd
 
         self.rsk1 = None
         self.rsk2 = None

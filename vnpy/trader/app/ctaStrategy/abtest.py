@@ -955,7 +955,7 @@ class TSBacktest(object):
             sephd = xfas['phds'].values()[-1]
         else:
             sephd = None
-        phdir = 0
+
 
         self.intedsgn.cmbsgn(fid, seet, self.SocPos_Dic)  # 此处整合信号，并调整持仓的止损和止盈设置
         # 更新相应的发单信号
@@ -969,7 +969,9 @@ class TSBacktest(object):
             if socfid != fid:
                 continue
             for sgnid, poslist in sgnpos.iteritems():
-                if seet != sgnid.split('_')[-1]:
+                sgntyp = sgnid.split('_')[0]
+                sgnseet = sgnid.split('_')[-1]
+                if seet != sgnseet:
                     continue
                 for pos in poslist:
                     entski = pos.EntSki
@@ -1004,7 +1006,7 @@ class TSBacktest(object):
                             # --------------------------基于sads的移动止损
                             # 1、rss开仓信号止损采用本身周期的Rstsa移动止损
                             # 2、se|et开仓信号止损采用外部周期的Rstsa移动止损
-                            if 'rsk' in sgnid.split('_')[0]:
+                            if 'rsk' in sgntyp:
                                 rstdir  = serstdir
                                 crtuprs = seuprs
                                 crtdwrs = sedwrs
@@ -1032,11 +1034,14 @@ class TSBacktest(object):
                             # --------------------------基于phds的移动止损
                             # 1、phd开仓信号止损采用本身周期的crtphd移动止损
                             # 2、se|et开仓信号止损采用外部周期的crtphd移动止损
-                            if ('psk' in sgnid.split('_')[0] or 'bsk' in sgnid.split('_')[0]) and sephd:
+                            mspsetyps = ['psk2', 'bsk1', 'bsk3', 'bsk5']
+                            mspettyps = ['rek2', 'rek1', 'rek3', 'bek1', 'bek2', 'bek3', 'bek4']
+                            phddir = 0
+                            if sgntyp in mspsetyps and sephd:
                                 phddir = sephd.dirn/abs(sephd.dirn)
                                 catr = atr
                                 phdmsp = sephd.fbsp - phddir * catr * 1.0
-                            elif etphd:
+                            elif sgntyp in mspettyps and etphd:
                                 phddir = etphd.dirn/abs(etphd.dirn)
                                 catr = eatr
                                 phdmsp = etphd.fbsp - phddir * catr * 1.0
@@ -1090,6 +1095,44 @@ class TSBacktest(object):
                     # =========================================================================限价平仓止盈单
                     sdtp = pos.EntTp
                     sdflg = pos.TpFlg
+                    # 移动止盈 (需要移动止盈的信号)
+                    mtpsetyps = ['psk2', 'bsk1', 'bsk3', 'bsk5']
+                    mtpettyps = []
+                    mtp = None
+                    phddir = 0
+                    if sgntyp in mtpsetyps and sephd:
+                        phddir = sephd.dirn / abs(sephd.dirn)
+                        catr = atr
+                        phdmtp = sephd.dbsp - phddir * catr * 0.0
+                    elif sgntyp in mtpettyps and etphd:
+                        phddir = etphd.dirn / abs(etphd.dirn)
+                        catr = eatr
+                        phdmtp = etphd.dbsp - phddir * catr * 0.0
+
+                    if entsize > 0 and phddir < 0:
+                        msp = phdmtp
+                    elif entsize < 0 and phddir > 0:
+                        msp = phdmtp
+
+                    # --------------------------------------
+                    if entsize > 0:
+                        if not sdtp or (msp and sdsp < msp):
+                            sdsp = msp
+                            sdflg = 'msp'
+
+
+                    elif entsize < 0:
+                        if not sdsp or (pbsp and sdsp > pbsp):
+                            sdsp = pbsp
+                            sdflg = 'pbsp'
+                        if not sdsp or (msp and sdsp > msp):
+                            sdsp = msp
+                            sdflg = 'msp'
+                        if not sdsp or (sgnsp and sdsp > sgnsp):
+                            sdsp = sgnsp
+                            sdflg = spflg
+
+
                     if not sdflg:
                         sdflg = 'tp0'
                     if sdtp and abs(sdtp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:

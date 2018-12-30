@@ -1032,12 +1032,12 @@ class TSBacktest(object):
                             # --------------------------基于phds的移动止损
                             # 1、phd开仓信号止损采用本身周期的crtphd移动止损
                             # 2、se|et开仓信号止损采用外部周期的crtphd移动止损
-                            if 'psk' in sgnid.split('_')[0] or 'bsk' in sgnid.split('_')[0] and sephd:
+                            if ('psk' in sgnid.split('_')[0] or 'bsk' in sgnid.split('_')[0]) and sephd:
                                 phddir = sephd.dirn/abs(sephd.dirn)
                                 catr = atr
                                 phdmsp = sephd.fbsp - phddir * catr * 1.0
                             elif etphd:
-                                phddir = etphd.dirn//abs(etphd.dirn)
+                                phddir = etphd.dirn/abs(etphd.dirn)
                                 catr = eatr
                                 phdmsp = etphd.fbsp - phddir * catr * 1.0
 

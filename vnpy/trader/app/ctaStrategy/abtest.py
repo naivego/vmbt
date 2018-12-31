@@ -31,7 +31,7 @@ from ctaBase import *
 # ----------------------------------------------------------------------
 class Order(object):
     # ----------------------------------------------------------------------
-    def __init__(self, Symbol, OrdSize, OrdAmount, OrdPrice, OrdTyp, OrdTime, Offset, OrdSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, Mso=None, OrdFlg='NB'):
+    def __init__(self, Symbol, OrdSize, OrdAmount, OrdPrice, OrdTyp, OrdTime, Offset, OrdSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Mtn = None, Ordid=None, Mso=None, OrdFlg='NB'):
         """Constructor"""
         self.Symbol = Symbol
         self.OrdSize = OrdSize
@@ -45,6 +45,7 @@ class Order(object):
         self.OrdTp = OrdTp
         self.Psn = Psn
         self.Msn = Msn
+        self.Mtn = Mtn
         self.Ordid = Ordid
         self.Mso = Mso
         self.OrdFlg = OrdFlg
@@ -52,7 +53,7 @@ class Order(object):
 # ----------------------------------------------------------------------
 class Trdord(object):
     # ----------------------------------------------------------------------
-    def __init__(self, Symbol, TrdSize, TrdPrice, TrdTime, Offset, Trdski=None, TrdSp = None, TrdTp = None, Psn=None, Msn = None, Trdid=None, TrdFlg='NB'):
+    def __init__(self, Symbol, TrdSize, TrdPrice, TrdTime, Offset, Trdski=None, TrdSp = None, TrdTp = None, Psn=None, Msn = None, Mtn = None, Trdid=None, TrdFlg='NB'):
         """Constructor"""
         self.Symbol = Symbol
         self.TrdSize = TrdSize
@@ -64,6 +65,7 @@ class Trdord(object):
         self.TrdTp = TrdTp
         self.Psn = Psn
         self.Msn = Msn
+        self.Mtn = Mtn
         self.Trdid = Trdid
         self.TrdFlg = TrdFlg
 
@@ -80,6 +82,7 @@ class Position(object):
         self.EntTp = OpenTrd.TrdTp
         self.Psn = OpenTrd.Psn
         self.Msn = OpenTrd.Msn
+        self.Mtn = OpenTrd.Mtn
         self.MktValue = 0
         self.Margin = 0
         self.PAL = 0
@@ -304,8 +307,6 @@ class TSBacktest(object):
         self.SgnVarLstSdop_Dic = {}  # 各个策略的各个品种最近的开仓信号
         self.SocPos_Dic = {} # 各信号源持仓汇总
 
-
-
         self.Opid = 0
         self.MktValue = 0
         self.Long_MktValue = 0
@@ -449,27 +450,27 @@ class TSBacktest(object):
         # ----------------------------------------------------------------------
 
 
-    def sendord(self, Soda, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Ordid=None, Mso=None, OrdFlg='NB'):
+    def sendord(self, Soda, Symbol, Size, Amount, Price, OrdTyp='Mkt', EntTime=None, Offset='open', EntSki=None, OrdSp = None, OrdTp = None, Psn=None, Msn = None, Mtn = None, Ordid=None, Mso=None, OrdFlg='NB'):
         # print 'sendord:', Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg
         self.LogOrdsnum += 1
         # self.LogOrds.loc[self.LogOrdsnum, :] = [self.LogOrdsnum, Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg]
         self.write_to_csv_file(self.Ordslogfile, [self.LogOrdsnum, Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSp, OrdTp, OrdFlg])
         if OrdTyp == 'Mkt':
-            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
+            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Mtn = Mtn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
             if Soda in self.OrdMkt_Dic:
                 self.OrdMkt_Dic[Soda].append(neword)
             else:
                 self.OrdMkt_Dic[Soda] = [neword]
 
         elif OrdTyp == 'Lmt':
-            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
+            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Mtn = Mtn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
             if Soda in self.OrdLmt_Dic:
                 self.OrdLmt_Dic[Soda].append(neword)
             else:
                 self.OrdLmt_Dic[Soda] = [neword]
 
         elif OrdTyp == 'Stp':
-            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
+            neword = Order(Symbol, Size, Amount, Price, OrdTyp, EntTime, Offset, OrdSki=EntSki, OrdSp = OrdSp, OrdTp = OrdTp, Psn=Psn, Msn = Msn, Mtn = Mtn, Ordid=Ordid, Mso=Mso, OrdFlg=OrdFlg)
             if Soda in self.OrdStp_Dic:
                 self.OrdStp_Dic[Soda].append(neword)
             else:
@@ -526,7 +527,7 @@ class TSBacktest(object):
                     elif abs(pos.EntSize) > abs(CldTrd.TrdSize):
                         pos.EntSize += CldTrd.TrdSize
                         newcldtrd = Trdord(pos.Symbol, - CldTrd.TrdSize, pos.EntPrice, pos.EntTime, Offset='open', Trdski=pos.EntSki,
-                                           TrdSp=pos.EntSp, TrdTp=pos.EntTp, Psn=pos.Psn, Msn=pos.Msn, Trdid=pos.Posid, TrdFlg=pos.EntFlg)
+                                           TrdSp=pos.EntSp, TrdTp=pos.EntTp, Psn=pos.Psn, Msn=pos.Msn, Mtn=pos.Mtn, Trdid=pos.Posid, TrdFlg=pos.EntFlg)
                         newcldpos = Position(newcldtrd)
                         newcldpos.CldPrice = CldTrd.TrdPrice
                         newcldpos.CldTime = CldTrd.TrdTime
@@ -621,13 +622,13 @@ class TSBacktest(object):
     def newtrd(self, Ord, trdsize, trdp, trdtime, trdski=None):
         if Ord.Offset == 'open':
             self.Opid += 1
-            Trd = Trdord(Ord.Symbol, trdsize, trdp, trdtime, Ord.Offset, trdski, Ord.OrdSp, Ord.OrdTp, Ord.Psn, Ord.Msn, self.Opid, Ord.OrdFlg)
+            Trd = Trdord(Ord.Symbol, trdsize, trdp, trdtime, Ord.Offset, trdski, Ord.OrdSp, Ord.OrdTp, Ord.Psn, Ord.Msn, Ord.Mtn, self.Opid, Ord.OrdFlg)
             self.LogTrdsnum += 1
             # self.LogTrds.loc[self.LogTrdsnum, :] = [self.LogTrdsnum, Ord.Symbol, trdsize, Ord.OrdAmount, trdp, trdtime, Ord.Offset, Ord.OrdSp, Ord.OrdTp, Ord.OrdFlg]
             self.write_to_csv_file(self.Trdslogfile, [self.LogTrdsnum, Ord.Symbol, trdsize, Ord.OrdAmount, trdp, trdtime, Ord.Offset, Ord.OrdSp, Ord.OrdTp, Ord.OrdFlg])
             self.newposition(Trd)
         elif Ord.Offset == 'close':
-            Trd = Trdord(Ord.Symbol, trdsize, trdp, trdtime, Ord.Offset, trdski, TrdSp = None, TrdTp = None, Psn = None, Msn = None, Trdid = Ord.Ordid, TrdFlg = Ord.OrdFlg)
+            Trd = Trdord(Ord.Symbol, trdsize, trdp, trdtime, Ord.Offset, trdski, TrdSp = None, TrdTp = None, Psn = None, Msn = None, Mtn = None, Trdid = Ord.Ordid, TrdFlg = Ord.OrdFlg)
             self.LogTrdsnum += 1
             # self.LogTrds.loc[self.LogTrdsnum, :] = [self.LogTrdsnum, Ord.Symbol, trdsize, Ord.OrdAmount, trdp, trdtime, Ord.Offset, None, None, Ord.OrdFlg]
             self.write_to_csv_file(self.Trdslogfile, [self.LogTrdsnum, Ord.Symbol, trdsize, Ord.OrdAmount, trdp, trdtime, Ord.Offset, None, None, Ord.OrdFlg])
@@ -981,6 +982,7 @@ class TSBacktest(object):
                     var = pos.Symbol
                     psn = pos.Psn
                     msn = pos.Msn
+                    mtn = pos.Mtn
                     sgnna = entflg
                     # ===========================================================================止损单
                     sdsp = pos.EntSp
@@ -1097,36 +1099,38 @@ class TSBacktest(object):
                     # =========================================================================限价平仓止盈单
                     sdtp = pos.EntTp
                     sdflg = pos.TpFlg
-                    # 移动止盈 (需要移动止盈的信号)
-                    mtpsetyps = ['psk2', 'bsk1', 'bsk3', 'bsk5']
-                    mtpettyps = []
-                    mtp = None
-                    phddir = 0
-                    if sgntyp in mtpsetyps and sephd:
-                        phddir = sephd.dirn / abs(sephd.dirn)
-                        catr = atr
-                        phdmtp = sephd.dbsp - phddir * catr * 0.0
-                    elif sgntyp in mtpettyps and etphd:
-                        phddir = etphd.dirn / abs(etphd.dirn)
-                        catr = eatr
-                        phdmtp = etphd.dbsp - phddir * catr * 0.0
+                    if mtn:
+                        # 移动止盈 (需要移动止盈的信号)
+                        if mtn == 3:
+                            mtpsetyps = ['psk2', 'bsk1', 'bsk3', 'bsk5']
+                            mtpettyps = []
+                            mtp = None
+                            phddir = 0
+                            if sgntyp in mtpsetyps and sephd:
+                                phddir = sephd.dirn / abs(sephd.dirn)
+                                catr = atr
+                                phdmtp = sephd.dbsp - phddir * catr * 0.0
+                            elif sgntyp in mtpettyps and etphd:
+                                phddir = etphd.dirn / abs(etphd.dirn)
+                                catr = eatr
+                                phdmtp = etphd.dbsp - phddir * catr * 0.0
 
-                    if entsize > 0 and phddir < 0:
-                        mtp = phdmtp
-                    elif entsize < 0 and phddir > 0:
-                        mtp = phdmtp
+                            if entsize > 0 and phddir < 0:
+                                mtp = phdmtp
+                            elif entsize < 0 and phddir > 0:
+                                mtp = phdmtp
 
-                    # --------------------------------------
-                    if entsize > 0:
-                        if mtp:
-                            if not sdtp or sdtp > mtp:
-                                sdtp = mtp
-                                sdflg = 'mtp'
-                    elif entsize < 0:
-                        if mtp:
-                            if not sdtp or sdtp < mtp:
-                                sdtp = mtp
-                                sdflg = 'mtp'
+                            # --------------------------------------
+                            if entsize > 0:
+                                if mtp:
+                                    if not sdtp or sdtp > mtp:
+                                        sdtp = mtp
+                                        sdflg = 'mtp'
+                            elif entsize < 0:
+                                if mtp:
+                                    if not sdtp or sdtp < mtp:
+                                        sdtp = mtp
+                                        sdflg = 'mtp'
 
                     if not sdflg:
                         sdflg = 'tp0'

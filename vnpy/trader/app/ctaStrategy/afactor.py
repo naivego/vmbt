@@ -1958,10 +1958,35 @@ class Skatline(object):
             self.det = 0.2
             self.rdet = 0.05
             self.mdet = 0.1
+
+            self.tdlpsn = 4
+            self.tdlmsn = 2
+            self.tdlmtn = 3
+
+            self.ssdpsn = 4
+            self.ssdmsn = 2
+            self.ssdmtn = 3
+
+            self.phdpsn = 4
+            self.phdmsn = 3
+            self.phdmtn = 3
         else:
             self.det = setting['det']
             self.rdet = setting['rdet']
             self.mdet = setting['mdet']
+
+            self.tdlpsn = setting['tdl']['psn']
+            self.tdlmsn = setting['tdl']['msn']
+            self.tdlmtn = setting['tdl']['mtn']
+
+            self.ssdpsn = setting['ssd']['psn']
+            self.ssdmsn = setting['ssd']['msn']
+            self.ssdmtn = setting['ssd']['mtn']
+
+            self.phdpsn = setting['phd']['psn']
+            self.phdmsn = setting['phd']['msn']
+            self.phdmtn = setting['phd']['mtn']
+
         self.sk_time = sk_time
         self.sk_open = sk_open
         self.sk_high = sk_high
@@ -2271,8 +2296,9 @@ class Skatline(object):
         det = self.det
         rdet = self.rdet
         mdet = self.mdet
-        usrpsn = 4  # 平保止损
-        usrmsn = 2  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrpsn = self.tdlpsn  # 平保止损
+        usrmsn = self.tdlmsn  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrmtn = self.tdlmtn
         usrspn = 1  # 硬止损 回看极限位以外1个atr
 
         # bek1/bek2多选一成交信号
@@ -2310,9 +2336,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.rek1:
                     sgnna = 'rek1' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2324,9 +2351,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.rek2:
                     sgnna = 'rek2' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2338,10 +2366,11 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
                     oco = ocorek23
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.rek3:
                     sgnna = 'rek3' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2353,10 +2382,11 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
                     oco = ocorek23
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
             if tdl.se_sta % 2 == 1:
                 if not tdl.se_bek1i and tdl.se_sta <= 5:
                     self.bek1 = tdl.se_bklp - rdet * atr * tdl.dir
@@ -2379,10 +2409,11 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
                     oco = ocobek12
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.bek1:
                     sgnna = 'bek1' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2394,10 +2425,11 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
                     oco = ocobek12
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.bek2:
                     sgnna = 'bek2' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2409,10 +2441,11 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
                     oco = ocobek12
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
                 # ---------------------------------------------
                 if self.bek3:
                     sgnna = 'bek3' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2424,9 +2457,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.bek4:
                     sgnna = 'bek4' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2437,10 +2471,11 @@ class Skatline(object):
                     sdsp = tdl.se_besp
                     sdtp = None
                     psn = usrpsn
-                    msn = 1
+                    msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
 
         else:
             si = eti
@@ -2463,9 +2498,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.rek1:
                     sgnna = 'rek1' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2477,9 +2513,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.rek2:
                     sgnna = 'rek2' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2491,9 +2528,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.rek3:
                     try:
@@ -2508,9 +2546,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
             if tdl.et_sta % 2 == 1:
                 if not tdl.et_bek1i and tdl.et_sta <= 5:
                     self.bek1 = tdl.et_bklp - rdet * atr * tdl.dir
@@ -2533,9 +2572,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.bek1:
                     sgnna = 'bek1' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2547,9 +2587,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.bek2:
                     sgnna = 'bek2' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2561,9 +2602,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.bek3:
                     sgnna = 'bek3' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2575,9 +2617,10 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
                 # ---------------------------------------------
                 if self.bek4:
                     sgnna = 'bek4' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2589,18 +2632,20 @@ class Skatline(object):
                     sdtp = None
                     psn = usrpsn
                     msn = usrmsn
+                    mtn = usrmtn
                     mark = i
                     prio = 0
-                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+                    self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
 
-    def sgnskatrssd(self, rstssd, i, eti=None, mosi=0, mosn=1):
+    def sgnskatssd(self, rstssd, i, eti=None, mosi=0, mosn=1):
         # 信号命名格式： 信号类_se_信号点-信号源名称    eg: rsk1_se_65-ma_rstssna,
         atr = self.sk_atr[i] * self.sk_close[i]
         det = self.det
         rdet = self.rdet
         mdet = self.mdet
-        usrpsn = 4
-        usrmsn = 2  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrpsn = self.ssdpsn  # 平保止损
+        usrmsn = self.ssdmsn  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrmtn = self.ssdmtn
         usrspn = 1  # 硬止损 回看极限位以外1个atr
 
         self.rsk1 = None
@@ -2617,9 +2662,10 @@ class Skatline(object):
             sdtp = None
             psn = usrpsn
             msn = usrmsn
+            mtn = usrmtn
             mark = i
             prio = 0
-            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio)
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
 
     def sgnskatphd(self, crtphd, i, eti=None, mosi=0, mosn=1):
         # 信号命名格式： 信号类_se_信号点-信号源名称    eg: psk2_se_65-ma_phdna, 信号：psk2 | bsk1 | bsk3 | bsk5
@@ -2627,8 +2673,9 @@ class Skatline(object):
         det = self.det
         rdet = self.rdet
         mdet = self.mdet
-        usrpsn = 4
-        usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrpsn = self.phdpsn  # 平保止损
+        usrmsn = self.phdmsn  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrmtn = self.phdmtn
         usrspn = 1  # 硬止损 回看极限位以外1个atr
 
         # psk2/bsk1多选一成交信号
@@ -2665,10 +2712,11 @@ class Skatline(object):
             sdtp = None
             psn = usrpsn
             msn = usrmsn
+            mtn = usrmtn
             mark = i
             prio = 0
             oco = None
-            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
 
         # ---------------------------------------------
         if self.bsk1:
@@ -2681,10 +2729,11 @@ class Skatline(object):
             sdtp = None
             psn = usrpsn
             msn = usrmsn
+            mtn = usrmtn
             mark = i
             prio = 0
             oco = None
-            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
 
         # ---------------------------------------------
         if self.bsk3:
@@ -2697,10 +2746,11 @@ class Skatline(object):
             sdtp = None
             psn = usrpsn
             msn = usrmsn
+            mtn = usrmtn
             mark = i
             prio = 0
             oco = None
-            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
 
         # ---------------------------------------------
         if self.bsk5:
@@ -2713,10 +2763,11 @@ class Skatline(object):
             sdtp = None
             psn = usrpsn
             msn = usrmsn
+            mtn = usrmtn
             mark = i
             prio = 0
             oco = None
-            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mark, prio, oco)
+            self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
 
 #---------------------------------------------------------------------------
 
@@ -2726,7 +2777,7 @@ class Ocosta(object):
 
 #------------------------开仓信号------
 class Sgnkop(object):
-    def __init__(self, sgnna=None, sgntyp=None, bsdir=None, sdop=None, ordtyp='Lmt', sdsp=None, sdtp=None, psn=None, msn = None, mark=None, prio=0, oco=None):
+    def __init__(self, sgnna=None, sgntyp=None, bsdir=None, sdop=None, ordtyp='Lmt', sdsp=None, sdtp=None, psn=None, msn = None, mtn = None, mark=None, prio=0, oco=None):
         self.sgnna = sgnna   # 拟开仓仓的信号名称
         self.sgntyp = sgntyp
         self.bsdir = bsdir
@@ -2736,6 +2787,7 @@ class Sgnkop(object):
         self.sdtp = sdtp
         self.psn = psn
         self.msn = msn
+        self.mtn = mtn
         self.mark = mark
         self.prio = prio
         self.oco = oco
@@ -2909,11 +2961,11 @@ class Intsgnbs(object):
         else:
             crtdwrs = None
 
-        if 'rss' in kopset and kopset['rss'] >=1:
+        if 'ssd' in kopset and kopset['ssd'] >=1:
             if crtuprs and len(crtuprs)>0:
                 skatsel.sgnskatrssd(crtuprs[-1], i)
             if crtdwrs and len(crtdwrs)>0:
-                skatsel.sgnskatrssd(crtdwrs[-1], i)
+                skatsel.sgnskatssd(crtdwrs[-1], i)
 
         if len(phds_dic)>0:
             crtphd = phds_dic.values()[-1]
@@ -3009,11 +3061,11 @@ class Intsgnbs(object):
         else:
             crtdwrs = None
 
-        if 'rss' in kopset and kopset['rss'] >=1:
+        if 'ssd' in kopset and kopset['ssd'] >=1:
             if crtuprs and len(crtuprs) > 0:
                 skatetl.sgnskatrssd(crtuprs[-1], i)
             if crtdwrs and len(crtdwrs) > 0:
-                skatetl.sgnskatrssd(crtdwrs[-1], i)
+                skatetl.sgnskatssd(crtdwrs[-1], i)
 
     # ------------------------------------------根据新开仓信号和持仓整合新进场和出场信号
     def cmbsgn(self, fid, seet, socpos_dic):
@@ -4491,7 +4543,7 @@ class Grst_Factor(object):
         self.sk_sgn = []
 
 
-        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl)
+        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl, setting['pstnset'])
         self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:

@@ -193,7 +193,7 @@ class GrstStrategy(CtaTemplate):
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
         if len(self.tedaet)>0:    # self.tedaet = ['ka','ma','su']
             self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.tedast, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
-                                                           self.sk_atr, self.sk_ckl)
+                                                           self.sk_atr, self.sk_ckl, self.setting['pstnset'])
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
     # ------------------------------------------------------------------------------------------
@@ -376,7 +376,7 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['fbsp', 'dbsp', 'rtp','drsp','alp1', 'dlp1']
+        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1']
         maextfas = ['sal']
         suextfas = ['sal', 'brdl', 'trdl']
 
@@ -484,21 +484,30 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1, 'rss': 0, 'phd': 1},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1, 'ssd': 0, 'phd': 1},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'rss':0, 'phd': 0},
-            'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'rss':0, 'phd': 0}
+            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'rss':0, 'phd': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'rss':0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'ssd': 0, 'phd': 0}
         }
     }
 
+    setting['pstnset'] = {
+        'det':  0.2,
+        'rdet': 0.05,
+        'mdet': 0.1,
+        'tdl': {'psn': 4, 'msn': 2, 'mtn': 3},
+        'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
+        'phd': {'psn': 4, 'msn': 3, 'mtn': 3},
+    }
+
     #----特征参数，用于写入绩效报告做归因分析
-    setting['feargs'] = ['msdpset','tedast', 'tedaet','tdkopset']
+    setting['feargs'] = ['msdpset', 'tedast', 'tedaet', 'tdkopset', 'pstnset']
 
     DB_Rt_Dir = TS_Config['DB_Rt_Dir']
     Host = TS_Config['Host']

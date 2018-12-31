@@ -2272,7 +2272,7 @@ class Skatline(object):
         rdet = self.rdet
         mdet = self.mdet
         usrpsn = 4  # 平保止损
-        usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrmsn = 2  # 1--简单移动止损 2--基于sads  3--基于phd
         usrspn = 1  # 硬止损 回看极限位以外1个atr
 
         # bek1/bek2多选一成交信号
@@ -6118,7 +6118,7 @@ class Grst_Factor(object):
         self.quotes['rsl' + aflg] = self.sk_rsl
         self.quotes['itp' + aflg] = self.sk_itp
 
-        self.quotes['drst' + aflg] = self.sk_drsp
+        self.quotes['drsp' + aflg] = self.sk_drsp
         self.quotes['phd'  + aflg] = self.sk_phd
         self.quotes['fbsp' + aflg] = self.sk_bsp
         self.quotes['lbsp' + aflg] = self.sk_lbsp

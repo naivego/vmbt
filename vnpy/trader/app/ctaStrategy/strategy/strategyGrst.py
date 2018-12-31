@@ -431,7 +431,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2015-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2011-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -488,12 +488,12 @@ if __name__ == '__main__':
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
+            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 1},
             'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'ssd': 0, 'phd': 0}
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         }
     }
 
@@ -501,9 +501,9 @@ if __name__ == '__main__':
         'det':  0.2,
         'rdet': 0.05,
         'mdet': 0.1,
-        'tdl': {'psn': 4, 'msn': 3, 'mtn': 3},
+        'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
         'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
-        'phd': {'psn': 4, 'msn': 3, 'mtn': 3},
+        'phd': {'psn': 4, 'msn': 3, 'mtn': 0},
     }
 
     #----特征参数，用于写入绩效报告做归因分析
@@ -530,5 +530,6 @@ if __name__ == '__main__':
         engine.runBacktesting()
         engine.Show_SaveResult()
         print 'bt end time: ', datetime.now()
-        engine.strategy.showfas()
+        if 0:
+            engine.strategy.showfas()
 

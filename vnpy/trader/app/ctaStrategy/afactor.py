@@ -2273,6 +2273,7 @@ class Skatline(object):
         mdet = self.mdet
         usrpsn = 4  # 平保止损
         usrmsn = 3  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrspn = 1  # 硬止损 回看极限位以外1个atr
 
         # bek1/bek2多选一成交信号
         ocobek12 = Ocosta()
@@ -2600,6 +2601,7 @@ class Skatline(object):
         mdet = self.mdet
         usrpsn = 4
         usrmsn = 2  # 1--简单移动止损 2--基于sads  3--基于phd
+        usrspn = 1  # 硬止损 回看极限位以外1个atr
 
         self.rsk1 = None
         self.rsk2 = None

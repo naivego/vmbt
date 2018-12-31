@@ -501,9 +501,9 @@ if __name__ == '__main__':
         'det':  0.2,
         'rdet': 0.05,
         'mdet': 0.1,
-        'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
-        'ssd': {'psn': 4, 'msn': 2, 'mtn': 0},
-        'phd': {'psn': 4, 'msn': 3, 'mtn': 0},
+        'tdl': {'psn': 4, 'msn': 3, 'mtn': 3},
+        'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
+        'phd': {'psn': 4, 'msn': 3, 'mtn': 3},
     }
 
     #----特征参数，用于写入绩效报告做归因分析

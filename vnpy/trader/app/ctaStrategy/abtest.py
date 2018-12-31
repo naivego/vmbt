@@ -1150,6 +1150,7 @@ class TSBacktest(object):
                     sdtp = kop.sdtp
                     psn = kop.psn
                     msn = kop.msn
+                    mtn = kop.mtn
                     oco = kop.oco
                     if kop.bsdir > 0:
                         stp = sdop - sdsp if sdsp else None
@@ -1179,7 +1180,7 @@ class TSBacktest(object):
                     ordtyp = kop.ordtyp
 
                     self.sendord(soda, var, entsize, 0, sdop, ordtyp, idtime, Offset='open', EntSki=iski, OrdSp=sdsp, OrdTp=sdtp, Psn=psn, Msn=msn,
-                                 Mso=oco, OrdFlg=sgnna)
+                                 Mtn=mtn, Mso=oco, OrdFlg=sgnna)
 
 
 

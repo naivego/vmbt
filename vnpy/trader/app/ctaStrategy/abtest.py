@@ -1006,7 +1006,9 @@ class TSBacktest(object):
                             # --------------------------基于sads的移动止损
                             # 1、rss开仓信号止损采用本身周期的Rstsa移动止损
                             # 2、se|et开仓信号止损采用外部周期的Rstsa移动止损
-                            if 'rsk' in sgntyp:
+                            mspsetyps = ['rsk1']
+                            mspettyps = ['rek2', 'rek1', 'rek3', 'bek1', 'bek2', 'bek3', 'bek4']
+                            if sgntyp in mspsetyps:
                                 rstdir  = serstdir
                                 crtuprs = seuprs
                                 crtdwrs = sedwrs
@@ -1086,7 +1088,7 @@ class TSBacktest(object):
 
                     if not sdflg:
                         sdflg = 'sp0'
-                    if sdsp and abs(sdsp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
+                    if sdsp and abs(sdsp - sk_close[ski]) < atr * 6:
                         spfid = 'pos_' + str(pos.Posid) + '_sp_' + sdflg
                         self.sendord(soda, var, -entsize, 0, sdsp, 'Stp', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=spfid)
                         pos.EntSp = sdsp
@@ -1110,32 +1112,25 @@ class TSBacktest(object):
                         phdmtp = etphd.dbsp - phddir * catr * 0.0
 
                     if entsize > 0 and phddir < 0:
-                        msp = phdmtp
+                        mtp = phdmtp
                     elif entsize < 0 and phddir > 0:
-                        msp = phdmtp
+                        mtp = phdmtp
 
                     # --------------------------------------
                     if entsize > 0:
-                        if not sdtp or (msp and sdsp < msp):
-                            sdsp = msp
-                            sdflg = 'msp'
-
-
+                        if mtp:
+                            if not sdtp or sdtp > mtp:
+                                sdtp = mtp
+                                sdflg = 'mtp'
                     elif entsize < 0:
-                        if not sdsp or (pbsp and sdsp > pbsp):
-                            sdsp = pbsp
-                            sdflg = 'pbsp'
-                        if not sdsp or (msp and sdsp > msp):
-                            sdsp = msp
-                            sdflg = 'msp'
-                        if not sdsp or (sgnsp and sdsp > sgnsp):
-                            sdsp = sgnsp
-                            sdflg = spflg
-
+                        if mtp:
+                            if not sdtp or sdtp < mtp:
+                                sdtp = mtp
+                                sdflg = 'mtp'
 
                     if not sdflg:
                         sdflg = 'tp0'
-                    if sdtp and abs(sdtp - sk_close[ski]) < sk_atr[ski] * sk_close[ski] * 6:
+                    if sdtp and abs(sdtp - sk_close[ski]) < atr * 10:
                         tpfid = 'pos_' + str(pos.Posid) + '_tp_' + sdflg
                         self.sendord(soda, var, -entsize, 0, sdtp, 'Lmt', idtime, Offset='close', EntSki=iski, Ordid=pos.Posid, OrdFlg=tpfid)
                         pos.EntTp = sdtp

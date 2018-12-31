@@ -376,7 +376,7 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['fbsp', 'lbsp', 'dbsp', 'rtp','brdl', 'trdl']
+        kaextfas = ['fbsp', 'lbsp', 'dbsp', 'rtp','brdl', 'trdl','drsp','alp1', 'dlp1']
         maextfas = ['sal']
         suextfas = ['sal', 'brdl', 'trdl']
 

@@ -4695,6 +4695,7 @@ class Grst_Factor(object):
 
         self.trdphd = Trdphd(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_chn)
 
+        self.phdtbp = 1 # 采用phd划分高低点
         # self.sk_cklsm=[] #在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls),最近的3段ckls
         ckltp = ckli
         ickls0 = tuple(self.ckls[-1])
@@ -5525,6 +5526,8 @@ class Grst_Factor(object):
             self.sk_qs2a.append(np.nan)
 
         self.sk_qspds.append([qsprti, nscklidx, nscklitp, qspbi, qspei, qspbsdp, qspesdp, qspbp, qspep])
+
+
         '''
           ==============以下是信号部分==============
         '''
@@ -5540,26 +5543,14 @@ class Grst_Factor(object):
             self.sk_qsl.append(self.sk_qspds[-1][7])
             self.sk_qswr.append((self.sk_high[i] - self.zslp) / self.zslp / self.sk_atr[i - 1])
             self.sk_rsl.append(0.2 + (self.sk_qsh[-1] - self.sk_close[i]) / (self.sk_qsh[-1] - self.sk_qsl[-1]))
-            self.sk_drsp.append(self.sk_qsh[-1])
 
-            # ---------------------------------------------------------------------------------------------------trdline
-            if self.ctp:
-                if self.ctp.skp < self.sk_high[i]:
-                    self.ctp = Extrp(i, self.sk_high[i], 1)
-
-                    # ----------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------------------------
         elif self.sk_qspds[-1][2] < 0:
             self.sk_qsh.append(self.sk_qspds[-1][7])
             self.sk_qsl.append(self.sk_qspds[-1][8])
             self.sk_qswr.append((self.sk_low[i] - self.zshp) / self.zshp / self.sk_atr[i - 1])
             self.sk_rsl.append(-0.2 + (self.sk_qsl[-1] - self.sk_close[i]) / (self.sk_qsh[-1] - self.sk_qsl[-1]))
-            self.sk_drsp.append(self.sk_qsl[-1])
-
-            # ---------------------------------------------------------------------------------------------------trdline
-            if self.cbp:
-                if self.cbp.skp > self.sk_low[i]:
-                    self.cbp = Extrp(i, self.sk_low[i], -1)
-                    # ----------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------------------------
         else:
             self.sk_qsh.append(self.sk_qspds[-1][7])
             self.sk_qsl.append(self.sk_qspds[-1][8])
@@ -5567,16 +5558,39 @@ class Grst_Factor(object):
             self.sk_rsl.append(0)
             self.sk_drsp.append(self.sk_qsl[-1])
 
+        # ----------------------------------------------------------------------------------------------------
+        if not self.phdtbp:
+            if self.sk_qspds[-1][2] > 0:
+                self.sk_drsp.append(self.sk_qsh[-1])
+                # ---------------------------------------------------------------------------------------------------trdline
+                if self.ctp:
+                    if self.ctp.skp < self.sk_high[i]:
+                        self.ctp = Extrp(i, self.sk_high[i], 1)
+            elif self.sk_qspds[-1][2] <= 0:
+                self.sk_drsp.append(self.sk_qsl[-1])
+                # ---------------------------------------------------------------------------------------------------trdline
+                if self.cbp:
+                    if self.cbp.skp > self.sk_low[i]:
+                        self.cbp = Extrp(i, self.sk_low[i], -1)
+        else:
+            phdi = self.trdphd.crtphd.phdi
+            if self.trdphd.crtphd.dirn>0:
+                drsp = max(self.sk_drsp[-1], self.sk_chn[phdi].hp)
+                self.sk_drsp.append(drsp)
+                if self.ctp:
+                    if self.ctp.skp < self.sk_high[i]:
+                        self.ctp = Extrp(i, self.sk_high[i], 1)
+            else:
+                drsp = min(self.sk_drsp[-1], self.sk_chn[phdi].lp)
+                self.sk_drsp.append(drsp)
+                if self.cbp:
+                    if self.cbp.skp > self.sk_low[i]:
+                        self.cbp = Extrp(i, self.sk_low[i], -1)
+
         # ----------------------------------------------基于 self.sk_drsp 生成 sadl序列
         self.uptsads(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, self.sk_drsp, i)
+
         if len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] > 0 and self.sk_qspds[-2][2] < 0:  # 向上转换
-            self.rstdir = 1
-            self.sads['sa_' + str(i)] = []
-            self.uprstsas['upr_' + str(i)] = OrderedDict()
-
-            self.crtsad = None
-            self.tepsad = Sadl(-1, bi=i, bap=self.sk_drsp[i])
-
             sgn_rsti = i
             sgn_rstp = self.sk_qspds[-2][7]
             sgn_rstdir = 1
@@ -5590,6 +5604,67 @@ class Grst_Factor(object):
             self.qsstpchain.append(newstpchain)
             self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
             self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+        elif len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] < 0 and self.sk_qspds[-2][2] > 0:  # 向下转换
+            sgn_rsti = i
+            sgn_rstp = self.sk_qspds[-2][7]
+            sgn_rstdir = -1
+            self.qsrstp.append((sgn_rsti, sgn_rstp, sgn_rstdir))
+            self.sk_qsrstp.append(sgn_rstdir)
+            self.sk_rstn.append(0)
+            # self.sk_rstspl.append(self.sk_bsl[-2])
+            # self.sk_rstsph.append(self.sk_bsh[-2])
+            self.bscp = None
+            newstpchain = Stepchain(-1, i, self.sk_ckl[i], self.qsstpchain[-1].piockl)
+            self.qsstpchain.append(newstpchain)
+            self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+            self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+        else:
+            self.sk_qsrstp.append(0)
+            if len(self.qsstpchain) > 0:
+                self.qsstpchain[-1].updatestep(i, self.sk_ckl[i])
+                self.sk_rstn.append(len(self.qsstpchain[-1].revckls) - 1)
+
+                if self.sk_rstn[-1] > 0 and self.sk_rstn[-1] > self.sk_rstn[-2]:  # 发生步进
+                    if len(self.botms) > 1 and self.qsstpchain[-1].stpdir > 0 and self.ctp:
+                        pass
+                        # self.new_supline(self.botms[-2], self.ctp , self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, i, self.teix[-1])
+                    elif len(self.tops) > 1 and self.qsstpchain[-1].stpdir < 0 and self.cbp:
+                        pass
+                        # self.new_resline(self.tops[-2], self.cbp, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, i, self.teix[-1])
+
+                if self.qsstpchain[-1].stpdir > 0:
+                    self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+                    self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+                else:
+                    self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
+                    self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
+            else:
+                self.sk_rstn.append(0)
+                self.sk_rstsph.append(self.sk_close[i])
+                self.sk_rstspl.append(self.sk_close[i])
+
+            if self.bsbj != 0:
+                # self.sk_rstspl.append(self.sk_close[i])
+                # self.sk_rstsph.append(self.sk_close[i])
+                # self.sk_rstn.append(self.sk_rstn[-1]+1)
+                self.bscp = None
+            else:
+                pass
+                # self.sk_rstn.append(self.sk_rstn[-1])
+                # self.sk_rstspl.append(self.sk_rstspl[-1])
+                # self.sk_rstsph.append(self.sk_rstsph[-1])
+
+
+        if (not self.phdtbp and (len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] > 0 and self.sk_qspds[-2][2] < 0)) \
+                or (self.phdtbp and self.trdphd.sta == 3 and self.trdphd.crtphd.dirn > 0):  # 向上转换
+
+            self.rstdir = 1
+            self.sads['sa_' + str(i)] = []
+            self.uprstsas['upr_' + str(i)] = OrderedDict()
+
+            self.crtsad = None
+            self.tepsad = Sadl(-1, bi=i, bap=self.sk_drsp[i])
+
             # ---------------------------------------------------------------------------------------------------trdline
             self.ctp = Extrp(i, self.sk_high[i], 1)
             if self.cbp:
@@ -5624,26 +5699,14 @@ class Grst_Factor(object):
                     self.new_resline(self.fid + '_mdl', self.tops[-2], self.botms[-1], self.sk_open, self.sk_high, self.sk_low, self.sk_close,
                                      self.sk_volume, self.sk_time, self.sk_atr, self.sk_ckl, i, self.teix[-1])
 
-        elif len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] < 0 and self.sk_qspds[-2][2] > 0:  # 向下转换
+        elif (not self.phdtbp and (len(self.sk_qspds) > 1 and self.sk_qspds[-1][2] < 0 and self.sk_qspds[-2][2] > 0)) \
+                or (self.phdtbp and self.trdphd.sta==3 and self.trdphd.crtphd.dirn < 0):  # 向下转换
             self.rstdir = -1
             self.sads['sd_' + str(i)] = []
             self.dwrstsas['dwr_' + str(i)] = OrderedDict()
             self.crtsad = None
             self.tepsad = Sadl(1, bi=i, bap=self.sk_drsp[i])
 
-            sgn_rsti = i
-            sgn_rstp = self.sk_qspds[-2][7]
-            sgn_rstdir = -1
-            self.qsrstp.append((sgn_rsti, sgn_rstp, sgn_rstdir))
-            self.sk_qsrstp.append(sgn_rstdir)
-            self.sk_rstn.append(0)
-            # self.sk_rstspl.append(self.sk_bsl[-2])
-            # self.sk_rstsph.append(self.sk_bsh[-2])
-            self.bscp = None
-            newstpchain = Stepchain(-1, i, self.sk_ckl[i], self.qsstpchain[-1].piockl)
-            self.qsstpchain.append(newstpchain)
-            self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
-            self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
             # ---------------------------------------------------------------------------------------------------trdline
             self.cbp = Extrp(i, self.sk_low[i], -1)
             if self.ctp:
@@ -5682,41 +5745,6 @@ class Grst_Factor(object):
                                      self.sk_volume,
                                      self.sk_time, self.sk_atr, self.sk_ckl, i, self.teix[-1])
         else:
-            self.sk_qsrstp.append(0)
-            if len(self.qsstpchain) > 0:
-                self.qsstpchain[-1].updatestep(i, self.sk_ckl[i])
-                self.sk_rstn.append(len(self.qsstpchain[-1].revckls) - 1)
-
-                if self.sk_rstn[-1] > 0 and self.sk_rstn[-1] > self.sk_rstn[-2]:  # 发生步进
-                    if len(self.botms) > 1 and self.qsstpchain[-1].stpdir > 0 and self.ctp:
-                        pass
-                        # self.new_supline(self.botms[-2], self.ctp , self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, i, self.teix[-1])
-                    elif len(self.tops) > 1 and self.qsstpchain[-1].stpdir < 0 and self.cbp:
-                        pass
-                        # self.new_resline(self.tops[-2], self.cbp, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_time, self.sk_atr, i, self.teix[-1])
-
-                if self.qsstpchain[-1].stpdir > 0:
-                    self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
-                    self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
-                else:
-                    self.sk_rstsph.append(self.qsstpchain[-1].revckls[-1][3])
-                    self.sk_rstspl.append(self.qsstpchain[-1].revckls[-1][4])
-            else:
-                self.sk_rstn.append(0)
-                self.sk_rstsph.append(self.sk_close[i])
-                self.sk_rstspl.append(self.sk_close[i])
-
-            if self.bsbj != 0:
-                # self.sk_rstspl.append(self.sk_close[i])
-                # self.sk_rstsph.append(self.sk_close[i])
-                # self.sk_rstn.append(self.sk_rstn[-1]+1)
-                self.bscp = None
-            else:
-                pass
-                # self.sk_rstn.append(self.sk_rstn[-1])
-                # self.sk_rstspl.append(self.sk_rstspl[-1])
-                # self.sk_rstsph.append(self.sk_rstsph[-1])
-
             #------------------更新 uprstsas 和 dwrstsas
             if self.rstdir > 0:
                 if len(self.uprstsas) > 0 and len(self.uprstsas.values()[-1].values()) > 0:

@@ -488,12 +488,12 @@ if __name__ == '__main__':
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
+            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 1},
             'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'ssd': 0, 'phd': 0}
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         }
     }
 
@@ -501,7 +501,7 @@ if __name__ == '__main__':
         'det':  0.2,
         'rdet': 0.05,
         'mdet': 0.1,
-        'tdl': {'psn': 4, 'msn': 3, 'mtn': 3},
+        'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
         'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
         'phd': {'psn': 4, 'msn': 3, 'mtn': 3},
     }
@@ -530,5 +530,6 @@ if __name__ == '__main__':
         engine.runBacktesting()
         engine.Show_SaveResult()
         print 'bt end time: ', datetime.now()
-        engine.strategy.showfas()
+        if 1:
+            engine.strategy.showfas()
 

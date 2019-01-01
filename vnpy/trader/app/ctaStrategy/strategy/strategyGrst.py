@@ -431,7 +431,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2011-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2015-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -503,7 +503,7 @@ if __name__ == '__main__':
         'mdet': 0.1,
         'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
         'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
-        'phd': {'psn': 4, 'msn': 3, 'mtn': 0},
+        'phd': {'psn': 4, 'msn': 3, 'mtn': 3},
     }
 
     #----特征参数，用于写入绩效报告做归因分析
@@ -530,6 +530,6 @@ if __name__ == '__main__':
         engine.runBacktesting()
         engine.Show_SaveResult()
         print 'bt end time: ', datetime.now()
-        if 0:
+        if 1:
             engine.strategy.showfas()
 

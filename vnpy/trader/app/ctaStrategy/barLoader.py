@@ -19,8 +19,8 @@ import matplotlib
 # matplotlib.use('Qt4Agg')
 matplotlib.use('TkAgg')
 
-from matplotlib.finance import candlestick2_ohlc
-# from mpl_finance import candlestick2_ohlc
+# from matplotlib.finance import candlestick2_ohlc
+from mpl_finance import candlestick2_ohlc
 
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt

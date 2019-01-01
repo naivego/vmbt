@@ -5556,7 +5556,7 @@ class Grst_Factor(object):
             self.sk_qsl.append(self.sk_qspds[-1][8])
             self.sk_qswr.append(0)
             self.sk_rsl.append(0)
-            self.sk_drsp.append(self.sk_qsl[-1])
+
 
         # ----------------------------------------------------------------------------------------------------
         if not self.phdtbp:

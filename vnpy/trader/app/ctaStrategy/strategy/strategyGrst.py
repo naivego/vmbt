@@ -488,7 +488,7 @@ if __name__ == '__main__':
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 1},
+            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
             'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {

@@ -377,7 +377,7 @@ class GrstStrategy(CtaTemplate):
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
         kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1']
-        maextfas = ['sal']
+        maextfas = ['sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         suextfas = ['sal', 'brdl', 'trdl']
 
         self.tedasgn(self.Karst.quotes, kaextfas, fid='ka', fillna = False)
@@ -488,8 +488,8 @@ if __name__ == '__main__':
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 1},
-            'etkop': {'sal': 1, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 1},
+            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1, 'ssd': 0, 'phd': 0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
@@ -503,11 +503,13 @@ if __name__ == '__main__':
         'mdet': 0.1,
         'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
         'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
-        'phd': {'psn': 4, 'msn': 3, 'mtn': 3},
+        'phd': {'psn': 4, 'msn': 3, 'mtn': 0},
     }
 
+    setting['phdtbp'] = 1
+
     #----特征参数，用于写入绩效报告做归因分析
-    setting['feargs'] = ['msdpset', 'tedast', 'tedaet', 'tdkopset', 'pstnset']
+    setting['feargs'] = ['msdpset', 'tedast', 'tedaet', 'tdkopset', 'pstnset', 'phdtbp']
 
     DB_Rt_Dir = TS_Config['DB_Rt_Dir']
     Host = TS_Config['Host']

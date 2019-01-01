@@ -4695,7 +4695,7 @@ class Grst_Factor(object):
 
         self.trdphd = Trdphd(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_chn)
 
-        self.phdtbp = 1 # 采用phd划分高低点
+        self.phdtbp = setting['phdtbp']  # 采用phd划分高低点
         # self.sk_cklsm=[] #在sk序列框架下对ckls结构进行描述，指示当前的sk处于ckls结构中的水平 (ckltp, ickls),最近的3段ckls
         ckltp = ckli
         ickls0 = tuple(self.ckls[-1])

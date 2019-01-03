@@ -202,6 +202,13 @@ class Trdphd(object):
         self.mdet = 0.1  # x 个atr
         self.crtphd = Snphd()
         self.phds= OrderedDict()
+        self.pbs = []
+        self.pts = []
+        self.cbp = None
+        self.ctp = None
+
+        self.upstps = []
+        self.dwstps = []
 
         self.upti = 0
         self.sta  = 0 # 前沿变更状态：前沿递进1，前沿步进2，前沿反转3
@@ -236,8 +243,14 @@ class Trdphd(object):
             elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.fbsp:
                 self.crtphd.fbsi = i
 
+        if self.crtphd.dirn > 0 and self.ctp and self.ctp.skp < self.sk_high[i]:
+            self.ctp.ski = i
+            self.ctp.skp = self.sk_high[i]
+        elif self.crtphd.dirn < 0 and self.cbp and self.cbp.skp > self.sk_low[i]:
+            self.cbp.ski = i
+            self.cbp.skp = self.sk_low[i]
         # -------------------------更新新前沿
-        if len(self.plevs) <=0:
+        if len(self.plevs) <= 0:
             self.plevs.append(self.sk_chn[i])
             self.crtphd.dirn = self.sk_chn[i].dirn
             self.crtphd.rtp = self.sk_chn[i].ep
@@ -269,9 +282,20 @@ class Trdphd(object):
                 self.crtphd = deepcopy(self.crtphd)
                 if self.crtphd.dirn * laphd.dirn > 0:  # 一级前沿步进
                     self.sta = 2
-                else:                           # 一级前沿反转
+                    if laphd.dirn > 0:
+                        self.upstps.append(Extrp(laphd.bi, self.sk_low[laphd.bi], -1))
+                    else:
+                        self.dwstps.append(Extrp(laphd.bi, self.sk_high[laphd.bi], 1))
+                else:                                  # 一级前沿反转
                     self.sta = 3
-
+                    if laphd.dirn > 0:
+                        if self.cbp:
+                            self.pbs.append(self.cbp)
+                        self.ctp = Extrp(i, self.sk_high[i], 1)
+                    else:
+                        if self.ctp:
+                            self.pts.append(self.ctp)
+                        self.cbp = Extrp(i, self.sk_low[i], -1)
                 self.crtphd.rsti = i
                 self.crtphd.phdi = i
                 self.crtphd.dirn = laphd.dirn

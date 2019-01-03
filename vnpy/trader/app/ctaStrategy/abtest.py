@@ -998,13 +998,13 @@ class TSBacktest(object):
                     # --------------------------移动止损
                     msp = None
                     if msn:
-                        if msn==1:
+                        if msn >= 3:
                             # --------------------------简单移动止损
                             if entsize > 0 and sdsp and sdsp < sk_close[ski] - msn * atr and entprice < sk_close[ski] - msn * atr:
                                 msp = sk_close[ski] - msn * atr
                             elif entsize < 0 and sdsp and sdsp > sk_close[ski] + msn * atr and entprice > sk_close[ski] + msn * atr:
                                 msp = sk_close[ski] + msn * atr
-                        elif msn==2:
+                        elif msn==1:
                             # --------------------------基于sads的移动止损
                             # 1、rss开仓信号止损采用本身周期的Rstsa移动止损
                             # 2、se|et开仓信号止损采用外部周期的Rstsa移动止损
@@ -1034,7 +1034,7 @@ class TSBacktest(object):
                                 else:
                                     msp = dwssd.cexp + 0.4 * catr
 
-                        elif msn == 3:
+                        elif msn == 2:
                             # --------------------------基于phds的移动止损
                             # 1、phd开仓信号止损采用本身周期的crtphd移动止损
                             # 2、se|et开仓信号止损采用外部周期的crtphd移动止损
@@ -1044,11 +1044,11 @@ class TSBacktest(object):
                             if sgntyp in mspsetyps and sephd:
                                 phddir = sephd.dirn/abs(sephd.dirn)
                                 catr = atr
-                                phdmsp = sephd.fbsp - phddir * catr * 1.0
+                                phdmsp = sephd.fbsp - phddir * catr * 0.2
                             elif sgntyp in mspettyps and etphd:
                                 phddir = etphd.dirn/abs(etphd.dirn)
                                 catr = eatr
-                                phdmsp = etphd.fbsp - phddir * catr * 1.0
+                                phdmsp = etphd.fbsp - phddir * catr * 0.2
 
                             if entsize > 0 and phddir > 0:
                                 msp = phdmsp
@@ -1101,7 +1101,7 @@ class TSBacktest(object):
                     sdflg = pos.TpFlg
                     if mtn:
                         # 移动止盈 (需要移动止盈的信号)
-                        if mtn == 3:
+                        if mtn == 2:
                             mtpsetyps = ['psk2', 'bsk1', 'bsk3', 'bsk5']
                             mtpettyps = []
                             mtp = None

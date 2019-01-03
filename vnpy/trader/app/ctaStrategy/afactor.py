@@ -3166,24 +3166,15 @@ class Intsgnbs(object):
 
 
     # ------------------------------------------
-    def intsgn(self):
-        self.isgnkop.clear()
-        self.isgncst.clear()
-        self.isgnctp.clear()
-        # -----同源信号的决策整合
-        # -----同类源信号的决策整合
-        # -----异源信号的决策整合
-
-        for socna, sgnsoc in self.sgnsocs.iteritems():
-            if sgnsoc.sockop:
-                self.isgnkop = dict(self.isgnkop, **sgnsoc.sockop)
-            if sgnsoc.soccst:
-                self.isgncst = dict(self.isgncst, **sgnsoc.soccst)
-            if sgnsoc.socctp:
-                self.isgnctp = dict(self.isgnctp, **sgnsoc.socctp)
+    def intfiltsgn(self):
+        pass
 
 
-        #-----交叉信号的决策整合，生成一些通用信号的平仓指令，生成一些综合开仓信号，处理可能的过时信号的仓位
+
+
+
+
+
     #--------------------------------------------------------------------------------------------
     def samsocsgn(self, sgnna, sgnost='cst'):  # 根据开仓信号 从整合的字典中查找【同源信号】
         if sgnost == 'kop':
@@ -5693,6 +5684,15 @@ class Grst_Factor(object):
                             if newtbl:
                                 self.suplines[newsupl.socna]['mdl'] = newtbl
                         self.boti = newsupl.mxi + 1
+                    else:
+                        newsupl = self.new_supline3(self.fid + '_rdl', self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                   self.sk_time, self.sk_atr, self.sk_ckl, i, self.teix[-1])
+                        if newsupl:
+                            self.suplines[newsupl.socna] = {'rdl': newsupl, 'mdl': None, 'mir': OrderedDict(), 'upl': OrderedDict(),
+                                                            'dwl': OrderedDict()}
+                            self.prebbl = self.crtbbl
+                            self.crtbbl = newsupl
+
             if len(self.tops) > 1:
                 pass
                 if False and self.tops[-2].skp > self.tops[-2].skp:
@@ -5737,6 +5737,14 @@ class Grst_Factor(object):
                             if newtbl:
                                 self.reslines[newresl.socna]['mdl'] = newtbl
                         self.topi = newresl.mxi + 1
+                    else:
+                        newresl = self.new_resline3(self.fid + '_rdl', self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
+                                                   self.sk_time, self.sk_atr, self.sk_ckl, i, self.teix[-1])
+                        if newresl:
+                            self.reslines[newresl.socna] = {'rdl': newresl, 'mdl': None, 'mir': OrderedDict(), 'upl': OrderedDict(),
+                                                            'dwl': OrderedDict()}
+                            self.prettl = self.crtttl
+                            self.crtttl = newresl
 
             if len(self.botms) > 1:
                 pass

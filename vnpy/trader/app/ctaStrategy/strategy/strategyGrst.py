@@ -376,7 +376,7 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1']
+        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1','brdl', 'trdl', 'sal']
         maextfas = ['sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         suextfas = ['sal', 'brdl', 'trdl']
 
@@ -411,7 +411,7 @@ class GrstStrategy(CtaTemplate):
         shwmafas = [fas + '_ma' for fas in maextfas]
         shwsufas = [fas + '_su' for fas in suextfas]
 
-        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas+shwmafas, period= self.Teda.period)
+        plotsdk(quotesk, symbol=self.Teda.var, disfactors=shwkafas, period= self.Teda.period)
 
 
 # ----------------------------------------------------------------------
@@ -431,7 +431,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2015-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2011-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -484,12 +484,12 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 1, 'mdl': 1, 'ssd': 0, 'phd': 1},
+            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'ssd': 0, 'phd': 1},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 1},
-            'etkop': {'sal': 1, 'rdl': 1, 'mdl': 1, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
             'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
@@ -502,8 +502,8 @@ if __name__ == '__main__':
         'rdet': 0.05,
         'mdet': 0.1,
         'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
-        'ssd': {'psn': 4, 'msn': 2, 'mtn': 3},
-        'phd': {'psn': 4, 'msn': 3, 'mtn': 0},
+        'ssd': {'psn': 4, 'msn': 1, 'mtn': 2},
+        'phd': {'psn': 4, 'msn': 2, 'mtn': 0},
     }
 
     setting['phdtbp'] = 1

@@ -209,7 +209,7 @@ class Trdphd(object):
 
         self.upstps = []
         self.dwstps = []
-
+        self.stpn = 0 # 当前所处的台阶数目
         self.upti = 0
         self.sta  = 0 # 前沿变更状态：前沿递进1，前沿步进2，前沿反转3
 
@@ -282,12 +282,10 @@ class Trdphd(object):
                 self.crtphd = deepcopy(self.crtphd)
                 if self.crtphd.dirn * laphd.dirn > 0:  # 一级前沿步进
                     self.sta = 2
-                    if laphd.dirn > 0:
-                        self.upstps.append(Extrp(laphd.bi, self.sk_low[laphd.bi], -1))
-                    else:
-                        self.dwstps.append(Extrp(laphd.bi, self.sk_high[laphd.bi], 1))
+                    self.stpn += 1
                 else:                                  # 一级前沿反转
                     self.sta = 3
+                    self.stpn = 0
                     if laphd.dirn > 0:
                         if self.cbp:
                             self.pbs.append(self.cbp)
@@ -296,6 +294,12 @@ class Trdphd(object):
                         if self.ctp:
                             self.pts.append(self.ctp)
                         self.cbp = Extrp(i, self.sk_low[i], -1)
+
+                if laphd.dirn > 0:
+                    self.upstps.append(Extrp(laphd.bi, self.sk_low[laphd.bi], -1))
+                else:
+                    self.dwstps.append(Extrp(laphd.bi, self.sk_high[laphd.bi], 1))
+
                 self.crtphd.rsti = i
                 self.crtphd.phdi = i
                 self.crtphd.dirn = laphd.dirn
@@ -851,15 +855,16 @@ class Trpline(object):
 
         self.uptsadls(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
         #----------------------更新fibo
-        if not self.fib0 and self.bk_enstp and self.bk_ensti and self.initi< self.bk_ensti:
-            if self.tbl == 'bbl' and self.upsmp and sk_low[ski] < self.bk_enstp and (ski - self.bk_ensti) % 10 >= 2:
-                self.getfib(sk_open, sk_high, sk_low, sk_close, atr, ski)
-            elif self.tbl == 'ttl' and self.dwsmp and sk_high[ski] > self.bk_enstp and (ski - self.bk_ensti) % 10 >= 2:
-                self.getfib(sk_open, sk_high, sk_low, sk_close, atr, ski)
+        if 0:
+            if not self.fib0 and self.bk_enstp and self.bk_ensti and self.initi< self.bk_ensti:
+                if self.tbl == 'bbl' and self.upsmp and sk_low[ski] < self.bk_enstp and (ski - self.bk_ensti) % 10 >= 2:
+                    self.getfib(sk_open, sk_high, sk_low, sk_close, atr, ski)
+                elif self.tbl == 'ttl' and self.dwsmp and sk_high[ski] > self.bk_enstp and (ski - self.bk_ensti) % 10 >= 2:
+                    self.getfib(sk_open, sk_high, sk_low, sk_close, atr, ski)
 
-        elif self.fib0:
-            if (self.tbl == 'bbl' and sk_high[ski]>= self.fib0) or (self.tbl == 'ttl' and sk_low[ski] <= self.fib0):
-                self.fib0 = None
+            elif self.fib0:
+                if (self.tbl == 'bbl' and sk_high[ski]>= self.fib0) or (self.tbl == 'ttl' and sk_low[ski] <= self.fib0):
+                    self.fib0 = None
 
         #-------------------------------------------
     # 计算斜率标准得分
@@ -1975,6 +1980,31 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     saline.rsta = 0
     return saline
 
+
+def getpline(socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
+    # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
+    rklmt = [0.02, 1.6]
+    tbl = socna.split('_')[1]
+    tbl = 'bbl' if tbl == 'pa' else 'ttl'
+
+    pline = Trpline(trpb, trpd, atr, tbl)
+    if not (rklmt[0] < pline.rk * pline.dir < rklmt[1]):  # 斜率太小或太大
+        return None
+    pline.socna = socna
+    pline.fsocna = socna
+    pline.btm = sk_time[trpb.ski]
+    pline.dtm = sk_time[trpd.ski]
+    pline.frtm = sk_time[i]
+    pline.fbi = fbi
+    pline.exti = trpd.ski
+    pline.extp = trpd.skp
+    pline.initi = i
+    pline.et_ini = eti if eti else i
+    pline.bkcn = 0
+    pline.rsta = 0
+    return pline
+
+
 class Skatline(object):
     def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, setting =None):
         self.fid = fid
@@ -2367,7 +2397,7 @@ class Skatline(object):
                 # ---------------------------------------------
                 if self.rek1:
                     sgnna = 'rek1' + '_se_'+ str(i) + '-' + tdl.fsocna
-                    sgntyp = 'rek0'
+                    sgntyp = 'rek1'
                     bsdir = tdl.dir
                     sdop = self.rek1
                     ordtyp = 'Lmt'
@@ -2441,7 +2471,7 @@ class Skatline(object):
                 # ---------------------------------------------
                 if self.bek1:
                     sgnna = 'bek1' + '_se_'+ str(i) + '-' + tdl.fsocna
-                    sgntyp = 'bek0'
+                    sgntyp = 'bek1'
                     bsdir = -tdl.dir
                     sdop = self.bek1
                     ordtyp = 'Lmt'
@@ -2529,7 +2559,7 @@ class Skatline(object):
                 # ---------------------------------------------
                 if self.rek1:
                     sgnna = 'rek1' + '_et_'+ str(i) + '-' + tdl.fsocna
-                    sgntyp = 'rek0'
+                    sgntyp = 'rek1'
                     bsdir = tdl.dir
                     sdop = self.rek1
                     ordtyp = 'Lmt'
@@ -2603,7 +2633,7 @@ class Skatline(object):
                 # ---------------------------------------------
                 if self.bek1:
                     sgnna = 'bek1' + '_et_'+ str(i) + '-' + tdl.fsocna
-                    sgntyp = 'bek0'
+                    sgntyp = 'bek1'
                     bsdir = -tdl.dir
                     sdop = self.bek1
                     ordtyp = 'Lmt'
@@ -2913,6 +2943,7 @@ class Intsgnbs(object):
         ttls_dic = xfas['ttls']
         sals_dic = xfas['sals']
         phds_dic = xfas['phds']
+        pdls_dic = xfas['pdls']
 
         skatsel.trpkops = {}
         if skatsel.sgni != i:
@@ -2929,6 +2960,8 @@ class Intsgnbs(object):
         preb_mdl = None
         crtt_mdl = None
         pret_mdl = None
+
+        crtpdl = None
 
         if len(sals_dic) > 0:
             crtsal = sals_dic.values()[-1]
@@ -2947,6 +2980,9 @@ class Intsgnbs(object):
         if len(ttls_dic) > 1:
             pret_rdl = ttls_dic.values()[-2]['rdl']
             pret_mdl = ttls_dic.values()[-2]['mdl']
+
+        if len(pdls_dic) > 0:
+            crtpdl = pdls_dic.values()[-1]
 
         if 'sal' in kopset and  (kopset['sal'] ==1 or kopset['sal'] ==3) and crtsal:
             skatsel.sgnskatl(crtsal, i)
@@ -2973,6 +3009,9 @@ class Intsgnbs(object):
             skatsel.sgnskatl(preb_mdl, i)
         if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3) and pret_mdl:
             skatsel.sgnskatl(pret_mdl, i)
+        # ----------------------------------
+        if 'pdl' in kopset and  (kopset['pdl'] ==1 or kopset['pdl'] ==3) and crtpdl:
+            skatsel.sgnskatl(crtpdl, i)
 
         upsas = xfas['upsas']
         dwsas = xfas['dwsas']
@@ -3000,7 +3039,6 @@ class Intsgnbs(object):
             if crtphd:
                 skatsel.sgnskatphd(crtphd, i)
 
-
     # ------------------------------------------
     def etsgnbs(self, fid, i, eti, mosi = 0, mosn=1):
         kopset = self.tdkopset[fid]['etkop']
@@ -3011,6 +3049,7 @@ class Intsgnbs(object):
         bbls_dic = xfas['bbls']
         ttls_dic = xfas['ttls']
         sals_dic = xfas['sals']
+        pdls_dic = xfas['pdls']
 
         skatetl = self.skatl['te']
         etfid = skatetl.fid
@@ -3030,6 +3069,7 @@ class Intsgnbs(object):
         crtt_mdl = None
         pret_mdl = None
 
+        crtpdl = None
         if len(sals_dic) > 0:
             crtsal = sals_dic.values()[-1]
         if len(sals_dic) > 1:
@@ -3047,6 +3087,8 @@ class Intsgnbs(object):
         if len(ttls_dic) > 1:
             pret_rdl = ttls_dic.values()[-2]['rdl']
             pret_mdl = ttls_dic.values()[-2]['mdl']
+        if len(pdls_dic) > 0:
+            crtpdl = pdls_dic.values()[-1]
 
         if 'sal' in kopset and (kopset['sal'] ==1 or kopset['sal'] ==3)  and crtsal:
             skatetl.sgnskatl(crtsal, i, eti, mosi, mosn)
@@ -3072,6 +3114,9 @@ class Intsgnbs(object):
             skatetl.sgnskatl(preb_mdl, i, eti, mosi, mosn)
         if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3)  and pret_mdl:
             skatetl.sgnskatl(pret_mdl, i, eti, mosi, mosn)
+        # ----------------------------------
+        if 'pdl' in kopset and (kopset['pdl'] == 1 or kopset['pdl'] == 3) and crtpdl:
+            skatetl.sgnskatl(crtpdl, i, eti, mosi, mosn)
 
         etfas=self.fas[etfid]
         upsas = etfas['upsas']
@@ -3809,6 +3854,7 @@ class Grst_Factor(object):
         self.sadlines = OrderedDict()
         self.dwrstsas = OrderedDict()
         self.uprstsas = OrderedDict()
+        self.phdlines = OrderedDict()
 
         self.tops = []
         self.botms = []
@@ -4511,12 +4557,14 @@ class Grst_Factor(object):
         self.sk_ttl = []   # rdl
         self.sk_obbl = []  # mdl
         self.sk_ottl = []  # mdl
+        self.sk_pdl = []   # pdl
 
         self.ak_sal = []  # sal
         self.ak_bbl = []  # rdl
         self.ak_ttl = []  # rdl
         self.ak_obbl = []  # mdl
         self.ak_ottl = []  # mdl
+        self.ak_pdl = []  # pdl
 
         self.sk_alp1 = []
         self.sk_alp2 = []
@@ -4595,11 +4643,13 @@ class Grst_Factor(object):
             self.sk_bbl.append(self.sk_drsp[-1])
             self.sk_obbl.append(self.sk_drsp[-1])
             self.sk_ottl.append(self.sk_drsp[-1])
+            self.sk_pdl.append(self.sk_drsp[-1])
             self.ak_sal.append(0)
             self.ak_ttl.append(0)
             self.ak_bbl.append(0)
             self.ak_obbl.append(0)
             self.ak_ottl.append(0)
+            self.ak_pdl.append(0)
 
             self.sk_alp1.append(self.sk_drsp[-1])
             self.sk_alp2.append(self.sk_drsp[-1])
@@ -4652,11 +4702,13 @@ class Grst_Factor(object):
         self.sk_bbl.append(self.sk_drsp[-1])
         self.sk_ottl.append(self.sk_drsp[-1])
         self.sk_obbl.append(self.sk_drsp[-1])
+        self.sk_pdl.append(self.sk_drsp[-1])
         self.ak_sal.append(0)
         self.ak_ttl.append(0)
         self.ak_bbl.append(0)
         self.ak_obbl.append(0)
         self.ak_ottl.append(0)
+        self.ak_pdl.append(0)
 
         self.sk_alp1.append(self.sk_drsp[-1])
         self.sk_alp2.append(self.sk_drsp[-1])
@@ -5839,6 +5891,37 @@ class Grst_Factor(object):
         else:
             presal = None
 
+        #-------生产 pal & pdl
+
+        if self.faset['pdl'] and self.trdphd.sta > 1: # 步进或反转
+            if self.trdphd.crtphd.dirn > 0:
+                if self.trdphd.cbp and len(self.trdphd.upstps)>0 and self.trdphd.upstps[-1].ski - self.trdphd.cbp.ski>=3:
+                    pdlna = self.fid + '_pa_' + str(self.trdphd.crtphd.rsti) +'_'+ str(self.trdphd.stpn)
+                    newpl = getpline(pdlna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
+                    if newpl:
+                        newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                        self.phdlines[pdlna] = newpl
+            elif self.trdphd.crtphd.dirn < 0:
+                if self.trdphd.ctp and len(self.trdphd.dwstps) > 0 and self.trdphd.dwstps[-1].ski - self.trdphd.ctp.ski >= 3:
+                    pdlna = self.fid + '_pd_' + str(self.trdphd.crtphd.rsti) + '_' + str(self.trdphd.stpn)
+                    newpl = getpline(pdlna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
+                    if newpl:
+                        newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                        self.phdlines[pdlna] = newpl
+
+        if len(self.phdlines) > 0:
+            crtpdl = self.phdlines.values()[-1]
+            crtpdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(crtpdl, i)
+        else:
+            crtpdl = None
+
+        if len(self.phdlines) > 1:
+            prepdl = self.phdlines.values()[-2]
+            prepdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(prepdl, i)
+        else:
+            prepdl = None
         # -------------集中更新tdls与sk的位置状态----------------------------------------------
         # 只更新最新的3组tdl
         supls = self.suplines.keys()
@@ -6089,6 +6172,13 @@ class Grst_Factor(object):
             self.sk_sal.append(np.nan)
             self.ak_sal.append(np.nan)
 
+        if crtpdl:
+            self.sk_pdl.append(crtpdl.extp)
+            self.ak_pdl.append(crtpdl.ak)
+        else:
+            self.sk_pdl.append(np.nan)
+            self.ak_pdl.append(np.nan)
+
         if self.crtbbl:
             # if str(self.sk_time[i])[:10] == '2016-06-27':
             #     print 'sta:', self.crtbbl.rsta
@@ -6209,7 +6299,7 @@ class Grst_Factor(object):
         # -----------------------------------------------------------------------
 
         self.ctaEngine.intedsgn.fas[self.fid] = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines,
-                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas, 'phds': self.trdphd.phds}
+                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas, 'phds': self.trdphd.phds, 'pdls': self.phdlines}
         self.ctaEngine.intedsgn.sesgnbs(self.fid, i)
         self.ctaEngine.sgntotrd(self.fid, 'se', i)
 
@@ -6242,12 +6332,14 @@ class Grst_Factor(object):
         self.quotes['trdl' + aflg] = self.sk_ttl
         self.quotes['bmdl' + aflg] = self.sk_obbl
         self.quotes['tmdl' + aflg] = self.sk_ottl
+        self.quotes['pdl' + aflg] = self.sk_pdl
 
         self.quotes['ak_sal' + aflg] = self.ak_sal
         self.quotes['ak_brdl' + aflg] = self.ak_bbl
         self.quotes['ak_trdl' + aflg] = self.ak_ttl
         self.quotes['ak_bmdl' + aflg] = self.ak_obbl
         self.quotes['ak_tmdl' + aflg] = self.ak_ottl
+        self.quotes['ak_pdl' + aflg] = self.ak_pdl
 
         self.quotes['alp1' + aflg] = self.sk_alp1
         self.quotes['alp2' + aflg] = self.sk_alp2

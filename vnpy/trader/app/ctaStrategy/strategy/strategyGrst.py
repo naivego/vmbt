@@ -247,6 +247,13 @@ class GrstStrategy(CtaTemplate):
                     subpresal = farst.sadlines.values()[-2]
                     self.skatetl.uptsta(subpresal, i, farst.crtski, farst.teofi, farst.teofn)
 
+                if len(farst.phdlines) > 0:
+                    subcrtpdl = farst.phdlines.values()[-1]
+                    self.skatetl.uptsta(subcrtpdl, i, farst.crtski, farst.teofi, farst.teofn)
+                if len(farst.phdlines) > 1:
+                    subprepdl = farst.phdlines.values()[-2]
+                    self.skatetl.uptsta(subprepdl, i, farst.crtski, farst.teofi, farst.teofn)
+
                 supls = farst.suplines.keys()
                 for tdlna in supls[-3:]:
                     bbls = farst.suplines[tdlna]
@@ -376,7 +383,7 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1','brdl', 'trdl', 'sal']
+        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1', 'brdl', 'trdl', 'pdl']
         maextfas = ['sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         suextfas = ['sal', 'brdl', 'trdl']
 
@@ -431,7 +438,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2011-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -476,26 +483,36 @@ if __name__ == '__main__':
 
     # --------------------backtest------------------------
     setting['faset'] = {
-        'ka':{'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False},
-        'ma': {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False},
-        'su':{'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
+        'ka':{'sal': True, 'rdl': True, 'mdl': True, 'pdl': True, 'upl': False, 'dwl': False, 'mir': False},
+        'ma': {'sal': True, 'rdl': True, 'mdl': True, 'pdl': True, 'upl': False, 'dwl': False, 'mir': False},
+        'su':{'sal': True, 'rdl': True, 'mdl': True, 'pdl': True, 'upl': False, 'dwl': False, 'mir': False}
     }
 
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 1, 'rdl': 1, 'mdl': 0, 'ssd': 0, 'phd': 1},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 1, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0}
         }
     }
+
+    setting['tdktypset'] = {
+
+        'sal': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+        'rdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+        'mdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+        'pdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+
+    }
+
 
     setting['pstnset'] = {
         'det':  0.2,

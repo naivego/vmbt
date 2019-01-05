@@ -193,7 +193,7 @@ class GrstStrategy(CtaTemplate):
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
         if len(self.tedaet)>0:    # self.tedaet = ['ka','ma','su']
             self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.tedast, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
-                                                           self.sk_atr, self.sk_ckl, self.setting['pstnset'])
+                                                           self.sk_atr, self.sk_ckl, self.setting['sklset'])
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
     # ------------------------------------------------------------------------------------------
@@ -504,29 +504,31 @@ if __name__ == '__main__':
         }
     }
 
-    setting['tdktypset'] = {
+    setting['sklset'] = {
+        'tdktypen':
+        {
+            'sal': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'rdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'mdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'pdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'ssd': {'rsk1': 1},
+            'phd': {'psk2': 1, 'bsk1': 0, 'bsk3': 1, 'bsk5': 1}
 
-        'sal': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
-        'rdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
-        'mdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
-        'pdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
-
+        },
+        'pstnset':
+        {
+            'det':  0.2,
+            'rdet': 0.05,
+            'mdet': 0.1,
+            'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
+            'ssd': {'psn': 4, 'msn': 1, 'mtn': 2},
+            'phd': {'psn': 4, 'msn': 2, 'mtn': 0},
+        }
     }
-
-
-    setting['pstnset'] = {
-        'det':  0.2,
-        'rdet': 0.05,
-        'mdet': 0.1,
-        'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},
-        'ssd': {'psn': 4, 'msn': 1, 'mtn': 2},
-        'phd': {'psn': 4, 'msn': 2, 'mtn': 0},
-    }
-
     setting['phdtbp'] = 1
 
     #----特征参数，用于写入绩效报告做归因分析
-    setting['feargs'] = ['msdpset', 'tedast', 'tedaet', 'tdkopset', 'pstnset', 'phdtbp']
+    setting['feargs'] = ['msdpset', 'tedast', 'tedaet', 'tdkopset', 'sklset', 'phdtbp']
 
     DB_Rt_Dir = TS_Config['DB_Rt_Dir']
     Host = TS_Config['Host']

@@ -347,7 +347,8 @@ class Trdphd(object):
 
 #---------------------------------------------------------------------------
 class Trpline(object):
-    def __init__(self, trpb, trpd, atr, tbl):
+    def __init__(self, soctyp, trpb, trpd, atr, tbl ):
+        self.soctyp = soctyp
         self.trpb = trpb  # 起点
         self.trpd = trpd  # 端点
         self.tbl= tbl     # 趋势线类型 'ttl' or 'bbl'
@@ -1759,7 +1760,7 @@ class Trpline(object):
             self.trpctps[sgnna] = Sgnctp(sgnna, sgntyp, bsdir, sdop, mark, prio)
 
 # --------------------------------------------------------------------------------------------
-def gettrpline(fidna, trp1, trp2, tbl, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_time, sk_ckl, i, eti = None):
+def gettrpline(soctyp, fidna, trp1, trp2, tbl, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_time, sk_ckl, i, eti = None):
     mbdi = 5
     wrsk = 1.5
     trpis =[trp1.ski, trp2.ski]
@@ -1768,7 +1769,7 @@ def gettrpline(fidna, trp1, trp2, tbl, sk_open, sk_high, sk_low, sk_close, sk_at
     trpb = trp1
     trpd = trp2
     atr  = sk_atr[i]
-    newtbl = Trpline(trpb, trpd, atr, tbl)
+    newtbl = Trpline(soctyp, trpb, trpd, atr, tbl)
     newtbl.fak()
     fbi = trp1.ski
     fei = i
@@ -1799,7 +1800,7 @@ def gettrpline(fidna, trp1, trp2, tbl, sk_open, sk_high, sk_low, sk_close, sk_at
             tdlna =  tbl + '_'+ str(bi) + '_' + str(ei)
             if tdlna in tdls:
                 continue
-            newtbl = Trpline(trpb, trpd, atr, tbl)
+            newtbl = Trpline(soctyp, trpb, trpd, atr, tbl)
             newtbl.fbi = fbi
             newtbl.et_ini = eti if eti else i
             newtbl.fak()
@@ -1825,7 +1826,7 @@ def gettrpline(fidna, trp1, trp2, tbl, sk_open, sk_high, sk_low, sk_close, sk_at
     return None
 
 # --------------------------------------------------------------------------------------------
-def getasline(socna, mdi, mp, mdp, ak, sk_time, atr, i, eti = None):
+def getasline(soctyp, socna, mdi, mp, mdp, ak, sk_time, atr, i, eti = None):
     if not mdi:
         return None
     tbl = socna.split('_')[0]
@@ -1835,7 +1836,7 @@ def getasline(socna, mdi, mp, mdp, ak, sk_time, atr, i, eti = None):
     ep = bp + ak
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
-    asline = Trpline(trpb, trpd, atr, tbl)
+    asline = Trpline(soctyp, trpb, trpd, atr, tbl)
     asline.socna = socna
     asline.fsocna = socna
     asline.btm = sk_time[bi]
@@ -1853,7 +1854,7 @@ def getasline(socna, mdi, mp, mdp, ak, sk_time, atr, i, eti = None):
     return asline
 
 # --------------------------------------------------------------------------------------------
-def getmrline1(socna, mri, mrp, ak, sk_time, atr, i, eti = None):
+def getmrline1(soctyp, socna, mri, mrp, ak, sk_time, atr, i, eti = None):
     if not mri:
         return None
     tbl = socna.split('_')[0]
@@ -1863,7 +1864,7 @@ def getmrline1(socna, mri, mrp, ak, sk_time, atr, i, eti = None):
     ep = bp + ak
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
-    mrline = Trpline(trpb, trpd, atr, tbl)
+    mrline = Trpline(soctyp, trpb, trpd, atr, tbl)
     mrline.socna = socna
     mrline.fsocna = socna
     mrline.btm = sk_time[bi]
@@ -1916,7 +1917,7 @@ def getsdi3(bi, bp, ski, skp, lkp, rkp):
     return None
 
 
-def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
+def getmrline2(soctyp, socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
     rklmt = [0.02, 0.4]
     tbl = socna.split('_')[0]
@@ -1926,7 +1927,7 @@ def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
     ep = mrp
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
-    mrline = Trpline(trpb, trpd, atr, tbl)
+    mrline = Trpline(soctyp, trpb, trpd, atr, tbl)
     if not (rklmt[0] <= mrline.rk * mrline.dir <= rklmt[1]):
         return None
     mrline.socna = socna
@@ -1943,7 +1944,7 @@ def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, eti = None):
     mrline.rsta = 0
     return mrline
 
-def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
+def getsaline2(soctyp, socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
     # 先用bbl-ttl连线，若斜率不适合，将右侧点向右移动一根K线到sk实体处价格
     rklmt = [0.02, 0.6]
@@ -1955,12 +1956,12 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     ep = sad2.mp
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
-    saline = Trpline(trpb, trpd, atr, tbl)
+    saline = Trpline(soctyp, trpb, trpd, atr, tbl)
     if saline.rk * saline.dir < rklmt[0]:
         ei = sad2.mi + 1
         ep = rkp
         trpd = Extrp(ei, ep, 0)
-        saline = Trpline(trpb, trpd, atr, tbl)
+        saline = Trpline(soctyp, trpb, trpd, atr, tbl)
         if not (rklmt[0] < saline.rk * saline.dir < rklmt[1]):  # 斜率太小或太大
             return None
     elif saline.rk * saline.dir > rklmt[1]:  # 斜率太大
@@ -1981,13 +1982,13 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = None):
     return saline
 
 
-def getpline(socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
+def getpline(soctyp, socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
     rklmt = [0.02, 1.6]
     tbl = socna.split('_')[1]
     tbl = 'bbl' if tbl == 'pa' else 'ttl'
 
-    pline = Trpline(trpb, trpd, atr, tbl)
+    pline = Trpline(soctyp, trpb, trpd, atr, tbl)
     if not (rklmt[0] < pline.rk * pline.dir < rklmt[1]):  # 斜率太小或太大
         return None
     pline.socna = socna
@@ -2004,27 +2005,15 @@ def getpline(socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
     pline.rsta = 0
     return pline
 
-
 class Skatline(object):
-    def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, setting =None):
+    def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, tdkset = None):
         self.fid = fid
-        if setting is None:
-            self.det = 0.2
-            self.rdet = 0.05
-            self.mdet = 0.1
-
-            self.tdlpsn = 4
-            self.tdlmsn = 2
-            self.tdlmtn = 3
-
-            self.ssdpsn = 4
-            self.ssdmsn = 2
-            self.ssdmtn = 3
-
-            self.phdpsn = 4
-            self.phdmsn = 3
-            self.phdmtn = 3
-        else:
+        try:
+            self.tdktypen = tdkset['tdktypen']
+        except:
+            self.tdktypen = {}
+        try:
+            setting = tdkset['pstnset']
             self.det = setting['det']
             self.rdet = setting['rdet']
             self.mdet = setting['mdet']
@@ -2040,6 +2029,23 @@ class Skatline(object):
             self.phdpsn = setting['phd']['psn']
             self.phdmsn = setting['phd']['msn']
             self.phdmtn = setting['phd']['mtn']
+
+        except:
+            self.det = 0.2
+            self.rdet = 0.05
+            self.mdet = 0.1
+
+            self.tdlpsn = 4
+            self.tdlmsn = 2
+            self.tdlmtn = 2
+
+            self.ssdpsn = 4
+            self.ssdmsn = 1
+            self.ssdmtn = 2
+
+            self.phdpsn = 4
+            self.phdmsn = 3
+            self.phdmtn = 2
 
         self.sk_time = sk_time
         self.sk_open = sk_open
@@ -2346,6 +2352,7 @@ class Skatline(object):
         # 反向交易信号 bek0(信号确认后按收盘价进场 -市价单), bek1（信号确认后待回踩突破线进场 -限价单）, bek2（信号确认后待突破进场 -突破单），bek3（信号确认后待回踩tdl进场 -限价单）
         # 顺向交易信号 rek0(信号确认后按收盘价进场 -市价单), rek1（信号确认后待回踩突破线进场 -限价单）, rek2（信号确认后待突破进场 -突破单），rek3（信号确认后待回踩tdl进场 -限价单）
         # 信号命名格式： 信号类_se/et_信号点-tdl名称    eg: bek2_se_65-ma_rdl_bbl_60, bek1_et_65-ma_sa_45_2
+        soctyp = tdl.soctyp
         atr = self.sk_atr[i] * self.sk_close[i]
         det = self.det
         rdet = self.rdet
@@ -2373,11 +2380,13 @@ class Skatline(object):
             si = i
             nextp = tdl.extendp(si+1)
             if tdl.se_sta % 2 == 0:
-                if tdl.se_rti:
-                    if not tdl.se_rek2i and tdl.se_sta<=5:
-                        self.rek2 = tdl.se_rekp + mdet * atr * tdl.dir
-                if tdl.se_sta <= 5:
-                    self.rek3 = nextp + rdet * atr * tdl.dir
+                if 'rek2' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['rek2']>0:
+                    if tdl.se_rti:
+                        if not tdl.se_rek2i and tdl.se_sta<=5:
+                            self.rek2 = tdl.se_rekp + mdet * atr * tdl.dir
+                if 'rek3' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['rek3'] > 0:
+                    if tdl.se_sta <= 5:
+                        self.rek3 = nextp + rdet * atr * tdl.dir
 
                 #---------------------------------------------
                 if self.rek0:
@@ -2442,16 +2451,18 @@ class Skatline(object):
                     oco = ocorek23
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio, oco)
             if tdl.se_sta % 2 == 1:
-                if not tdl.se_bek1i and tdl.se_sta <= 5:
-                    self.bek1 = tdl.se_bklp - rdet * atr * tdl.dir
-
-                if not tdl.se_bek2i and tdl.se_sta <= 5:
-                    self.bek2 = tdl.se_bekp
-                if tdl.se_sta <= 5:
-                    self.bek3 = nextp - rdet * atr * tdl.dir
-
-                if not tdl.se_bek4i and (tdl.se_bkl_sta == 3 or tdl.se_bkl_sta == 5) :  # 第一次sk从bklp上方突破作为bek4信号
-                    self.bek4 = self.sk_ckl[tdl.se_bkl_beks[-1]][4] - mdet * atr * tdl.dir
+                if 'bek1' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek1'] > 0:
+                    if not tdl.se_bek1i and tdl.se_sta <= 5:
+                        self.bek1 = tdl.se_bklp - rdet * atr * tdl.dir
+                if 'bek2' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek2'] > 0:
+                    if not tdl.se_bek2i and tdl.se_sta <= 5:
+                        self.bek2 = tdl.se_bekp
+                if 'bek3' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek3'] > 0:
+                    if tdl.se_sta <= 5:
+                        self.bek3 = nextp - rdet * atr * tdl.dir
+                if 'bek4' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek4'] > 0:
+                    if not tdl.se_bek4i and (tdl.se_bkl_sta == 3 or tdl.se_bkl_sta == 5) :  # 第一次sk从bklp上方突破作为bek4信号
+                        self.bek4 = self.sk_ckl[tdl.se_bkl_beks[-1]][4] - mdet * atr * tdl.dir
                 # ---------------------------------------------
                 if self.bek0:
                     sgnna = 'bek0' + '_se_'+ str(i) + '-' + tdl.fsocna
@@ -2535,11 +2546,13 @@ class Skatline(object):
             si = eti
             nextp = tdl.extendp(si) + (mosi+1) * tdl.ak / mosn
             if tdl.et_sta % 2 == 0:
-                if tdl.et_rti:
-                    if not tdl.et_rek2i and tdl.et_sta<=5 :
-                        self.rek2 = tdl.et_rekp + mdet * atr * tdl.dir
-                if tdl.et_sta <= 5:
-                    self.rek3 = nextp + rdet * atr * tdl.dir
+                if 'rek2' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['rek2'] > 0:
+                    if tdl.et_rti:
+                        if not tdl.et_rek2i and tdl.et_sta<=5 :
+                            self.rek2 = tdl.et_rekp + mdet * atr * tdl.dir
+                if 'rek3' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['rek3'] > 0:
+                    if tdl.et_sta <= 5:
+                        self.rek3 = nextp + rdet * atr * tdl.dir
 
                 # ---------------------------------------------
                 if self.rek0:
@@ -2605,16 +2618,18 @@ class Skatline(object):
                     prio = 0
                     self.trpkops[sgnna] = Sgnkop(sgnna, sgntyp, bsdir, sdop, ordtyp, sdsp, sdtp, psn, msn, mtn, mark, prio)
             if tdl.et_sta % 2 == 1:
-                if not tdl.et_bek1i and tdl.et_sta <= 5:
-                    self.bek1 = tdl.et_bklp - rdet * atr * tdl.dir
-
-                if not tdl.et_bek2i and tdl.et_sta <= 5:
-                    self.bek2 = tdl.et_bekp
-                if tdl.et_sta <= 5:
-                    self.bek3 = nextp - rdet * atr * tdl.dir
-
-                if not tdl.et_bek4i and (tdl.et_bkl_sta == 3 or tdl.et_bkl_sta == 5):  # 第一次sk从bklp上方突破作为bek4信号
-                    self.bek4 = self.sk_ckl[tdl.et_bkl_beks[-1]][4] - mdet * atr * tdl.dir
+                if 'bek1' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek1'] > 0:
+                    if not tdl.et_bek1i and tdl.et_sta <= 5:
+                        self.bek1 = tdl.et_bklp - rdet * atr * tdl.dir
+                if 'bek2' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek2'] > 0:
+                    if not tdl.et_bek2i and tdl.et_sta <= 5:
+                        self.bek2 = tdl.et_bekp
+                if 'bek3' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek3'] > 0:
+                    if tdl.et_sta <= 5:
+                        self.bek3 = nextp - rdet * atr * tdl.dir
+                if 'bek4' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bek4'] > 0:
+                    if not tdl.et_bek4i and (tdl.et_bkl_sta == 3 or tdl.et_bkl_sta == 5):  # 第一次sk从bklp上方突破作为bek4信号
+                        self.bek4 = self.sk_ckl[tdl.et_bkl_beks[-1]][4] - mdet * atr * tdl.dir
                 # ---------------------------------------------
                 if self.bek0:
                     sgnna = 'bek0' + '_et_'+ str(i) + '-' + tdl.fsocna
@@ -2693,6 +2708,7 @@ class Skatline(object):
 
     def sgnskatssd(self, rstssd, i, eti=None, mosi=0, mosn=1):
         # 信号命名格式： 信号类_se_信号点-信号源名称    eg: rsk1_se_65-ma_rstssna,
+        soctyp = 'ssd'
         atr = self.sk_atr[i] * self.sk_close[i]
         det = self.det
         rdet = self.rdet
@@ -2704,8 +2720,11 @@ class Skatline(object):
 
         self.rsk1 = None
         self.rsk2 = None
-        if rstssd.mexsta < 2:
-            self.rsk1 = rstssd.mexp
+
+        if 'rsk1' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['rsk1'] > 0:
+            if rstssd.mexsta < 2:
+                self.rsk1 = rstssd.mexp
+
         if self.rsk1:
             sgnna = 'rsk1' + '_se_' + str(i) + '-' + rstssd.rssna
             sgntyp = 'rsk1'
@@ -2723,6 +2742,7 @@ class Skatline(object):
 
     def sgnskatphd(self, crtphd, i, eti=None, mosi=0, mosn=1):
         # 信号命名格式： 信号类_se_信号点-信号源名称    eg: psk2_se_65-ma_phdna, 信号：psk2 | bsk1 | bsk3 | bsk5
+        soctyp = 'phd'
         atr = self.sk_atr[i] * self.sk_close[i]
         det = self.det
         rdet = self.rdet
@@ -2743,18 +2763,20 @@ class Skatline(object):
         self.bsk1 = None
         self.bsk3 = None
         self.bsk5 = None
+        if 'psk2' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['psk2'] > 0:
+            if not crtphd.rti:
+                self.psk2 = crtphd.rtp
 
-        if not crtphd.rti:
-            self.psk2 = crtphd.rtp
+        if 'bsk1' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bsk1'] > 0:
+            if not crtphd.lbsi:
+                self.bsk1 = crtphd.lbsp
 
-        if not crtphd.lbsi and  0 :
-            self.bsk1 = crtphd.lbsp
-
-        if not crtphd.dbsi:
-            self.bsk3 = crtphd.dbsp
-
-        if not crtphd.fbsi:
-            self.bsk5 = crtphd.fbsp
+        if 'bsk3' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bsk3'] > 0:
+            if not crtphd.dbsi:
+                self.bsk3 = crtphd.dbsp
+        if 'bsk5' in self.tdktypen[soctyp] and self.tdktypen[soctyp]['bsk5'] > 0:
+            if not crtphd.fbsi:
+                self.bsk5 = crtphd.fbsp
         # ---------------------------------------------
         if self.psk2:
             sgnna = 'psk2' + '_se_' + str(i) + '-' + crtphd.phdna
@@ -3927,7 +3949,8 @@ class Grst_Factor(object):
         # --calc new new_supline
         if bdpt.skp > edpt.skp:
             return
-        newbbl = gettrpline(fidna, bdpt, edpt, 'bbl', sk_open, sk_high, sk_low, sk_close, sk_atr, sk_time, sk_ckl, i, eti)
+        soctyp = fidna.split('_')[1]
+        newbbl = gettrpline(soctyp, fidna, bdpt, edpt, 'bbl', sk_open, sk_high, sk_low, sk_close, sk_atr, sk_time, sk_ckl, i, eti)
         if newbbl:
             newbbl.initsklsta(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, i)
             return newbbl
@@ -3940,7 +3963,8 @@ class Grst_Factor(object):
         # --calc new new_resline
         if bdpt.skp < edpt.skp:
             return
-        newttl = gettrpline(fidna, bdpt, edpt, 'ttl', sk_open, sk_high, sk_low, sk_close, sk_atr, sk_time, sk_ckl, i, eti)
+        soctyp = fidna.split('_')[1]
+        newttl = gettrpline(soctyp, fidna, bdpt, edpt, 'ttl', sk_open, sk_high, sk_low, sk_close, sk_atr, sk_time, sk_ckl, i, eti)
         if newttl:
             newttl.initsklsta(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, i)
             return newttl
@@ -3954,6 +3978,7 @@ class Grst_Factor(object):
         # 连线方式 ：0--常规bbl-ttl， 1 - 右侧连接点偏向sk实体
         kkltpye = 0
 
+        soctyp = fidna.split('_')[1]
         mbdi = 5
         wrsk = 1.5
         tdls = {}
@@ -4004,7 +4029,7 @@ class Grst_Factor(object):
                 continue
             mri = sdpt[0]
             mrp = sdpt[1]
-            newtbl = getmrline2(tdlna, bi, sk_low[bi], mri, mrp, fbi, sk_time, atr, i, eti)
+            newtbl = getmrline2(soctyp, tdlna, bi, sk_low[bi], mri, mrp, fbi, sk_time, atr, i, eti)
             if not newtbl:
                 continue
             # -----------------------------------
@@ -4040,6 +4065,7 @@ class Grst_Factor(object):
         # 连线方式 ：0--常规bbl-ttl， 1 - 右侧连接点偏向sk实体
         kkltpye = 0
 
+        soctyp = fidna.split('_')[1]
         mbdi = 5
         wrsk = 1.5
         tdls = {}
@@ -4075,7 +4101,7 @@ class Grst_Factor(object):
             # -----------------------------------------
             # trpb = Extrp(bi, sk_high[bi], 1)
             # trpd = Extrp(ei, sk_high[ei], 1)
-            # newtbl = Trpline(trpb, trpd, atr, 'ttl')
+            # newtbl = Trpline(soctyp, trpb, trpd, atr, 'ttl')
             # newtbl.fbi = bi
             # -----------------------------------------
             fbi = ei
@@ -4090,7 +4116,7 @@ class Grst_Factor(object):
                 continue
             mri = sdpt[0]
             mrp = sdpt[1]
-            newtbl = getmrline2(tdlna, bi, sk_high[bi], mri, mrp, fbi, sk_time, atr, i, eti)
+            newtbl = getmrline2(soctyp, tdlna, bi, sk_high[bi], mri, mrp, fbi, sk_time, atr, i, eti)
             if not newtbl:
                 continue
             # -----------------------------------
@@ -4123,6 +4149,7 @@ class Grst_Factor(object):
 
     def new_supline3(self, fidna, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_time, sk_atr, sk_ckl, i, eti = None):
         # --calc new new_supline3
+        soctyp = fidna.split('_')[1]
         mbdi = 5
         wrsk = 1.5
         tdls = {}
@@ -4163,7 +4190,7 @@ class Grst_Factor(object):
 
             if tdlna in tdls:
                 continue
-            newtbl = Trpline(trpb, trpd, atr, 'bbl')
+            newtbl = Trpline(soctyp, trpb, trpd, atr, 'bbl')
             newtbl.fbi = botms[mxi].ski
             newtbl.et_ini = eti if eti else i
             newtbl.fak()
@@ -4193,8 +4220,9 @@ class Grst_Factor(object):
                 # self.crtbbl = newtbl
         return None
 
-    def new_resline3(self,  fidna, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_time, sk_atr, sk_ckl, i, eti = None):
+    def new_resline3(self, fidna, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_time, sk_atr, sk_ckl, i, eti = None):
         # --calc new new_supline3
+        soctyp = fidna.split('_')[1]
         mbdi = 5
         wrsk = 1.5
         tdls = {}
@@ -4234,7 +4262,7 @@ class Grst_Factor(object):
             tdlna =  'ttl' + '_'+ str(bi) + '_' + str(ei)
             if tdlna in tdls:
                 continue
-            newtbl = Trpline(trpb, trpd, atr, 'ttl')
+            newtbl = Trpline(soctyp, trpb, trpd, atr, 'ttl')
             newtbl.fbi = tops[mxi].ski
             newtbl.et_ini = eti if eti else i
             newtbl.fak()
@@ -4606,7 +4634,7 @@ class Grst_Factor(object):
         self.sk_sgn = []
 
 
-        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl, setting['pstnset'])
+        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl, setting['sklset'])
         self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:
@@ -5874,7 +5902,7 @@ class Grst_Factor(object):
                     if sbi:
                         rkp = max(self.sk_open[sad2.mi + 1], self.sk_close[sad2.mi + 1]) if sad2.dwup > 0 else min(self.sk_open[sad2.mi + 1],
                                                                                                                    self.sk_close[sad2.mi + 1])
-                        newsal = getsaline2(salna, sbi, sbp, sad2, rkp, sbi, self.sk_time, atr, i, self.teix[-1])
+                        newsal = getsaline2('sal',salna, sbi, sbp, sad2, rkp, sbi, self.sk_time, atr, i, self.teix[-1])
                         if newsal:
                             newsal.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                             self.sadlines[salna] = newsal
@@ -5897,14 +5925,14 @@ class Grst_Factor(object):
             if self.trdphd.crtphd.dirn > 0:
                 if self.trdphd.cbp and len(self.trdphd.upstps)>0 and self.trdphd.upstps[-1].ski - self.trdphd.cbp.ski>=3:
                     pdlna = self.fid + '_pa_' + str(self.trdphd.crtphd.rsti) +'_'+ str(self.trdphd.stpn)
-                    newpl = getpline(pdlna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
+                    newpl = getpline('pdl', pdlna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         self.phdlines[pdlna] = newpl
             elif self.trdphd.crtphd.dirn < 0:
                 if self.trdphd.ctp and len(self.trdphd.dwstps) > 0 and self.trdphd.dwstps[-1].ski - self.trdphd.ctp.ski >= 3:
                     pdlna = self.fid + '_pd_' + str(self.trdphd.crtphd.rsti) + '_' + str(self.trdphd.stpn)
-                    newpl = getpline(pdlna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
+                    newpl = getpline('pdl', pdlna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         self.phdlines[pdlna] = newpl
@@ -5948,7 +5976,7 @@ class Grst_Factor(object):
                     mdp = mdl.upsmdp
                     ak = mdl.ak
                     atr = self.sk_atr[i]
-                    upl = getasline(uplna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    upl = getasline('upl', uplna, mdi, mp, mdp, ak, self.sk_time, atr, i)
                     if upl:
                         upls[uplna] = upl
                         upl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
@@ -5964,7 +5992,7 @@ class Grst_Factor(object):
                     mdp = upl.upsmdp
                     ak = upl.ak
                     atr = self.sk_atr[i]
-                    nupl = getasline(nuplna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    nupl = getasline('upl', nuplna, mdi, mp, mdp, ak, self.sk_time, atr, i)
                     if nupl:
                         toaddupl[nuplna] = nupl
                         nupl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
@@ -5992,7 +6020,7 @@ class Grst_Factor(object):
                     # mrp = mirp
                     # ak = mdl.ak
                     # atr = self.sk_atr[i]
-                    # nmrl = getmrline1(nmrlna, mri, mrp, ak, self.sk_time, atr, i)
+                    # nmrl = getmrline1('mir', nmrlna, mri, mrp, ak, self.sk_time, atr, i)
                     # if nmrl:
                     #     nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                     #     mirl = nmrl
@@ -6011,7 +6039,7 @@ class Grst_Factor(object):
                             mri = sdpt[0]
                             mrp = sdpt[1]
                             atr = self.sk_atr[i]
-                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            nmrl = getmrline2('mir', nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
                             if nmrl:
                                 nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                                 mirl = nmrl
@@ -6031,7 +6059,7 @@ class Grst_Factor(object):
                             mri = sdpt[0]
                             mrp = sdpt[1]
                             atr = self.sk_atr[i]
-                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            nmrl = getmrline2('mir', nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
                             if nmrl:
                                 nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                                 mirl = nmrl
@@ -6079,7 +6107,7 @@ class Grst_Factor(object):
                     mdp = dwl.dwsmdp
                     ak = dwl.ak
                     atr = self.sk_atr[i]
-                    ndwl = getasline(ndwlna, mdi, mp, mdp, ak, self.sk_time, atr, i)
+                    ndwl = getasline('dwl', ndwlna, mdi, mp, mdp, ak, self.sk_time, atr, i)
                     if ndwl:
                         toadddwl[ndwlna] = ndwl
                         ndwl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
@@ -6107,7 +6135,7 @@ class Grst_Factor(object):
                     # mrp = mirp
                     # ak = mdl.ak
                     # atr = self.sk_atr[i]
-                    # nmrl = getmrline1(nmrlna, mri, mrp, ak, self.sk_time, atr, i)
+                    # nmrl = getmrline1('mir', nmrlna, mri, mrp, ak, self.sk_time, atr, i)
                     # if nmrl:
                     #     nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                     #     mirl = nmrl
@@ -6126,7 +6154,7 @@ class Grst_Factor(object):
                             mri = sdpt[0]
                             mrp = sdpt[1]
                             atr = self.sk_atr[i]
-                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            nmrl = getmrline2('mir', nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
                             if nmrl:
                                 nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                                 mirl = nmrl
@@ -6146,7 +6174,7 @@ class Grst_Factor(object):
                             mri = sdpt[0]
                             mrp = sdpt[1]
                             atr = self.sk_atr[i]
-                            nmrl = getmrline2(nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
+                            nmrl = getmrline2('mir', nmrlna, mbi, mbp, mri, mrp, fbi, self.sk_time, atr, i)
                             if nmrl:
                                 nmrl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                                 mirl = nmrl

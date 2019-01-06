@@ -356,8 +356,12 @@ class Trpline(object):
         self.tdlna = tbl+'_' + str(trpb.ski) + '_' + str(trpd.ski)
         self.socna = None
         self.fsocna = None
-        self.ak = (trpd.skp - trpb.skp)/(trpd.ski- trpb.ski)
-        self.rk = (trpd.skp - trpb.skp)/(trpd.ski- trpb.ski)/trpd.skp/atr  # 平均每日涨幅相对atr的倍数
+        if trpd.ski == trpb.ski:
+            self.ak = 0
+            self.rk = 0
+        else:
+            self.ak = (trpd.skp - trpb.skp)/(trpd.ski- trpb.ski)
+            self.rk = (trpd.skp - trpb.skp)/(trpd.ski- trpb.ski)/trpd.skp/atr  # 平均每日涨幅相对atr的倍数
         self.fbi = None
         self.mxi = None
         self.btm = None #  tdl的起点时间
@@ -1984,16 +1988,19 @@ def getsaline2(soctyp, socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, eti = Non
 
 def getpline(soctyp, socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
-    rklmt = [0.02, 1.6]
+    rklmt = [-0.02, 2.6]
     tbl = socna.split('_')[1]
     tbl = 'bbl' if tbl == 'pa' else 'ttl'
-
-    pline = Trpline(soctyp, trpb, trpd, atr, tbl)
+    if trpd.ski - trpb.ski <= 2:
+        ntrpb = deepcopy(trpd)
+    else:
+        ntrpb = trpb
+    pline = Trpline(soctyp, ntrpb, trpd, atr, tbl)
     if not (rklmt[0] < pline.rk * pline.dir < rklmt[1]):  # 斜率太小或太大
         return None
     pline.socna = socna
     pline.fsocna = socna
-    pline.btm = sk_time[trpb.ski]
+    pline.btm = sk_time[ntrpb.ski]
     pline.dtm = sk_time[trpd.ski]
     pline.frtm = sk_time[i]
     pline.fbi = fbi
@@ -2966,6 +2973,7 @@ class Intsgnbs(object):
         sals_dic = xfas['sals']
         phds_dic = xfas['phds']
         pdls_dic = xfas['pdls']
+        pals_dic = xfas['pals']
 
         skatsel.trpkops = {}
         if skatsel.sgni != i:
@@ -2983,7 +2991,10 @@ class Intsgnbs(object):
         crtt_mdl = None
         pret_mdl = None
 
+        crtpal = None
+        prepal = None
         crtpdl = None
+        prepdl = None
 
         if len(sals_dic) > 0:
             crtsal = sals_dic.values()[-1]
@@ -3005,6 +3016,13 @@ class Intsgnbs(object):
 
         if len(pdls_dic) > 0:
             crtpdl = pdls_dic.values()[-1]
+        if len(pdls_dic) > 1:
+            prepdl = pdls_dic.values()[-2]
+
+        if len(pals_dic) > 0:
+            crtpal = pals_dic.values()[-1]
+        if len(pals_dic) > 1:
+            prepal = pals_dic.values()[-2]
 
         if 'sal' in kopset and  (kopset['sal'] ==1 or kopset['sal'] ==3) and crtsal:
             skatsel.sgnskatl(crtsal, i)
@@ -3032,8 +3050,15 @@ class Intsgnbs(object):
         if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3) and pret_mdl:
             skatsel.sgnskatl(pret_mdl, i)
         # ----------------------------------
-        if 'pdl' in kopset and  (kopset['pdl'] ==1 or kopset['pdl'] ==3) and crtpdl:
+        if 'psl' in kopset and (kopset['psl'] ==1 or kopset['psl'] ==3) and crtpdl:
             skatsel.sgnskatl(crtpdl, i)
+        if 'psl' in kopset and (kopset['psl'] ==2 or kopset['psl'] ==3) and prepdl:
+            skatsel.sgnskatl(prepdl, i)
+        # ----------------------------------
+        if 'psl' in kopset and  (kopset['psl'] ==1 or kopset['psl'] ==3) and crtpal:
+            skatsel.sgnskatl(crtpal, i)
+        if 'psl' in kopset and  (kopset['psl'] ==2 or kopset['psl'] ==3) and prepal:
+            skatsel.sgnskatl(prepal, i)
 
         upsas = xfas['upsas']
         dwsas = xfas['dwsas']
@@ -3072,6 +3097,7 @@ class Intsgnbs(object):
         ttls_dic = xfas['ttls']
         sals_dic = xfas['sals']
         pdls_dic = xfas['pdls']
+        pals_dic = xfas['pals']
 
         skatetl = self.skatl['te']
         etfid = skatetl.fid
@@ -3091,7 +3117,11 @@ class Intsgnbs(object):
         crtt_mdl = None
         pret_mdl = None
 
+        crtpal = None
+        prepal = None
         crtpdl = None
+        prepdl = None
+
         if len(sals_dic) > 0:
             crtsal = sals_dic.values()[-1]
         if len(sals_dic) > 1:
@@ -3110,7 +3140,9 @@ class Intsgnbs(object):
             pret_rdl = ttls_dic.values()[-2]['rdl']
             pret_mdl = ttls_dic.values()[-2]['mdl']
         if len(pdls_dic) > 0:
-            crtpdl = pdls_dic.values()[-1]
+            crtpsl = pdls_dic.values()[-1]
+        if len(pdls_dic) > 1:
+            prepsl = pdls_dic.values()[-2]
 
         if 'sal' in kopset and (kopset['sal'] ==1 or kopset['sal'] ==3)  and crtsal:
             skatetl.sgnskatl(crtsal, i, eti, mosi, mosn)
@@ -3137,8 +3169,15 @@ class Intsgnbs(object):
         if 'mdl' in kopset and (kopset['mdl'] ==2 or kopset['mdl'] ==3)  and pret_mdl:
             skatetl.sgnskatl(pret_mdl, i, eti, mosi, mosn)
         # ----------------------------------
-        if 'pdl' in kopset and (kopset['pdl'] == 1 or kopset['pdl'] == 3) and crtpdl:
+        if 'psl' in kopset and (kopset['psl'] == 1 or kopset['psl'] == 3) and crtpdl:
             skatetl.sgnskatl(crtpdl, i, eti, mosi, mosn)
+        if 'psl' in kopset and (kopset['psl'] == 2 or kopset['psl'] == 3) and prepdl:
+            skatetl.sgnskatl(prepdl, i, eti, mosi, mosn)
+        # ----------------------------------
+        if 'psl' in kopset and (kopset['psl'] == 1 or kopset['psl'] == 3) and crtpal:
+            skatetl.sgnskatl(crtpal, i, eti, mosi, mosn)
+        if 'psl' in kopset and (kopset['psl'] == 2 or kopset['psl'] == 3) and prepal:
+            skatetl.sgnskatl(prepal, i, eti, mosi, mosn)
 
         etfas=self.fas[etfid]
         upsas = etfas['upsas']
@@ -3877,6 +3916,8 @@ class Grst_Factor(object):
         self.dwrstsas = OrderedDict()
         self.uprstsas = OrderedDict()
         self.phdlines = OrderedDict()
+        self.pdlines = OrderedDict()
+        self.palines = OrderedDict()
 
         self.tops = []
         self.botms = []
@@ -4585,14 +4626,14 @@ class Grst_Factor(object):
         self.sk_ttl = []   # rdl
         self.sk_obbl = []  # mdl
         self.sk_ottl = []  # mdl
-        self.sk_pdl = []   # pdl
+        self.sk_psl = []   # psl
 
         self.ak_sal = []  # sal
         self.ak_bbl = []  # rdl
         self.ak_ttl = []  # rdl
         self.ak_obbl = []  # mdl
         self.ak_ottl = []  # mdl
-        self.ak_pdl = []  # pdl
+        self.ak_psl = []  # psl
 
         self.sk_alp1 = []
         self.sk_alp2 = []
@@ -4671,13 +4712,13 @@ class Grst_Factor(object):
             self.sk_bbl.append(self.sk_drsp[-1])
             self.sk_obbl.append(self.sk_drsp[-1])
             self.sk_ottl.append(self.sk_drsp[-1])
-            self.sk_pdl.append(self.sk_drsp[-1])
+            self.sk_psl.append(self.sk_drsp[-1])
             self.ak_sal.append(0)
             self.ak_ttl.append(0)
             self.ak_bbl.append(0)
             self.ak_obbl.append(0)
             self.ak_ottl.append(0)
-            self.ak_pdl.append(0)
+            self.ak_psl.append(0)
 
             self.sk_alp1.append(self.sk_drsp[-1])
             self.sk_alp2.append(self.sk_drsp[-1])
@@ -4730,13 +4771,13 @@ class Grst_Factor(object):
         self.sk_bbl.append(self.sk_drsp[-1])
         self.sk_ottl.append(self.sk_drsp[-1])
         self.sk_obbl.append(self.sk_drsp[-1])
-        self.sk_pdl.append(self.sk_drsp[-1])
+        self.sk_psl.append(self.sk_drsp[-1])
         self.ak_sal.append(0)
         self.ak_ttl.append(0)
         self.ak_bbl.append(0)
         self.ak_obbl.append(0)
         self.ak_ottl.append(0)
-        self.ak_pdl.append(0)
+        self.ak_psl.append(0)
 
         self.sk_alp1.append(self.sk_drsp[-1])
         self.sk_alp2.append(self.sk_drsp[-1])
@@ -5920,36 +5961,44 @@ class Grst_Factor(object):
             presal = None
 
         #-------生产 pal & pdl
-
-        if self.faset['pdl'] and self.trdphd.sta > 1: # 步进或反转
+        if self.faset['psl'] and self.trdphd.sta > 1: # 步进或反转
             if self.trdphd.crtphd.dirn > 0:
-                if self.trdphd.cbp and len(self.trdphd.upstps)>0 and self.trdphd.upstps[-1].ski - self.trdphd.cbp.ski>=3:
+                if self.trdphd.cbp and len(self.trdphd.upstps)>0:
                     pdlna = self.fid + '_pa_' + str(self.trdphd.crtphd.rsti) +'_'+ str(self.trdphd.stpn)
-                    newpl = getpline('pdl', pdlna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
+                    newpl = getpline('psl', pdlna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         self.phdlines[pdlna] = newpl
+                        self.palines[pdlna] = newpl
             elif self.trdphd.crtphd.dirn < 0:
-                if self.trdphd.ctp and len(self.trdphd.dwstps) > 0 and self.trdphd.dwstps[-1].ski - self.trdphd.ctp.ski >= 3:
+                if self.trdphd.ctp and len(self.trdphd.dwstps) > 0:
                     pdlna = self.fid + '_pd_' + str(self.trdphd.crtphd.rsti) + '_' + str(self.trdphd.stpn)
-                    newpl = getpline('pdl', pdlna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
+                    newpl = getpline('psl', pdlna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         self.phdlines[pdlna] = newpl
+                        self.pdlines[pdlna] = newpl
+
+        # 更新最新的3组psl
+        pals = self.palines.values()
+        for pal in pals[-3:]:
+            pal.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(pal, i)
+
+        pdls = self.pdlines.values()
+        for pdl in pdls[-3:]:
+            pdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+            self.skatsel.uptsta(pdl, i)
 
         if len(self.phdlines) > 0:
-            crtpdl = self.phdlines.values()[-1]
-            crtpdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
-            self.skatsel.uptsta(crtpdl, i)
+            crtpsl = self.phdlines.values()[-1]
         else:
-            crtpdl = None
+            crtpsl = None
 
         if len(self.phdlines) > 1:
-            prepdl = self.phdlines.values()[-2]
-            prepdl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
-            self.skatsel.uptsta(prepdl, i)
+            prepsl = self.phdlines.values()[-2]
         else:
-            prepdl = None
+            prepsl = None
         # -------------集中更新tdls与sk的位置状态----------------------------------------------
         # 只更新最新的3组tdl
         supls = self.suplines.keys()
@@ -6200,12 +6249,12 @@ class Grst_Factor(object):
             self.sk_sal.append(np.nan)
             self.ak_sal.append(np.nan)
 
-        if crtpdl:
-            self.sk_pdl.append(crtpdl.extp)
-            self.ak_pdl.append(crtpdl.ak)
+        if crtpsl:
+            self.sk_psl.append(crtpsl.extp)
+            self.ak_psl.append(crtpsl.ak)
         else:
-            self.sk_pdl.append(np.nan)
-            self.ak_pdl.append(np.nan)
+            self.sk_psl.append(np.nan)
+            self.ak_psl.append(np.nan)
 
         if self.crtbbl:
             # if str(self.sk_time[i])[:10] == '2016-06-27':
@@ -6327,7 +6376,7 @@ class Grst_Factor(object):
         # -----------------------------------------------------------------------
 
         self.ctaEngine.intedsgn.fas[self.fid] = {'rstdir': self.rstdir, 'sals': self.sadlines, 'bbls': self.suplines, 'ttls': self.reslines,
-                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas, 'phds': self.trdphd.phds, 'pdls': self.phdlines}
+                                                 'upsas': self.uprstsas, 'dwsas': self.dwrstsas, 'phds': self.trdphd.phds, 'pals': self.palines, 'pdls': self.pdlines}
         self.ctaEngine.intedsgn.sesgnbs(self.fid, i)
         self.ctaEngine.sgntotrd(self.fid, 'se', i)
 
@@ -6360,14 +6409,14 @@ class Grst_Factor(object):
         self.quotes['trdl' + aflg] = self.sk_ttl
         self.quotes['bmdl' + aflg] = self.sk_obbl
         self.quotes['tmdl' + aflg] = self.sk_ottl
-        self.quotes['pdl' + aflg] = self.sk_pdl
+        self.quotes['psl' + aflg] = self.sk_psl
 
         self.quotes['ak_sal' + aflg] = self.ak_sal
         self.quotes['ak_brdl' + aflg] = self.ak_bbl
         self.quotes['ak_trdl' + aflg] = self.ak_ttl
         self.quotes['ak_bmdl' + aflg] = self.ak_obbl
         self.quotes['ak_tmdl' + aflg] = self.ak_ottl
-        self.quotes['ak_pdl' + aflg] = self.ak_pdl
+        self.quotes['ak_psl' + aflg] = self.ak_psl
 
         self.quotes['alp1' + aflg] = self.sk_alp1
         self.quotes['alp2' + aflg] = self.sk_alp2

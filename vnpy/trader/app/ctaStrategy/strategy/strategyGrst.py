@@ -383,7 +383,7 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1', 'brdl', 'trdl', 'pdl']
+        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1', 'brdl', 'trdl', 'psl']
         maextfas = ['sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         suextfas = ['sal', 'brdl', 'trdl']
 
@@ -483,24 +483,24 @@ if __name__ == '__main__':
 
     # --------------------backtest------------------------
     setting['faset'] = {
-        'ka':{'sal': True, 'rdl': True, 'mdl': True, 'pdl': True, 'upl': False, 'dwl': False, 'mir': False},
-        'ma': {'sal': True, 'rdl': True, 'mdl': True, 'pdl': True, 'upl': False, 'dwl': False, 'mir': False},
-        'su':{'sal': True, 'rdl': True, 'mdl': True, 'pdl': True, 'upl': False, 'dwl': False, 'mir': False}
+        'ka':{'sal': True, 'rdl': True, 'mdl': True, 'psl': True, 'upl': False, 'dwl': False, 'mir': False},
+        'ma': {'sal': True, 'rdl': True, 'mdl': True, 'psl': True, 'upl': False, 'dwl': False, 'mir': False},
+        'su':{'sal': True, 'rdl': True, 'mdl': True, 'psl': True, 'upl': False, 'dwl': False, 'mir': False}
     }
 
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 1, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 3, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'pdl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
         }
     }
 
@@ -510,7 +510,7 @@ if __name__ == '__main__':
             'sal': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'rdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'mdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
-            'pdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'psl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'ssd': {'rsk1': 1},
             'phd': {'psk2': 1, 'bsk1': 0, 'bsk3': 1, 'bsk5': 1}
 

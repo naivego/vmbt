@@ -243,10 +243,10 @@ class Trdphd(object):
             elif self.crtphd.dirn < 0 and self.sk_high[i] >= self.crtphd.fbsp:
                 self.crtphd.fbsi = i
 
-        if self.crtphd.dirn > 0 and self.ctp and self.ctp.skp < self.sk_high[i]:
+        if self.crtphd.dirn > 0 and self.ctp and self.ctp.skp <= self.sk_high[i]:
             self.ctp.ski = i
             self.ctp.skp = self.sk_high[i]
-        elif self.crtphd.dirn < 0 and self.cbp and self.cbp.skp > self.sk_low[i]:
+        elif self.crtphd.dirn < 0 and self.cbp and self.cbp.skp >= self.sk_low[i]:
             self.cbp.ski = i
             self.cbp.skp = self.sk_low[i]
         # -------------------------更新新前沿
@@ -296,10 +296,11 @@ class Trdphd(object):
                         self.cbp = Extrp(i, self.sk_low[i], -1)
 
                 if laphd.dirn > 0:
-                    self.upstps.append(Extrp(laphd.bi, self.sk_low[laphd.bi], -1))
+                    # self.upstps.append(Extrp(laphd.bi, self.sk_low[laphd.bi], -1))
+                    self.upstps.append(Extrp(i, self.sk_low[i], -1))
                 else:
-                    self.dwstps.append(Extrp(laphd.bi, self.sk_high[laphd.bi], 1))
-
+                    # self.dwstps.append(Extrp(laphd.bi, self.sk_high[laphd.bi], 1))
+                    self.dwstps.append(Extrp(i, self.sk_high[i], 1))
                 self.crtphd.rsti = i
                 self.crtphd.phdi = i
                 self.crtphd.dirn = laphd.dirn
@@ -1991,7 +1992,7 @@ def getpline(soctyp, socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
     rklmt = [-0.02, 2.6]
     tbl = socna.split('_')[1]
     tbl = 'bbl' if tbl == 'pa' else 'ttl'
-    if trpd.ski - trpb.ski <= 2:
+    if trpd.ski - trpb.ski <= 1:
         ntrpb = deepcopy(trpd)
     else:
         ntrpb = trpb
@@ -5700,13 +5701,13 @@ class Grst_Factor(object):
                 self.sk_drsp.append(self.sk_qsh[-1])
                 # ---------------------------------------------------------------------------------------------------trdline
                 if self.ctp:
-                    if self.ctp.skp < self.sk_high[i]:
+                    if self.ctp.skp <= self.sk_high[i]:
                         self.ctp = Extrp(i, self.sk_high[i], 1)
             elif self.sk_qspds[-1][2] <= 0:
                 self.sk_drsp.append(self.sk_qsl[-1])
                 # ---------------------------------------------------------------------------------------------------trdline
                 if self.cbp:
-                    if self.cbp.skp > self.sk_low[i]:
+                    if self.cbp.skp >= self.sk_low[i]:
                         self.cbp = Extrp(i, self.sk_low[i], -1)
         else:
             phdi = self.trdphd.crtphd.phdi
@@ -5714,13 +5715,13 @@ class Grst_Factor(object):
                 drsp = max(self.sk_drsp[-1], self.sk_chn[phdi].hp)
                 self.sk_drsp.append(drsp)
                 if self.ctp:
-                    if self.ctp.skp < self.sk_high[i]:
+                    if self.ctp.skp <= self.sk_high[i]:
                         self.ctp = Extrp(i, self.sk_high[i], 1)
             else:
                 drsp = min(self.sk_drsp[-1], self.sk_chn[phdi].lp)
                 self.sk_drsp.append(drsp)
                 if self.cbp:
-                    if self.cbp.skp > self.sk_low[i]:
+                    if self.cbp.skp >= self.sk_low[i]:
                         self.cbp = Extrp(i, self.sk_low[i], -1)
 
         # ----------------------------------------------基于 self.sk_drsp 生成 sadl序列

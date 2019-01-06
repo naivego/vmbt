@@ -247,12 +247,13 @@ class GrstStrategy(CtaTemplate):
                     subpresal = farst.sadlines.values()[-2]
                     self.skatetl.uptsta(subpresal, i, farst.crtski, farst.teofi, farst.teofn)
 
-                if len(farst.phdlines) > 0:
-                    subcrtpdl = farst.phdlines.values()[-1]
-                    self.skatetl.uptsta(subcrtpdl, i, farst.crtski, farst.teofi, farst.teofn)
-                if len(farst.phdlines) > 1:
-                    subprepdl = farst.phdlines.values()[-2]
-                    self.skatetl.uptsta(subprepdl, i, farst.crtski, farst.teofi, farst.teofn)
+                pals = farst.palines.values()
+                for pal in pals[-3:]:
+                    self.skatetl.uptsta(pal, i, farst.crtski, farst.teofi, farst.teofn)
+
+                pdls = farst.pdlines.values()
+                for pdl in pdls[-3:]:
+                    self.skatetl.uptsta(pdl, i, farst.crtski, farst.teofi, farst.teofn)
 
                 supls = farst.suplines.keys()
                 for tdlna in supls[-3:]:
@@ -491,7 +492,7 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 3, 'ssd': 0, 'phd': 0},
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 1, 'ssd': 0, 'phd': 0},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
@@ -510,7 +511,7 @@ if __name__ == '__main__':
             'sal': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'rdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'mdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
-            'psl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'psl': {'bek1': 0, 'bek3': 0, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'ssd': {'rsk1': 1},
             'phd': {'psk2': 1, 'bsk1': 0, 'bsk3': 1, 'bsk5': 1}
 

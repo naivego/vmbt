@@ -439,7 +439,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2011-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -492,7 +492,7 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 1, 'ssd': 0, 'phd': 0},
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 1, 'ssd': 0, 'phd': 1},
             'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
@@ -518,7 +518,7 @@ if __name__ == '__main__':
         },
         'pstnset':
         {
-            'det':  0.2,
+            'det':  0.3,
             'rdet': 0.05,
             'mdet': 0.1,
             'tdl': {'psn': 4, 'msn': 2, 'mtn': 0},

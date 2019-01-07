@@ -469,6 +469,7 @@ class Trpline(object):
         self.se_bkl_berhs = []  # sk从外侧触及bkl的ski列表
         self.se_bkl_rerhs = []  # sk从内侧触及bkl的ski列表
 
+        self.se_mpi = None  # 内侧极值点
         self.se_bki = None  # 反式突破i
         self.se_bekp = None  # 反式开仓价
         self.se_besp = None  # 反式止损价
@@ -512,7 +513,7 @@ class Trpline(object):
         self.et_bkl_berhs = []  # sk从外侧触及bkl的ski列表
         self.et_bkl_rerhs = []  # sk从内侧触及bkl的ski列表
 
-
+        self.et_mpi = None   # 内侧极值点
         self.et_bki  = None  # 反式突破i
         self.et_bekp = None  # 反式开仓价
         self.et_besp = None  # 反式止损价
@@ -608,258 +609,262 @@ class Trpline(object):
         self.exti = ski
         self.extp = self.extendp(ski)
         atr = sk_atr[ski]
-        if self.rsta % 3 == 0:
-            if self.tbl == 'bbl':
-                if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
-                    self.bki = ski
-                    self.bkp = self.extp - self.ak
-                    self.eop = min(sk_low[ski],sk_low[ski-1])
-                    self.eip = max(sk_high[ski],sk_high[ski-1])
-                    self.bkcn +=1
-                    self.rsta += 1
-                    self.bkp_rhcn = 0
-                    self.bkp_ovcn = 0
-                    self.bk_ensti = None
-                    self.reb_ensti = None
-                    # self.extp_rhi = None
 
-            elif self.tbl == 'ttl':
-                if sk_close[ski] > self.extp + atr * sk_close[ski] * 0.2:
-                    self.bki = ski
-                    self.bkp = self.extp - self.ak
-                    self.eop = max(sk_high[ski], sk_high[ski - 1])
-                    self.eip = min(sk_low[ski], sk_low[ski - 1])
-                    self.bkcn +=1
-                    self.rsta += 1
-                    self.bkp_rhcn = 0
-                    self.bkp_ovcn = 0
-                    self.bk_ensti = None
-                    self.reb_ensti = None
-                    # self.extp_rhi = None
-        elif self.rsta % 3 == 1:
-            if self.tbl == 'bbl':
-                if sk_close[ski] >= self.extp + atr * sk_close[ski] * 0.05:
-                    self.rsta += 1
-            elif self.tbl == 'ttl':
-                if sk_close[ski] <= self.extp - atr * sk_close[ski] * 0.05:
-                    self.rsta += 1
-        elif self.rsta  % 3 == 2:  # 回归趋势线临界点 2根sk收到趋势线内部才算回归（虚假突破）
-            if self.tbl == 'bbl':
-                if sk_close[ski] >= self.extp + atr * sk_close[ski] * 0.2:
-                    self.rsta += 1
-                elif sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
-                    self.rsta += -1
-            elif self.tbl == 'ttl':
-                if sk_close[ski] <= self.extp - atr * sk_close[ski] * 0.2:
-                    self.rsta += 1
-                elif sk_close[ski] > self.extp + atr * sk_close[ski] * 0.2:
-                    self.rsta += -1
+        if 0:
+            if self.rsta % 3 == 0:
+                if self.tbl == 'bbl':
+                    if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
+                        self.bki = ski
+                        self.bkp = self.extp - self.ak
+                        self.eop = min(sk_low[ski],sk_low[ski-1])
+                        self.eip = max(sk_high[ski],sk_high[ski-1])
+                        self.bkcn +=1
+                        self.rsta += 1
+                        self.bkp_rhcn = 0
+                        self.bkp_ovcn = 0
+                        self.bk_ensti = None
+                        self.reb_ensti = None
+                        # self.extp_rhi = None
 
-        #----------------------------------update
-        if self.dir>0:
-            diskl = sk_high[ski] - self.extp
-            if not self.mptv or diskl >=  self.mptv:
-                self.mpti = ski
-                self.mptv = diskl
-        else:
-            diskl = sk_low[ski] - self.extp
-            if not self.mptv or diskl <= self.mptv:
-                self.mpti = ski
-                self.mptv = diskl
-        #----------------------------------
-        if self.dir>0:
-            diskl = sk_low[ski] - self.extp
-            if not self.bkmptv or diskl <=  self.bkmptv:
-                self.bkmpti = ski
-                self.bkmptv = diskl
-        else:
-            diskl = sk_high[ski] - self.extp
-            if not self.bkmptv or diskl >= self.bkmptv:
-                self.bkmpti = ski
-                self.bkmptv = diskl
+                elif self.tbl == 'ttl':
+                    if sk_close[ski] > self.extp + atr * sk_close[ski] * 0.2:
+                        self.bki = ski
+                        self.bkp = self.extp - self.ak
+                        self.eop = max(sk_high[ski], sk_high[ski - 1])
+                        self.eip = min(sk_low[ski], sk_low[ski - 1])
+                        self.bkcn +=1
+                        self.rsta += 1
+                        self.bkp_rhcn = 0
+                        self.bkp_ovcn = 0
+                        self.bk_ensti = None
+                        self.reb_ensti = None
+                        # self.extp_rhi = None
+            elif self.rsta % 3 == 1:
+                if self.tbl == 'bbl':
+                    if sk_close[ski] >= self.extp + atr * sk_close[ski] * 0.05:
+                        self.rsta += 1
+                elif self.tbl == 'ttl':
+                    if sk_close[ski] <= self.extp - atr * sk_close[ski] * 0.05:
+                        self.rsta += 1
+            elif self.rsta  % 3 == 2:  # 回归趋势线临界点 2根sk收到趋势线内部才算回归（虚假突破）
+                if self.tbl == 'bbl':
+                    if sk_close[ski] >= self.extp + atr * sk_close[ski] * 0.2:
+                        self.rsta += 1
+                    elif sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
+                        self.rsta += -1
+                elif self.tbl == 'ttl':
+                    if sk_close[ski] <= self.extp - atr * sk_close[ski] * 0.2:
+                        self.rsta += 1
+                    elif sk_close[ski] > self.extp + atr * sk_close[ski] * 0.2:
+                        self.rsta += -1
 
-        if ski - self.mpti >1:
-            self.mirp = self.extp + self.mptv - self.dir * atr * sk_close[ski] * 0.1
-        else:
-            self.mirp = None
+            #----------------------------------update
+            if self.dir>0:
+                diskl = sk_high[ski] - self.extp
+                if not self.mptv or diskl >=  self.mptv:
+                    self.mpti = ski
+                    self.mptv = diskl
+            else:
+                diskl = sk_low[ski] - self.extp
+                if not self.mptv or diskl <= self.mptv:
+                    self.mpti = ski
+                    self.mptv = diskl
+            #----------------------------------
+            if self.dir>0:
+                diskl = sk_low[ski] - self.extp
+                if not self.bkmptv or diskl <=  self.bkmptv:
+                    self.bkmpti = ski
+                    self.bkmptv = diskl
+            else:
+                diskl = sk_high[ski] - self.extp
+                if not self.bkmptv or diskl >= self.bkmptv:
+                    self.bkmpti = ski
+                    self.bkmptv = diskl
 
-        if ski - self.bkmpti >1:
-            self.bkmirp = self.extp + self.bkmptv + self.dir * atr * sk_close[ski] * 0.1
-            if self.bkmptv * self.dir >= 0:
+            if ski - self.mpti >1:
+                self.mirp = self.extp + self.mptv - self.dir * atr * sk_close[ski] * 0.1
+            else:
+                self.mirp = None
+
+            if ski - self.bkmpti >1:
+                self.bkmirp = self.extp + self.bkmptv + self.dir * atr * sk_close[ski] * 0.1
+                if self.bkmptv * self.dir >= 0:
+                    self.bkmirp = None
+            else:
                 self.bkmirp = None
-        else:
-            self.bkmirp = None
-        #-------------------------------
-        bkprh = 0
-        bkpderh = 0
-        bkpov = 0
-        bkpdeov = 0
-        extprh = 0
-        extpderh = 0
-        extpov = 0
-        extpdeov = 0
-        if self.bkp and ski > self.bki and self.tbl == 'bbl' :  #self.bkp and ski > self.bki
-            if sk_high[ski] >= self.bkp + atr * sk_close[ski] * 0.0:
-                bkprh = 1
-            if sk_high[ski] < self.bkp - atr * sk_close[ski] * 0.1:
-                bkpderh = 1
-            if bkprh > 0:
-                if self.skat_bkp == 0:
-                    self.bkp_rhcn += 1
-                    self.bkp_rhi = ski
-                self.skat_bkp += 1
-            if  bkpderh > 0:
-                self.skat_bkp = 0
-            #----------------------------
-            if sk_close[ski] > self.bkp + atr * sk_close[ski] * 0.2:
-                bkpov = 1
-            if sk_close[ski] < self.bkp - atr * sk_close[ski] * 0.1:
-                bkpdeov = 1
-            if bkpov > 0:
-                if self.skov_bkp == 0:
-                    self.bkp_ovcn += 1
-                    self.bkp_ovi = ski
-                self.skov_bkp += 1
+            #-------------------------------
+            bkprh = 0
+            bkpderh = 0
+            bkpov = 0
+            bkpdeov = 0
+            extprh = 0
+            extpderh = 0
+            extpov = 0
+            extpdeov = 0
+            if self.bkp and ski > self.bki and self.tbl == 'bbl' :  #self.bkp and ski > self.bki
+                if sk_high[ski] >= self.bkp + atr * sk_close[ski] * 0.0:
+                    bkprh = 1
+                if sk_high[ski] < self.bkp - atr * sk_close[ski] * 0.1:
+                    bkpderh = 1
+                if bkprh > 0:
+                    if self.skat_bkp == 0:
+                        self.bkp_rhcn += 1
+                        self.bkp_rhi = ski
+                    self.skat_bkp += 1
+                if  bkpderh > 0:
+                    self.skat_bkp = 0
+                #----------------------------
+                if sk_close[ski] > self.bkp + atr * sk_close[ski] * 0.2:
+                    bkpov = 1
+                if sk_close[ski] < self.bkp - atr * sk_close[ski] * 0.1:
+                    bkpdeov = 1
+                if bkpov > 0:
+                    if self.skov_bkp == 0:
+                        self.bkp_ovcn += 1
+                        self.bkp_ovi = ski
+                    self.skov_bkp += 1
 
-            if bkpdeov > 0:
-                self.skov_bkp = 0
+                if bkpdeov > 0:
+                    self.skov_bkp = 0
+                # -------------------------------------
+                if not self.bk_ensti:
+                    if sk_ckl[ski][0] > 0:
+                        self.bk_enstp = min(sk_low[ski-1], sk_low[ski]) - atr * sk_close[ski] *0.05
+                        self.bk_ensti = ski
+                #--------------------------------------
+                if ski >= self.bki + 5 and sk_high[ski] >= self.extp + atr * sk_close[ski]* 0.0:
+                    extprh = 1
+                if sk_high[ski] < self.extp - atr * sk_close[ski] * 0.3:
+                    extpderh = 1
+                if extprh > 0:
+                    if self.skat_extp == 0:
+                        self.extp_rhcn += 1
+                        self.extp_rhi = ski
+                    self.skat_extp += 1
+                if extpderh > 0:
+                    self.skat_extp = 0
+                # ----------------------------
+                if sk_close[ski] > self.extp + atr * sk_close[ski] * 0.2:
+                    extpov = 1
+                if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.1:
+                    extpdeov = 1
+                if extpov > 0:
+                    if self.skov_extp == 0:
+                        self.extp_ovcn += 1
+                        self.extp_ovi = ski
+                    self.skov_extp += 1
+                if extpdeov > 0:
+                    self.skov_extp = 0
+            # -----------------------------------------------------------
+            elif self.bkp and ski > self.bki and self.tbl == 'ttl':
+                if sk_low[ski] <= self.bkp + atr * sk_close[ski] * 0.0:
+                    bkprh = 1
+                if sk_low[ski] > self.bkp + atr * sk_close[ski] * 0.1:
+                    bkpderh = 1
+                if bkprh > 0:
+                    if self.skat_bkp == 0:
+                        self.bkp_rhcn += 1
+                        self.bkp_rhi = ski
+                    self.skat_bkp += 1
+                if bkpderh > 0:
+                    self.skat_bkp = 0
+                # ----------------------------
+                if sk_close[ski] < self.bkp - atr * sk_close[ski] * 0.2:
+                    bkpov = 1
+                if sk_close[ski] > self.bkp + atr * sk_close[ski] * 0.1:
+                    bkpdeov = 1
+                if bkpov > 0:
+                    if self.skov_bkp == 0:
+                        self.bkp_ovcn += 1
+                        self.bkp_ovi = ski
+                    self.skov_bkp += 1
+                if bkpdeov > 0:
+                    self.skov_bkp = 0
+                # -------------------------------------
+                if not self.bk_ensti:
+                    if sk_ckl[ski][0] < 0:
+                        self.bk_enstp = max(sk_high[ski - 1], sk_high[ski]) + atr * sk_close[ski] * 0.05
+                        self.bk_ensti = ski
+                # --------------------------------------
+                if ski >= self.bki + 5 and  sk_low[ski] <= self.extp + atr * sk_close[ski] * 0.0:
+                    extprh = 1
+                if sk_low[ski] > self.extp + atr * sk_close[ski] * 0.3:
+                    extpderh = 1
+                if extprh > 0:
+                    if self.skat_extp == 0:
+                        self.extp_rhcn += 1
+                        self.extp_rhi = ski
+                    self.skat_extp += 1
+                if extpderh > 0:
+                    self.skat_extp = 0
+                # ----------------------------
+                if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
+                    extpov = 1
+                if sk_close[ski] > self.extp + atr * sk_close[ski] * 0.1:
+                    extpdeov = 1
+                if extpov > 0:
+                    if self.skov_extp == 0:
+                        self.extp_ovcn += 1
+                        self.extp_ovi = ski
+                    self.skov_extp += 1
+                if extpdeov > 0:
+                    self.skov_extp = 0
+
             # -------------------------------------
-            if not self.bk_ensti:
-                if sk_ckl[ski][0] > 0:
-                    self.bk_enstp = min(sk_low[ski-1], sk_low[ski]) - atr * sk_close[ski] *0.05
-                    self.bk_ensti = ski
-            #--------------------------------------
-            if ski >= self.bki + 5 and sk_high[ski] >= self.extp + atr * sk_close[ski]* 0.0:
-                extprh = 1
-            if sk_high[ski] < self.extp - atr * sk_close[ski] * 0.3:
-                extpderh = 1
-            if extprh > 0:
-                if self.skat_extp == 0:
-                    self.extp_rhcn += 1
-                    self.extp_rhi = ski
-                self.skat_extp += 1
-            if extpderh > 0:
-                self.skat_extp = 0
-            # ----------------------------
-            if sk_close[ski] > self.extp + atr * sk_close[ski] * 0.2:
-                extpov = 1
-            if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.1:
-                extpdeov = 1
-            if extpov > 0:
-                if self.skov_extp == 0:
-                    self.extp_ovcn += 1
-                    self.extp_ovi = ski
-                self.skov_extp += 1
-            if extpdeov > 0:
-                self.skov_extp = 0
-        # -----------------------------------------------------------
-        elif self.bkp and ski > self.bki and self.tbl == 'ttl':
-            if sk_low[ski] <= self.bkp + atr * sk_close[ski] * 0.0:
-                bkprh = 1
-            if sk_low[ski] > self.bkp + atr * sk_close[ski] * 0.1:
-                bkpderh = 1
-            if bkprh > 0:
-                if self.skat_bkp == 0:
-                    self.bkp_rhcn += 1
-                    self.bkp_rhi = ski
-                self.skat_bkp += 1
-            if bkpderh > 0:
-                self.skat_bkp = 0
-            # ----------------------------
-            if sk_close[ski] < self.bkp - atr * sk_close[ski] * 0.2:
-                bkpov = 1
-            if sk_close[ski] > self.bkp + atr * sk_close[ski] * 0.1:
-                bkpdeov = 1
-            if bkpov > 0:
-                if self.skov_bkp == 0:
-                    self.bkp_ovcn += 1
-                    self.bkp_ovi = ski
-                self.skov_bkp += 1
-            if bkpdeov > 0:
-                self.skov_bkp = 0
-            # -------------------------------------
-            if not self.bk_ensti:
-                if sk_ckl[ski][0] < 0:
-                    self.bk_enstp = max(sk_high[ski - 1], sk_high[ski]) + atr * sk_close[ski] * 0.05
-                    self.bk_ensti = ski
-            # --------------------------------------
-            if ski >= self.bki + 5 and  sk_low[ski] <= self.extp + atr * sk_close[ski] * 0.0:
-                extprh = 1
-            if sk_low[ski] > self.extp + atr * sk_close[ski] * 0.3:
-                extpderh = 1
-            if extprh > 0:
-                if self.skat_extp == 0:
-                    self.extp_rhcn += 1
-                    self.extp_rhi = ski
-                self.skat_extp += 1
-            if extpderh > 0:
-                self.skat_extp = 0
-            # ----------------------------
-            if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
-                extpov = 1
-            if sk_close[ski] > self.extp + atr * sk_close[ski] * 0.1:
-                extpdeov = 1
-            if extpov > 0:
-                if self.skov_extp == 0:
-                    self.extp_ovcn += 1
-                    self.extp_ovi = ski
-                self.skov_extp += 1
-            if extpdeov > 0:
-                self.skov_extp = 0
+            if self.bkp_ovi:
+                if self.tbl == 'bbl' and sk_ckl[ski][0] < 0:
+                    self.bkp_ovstp = max(sk_high[ski - 1], sk_high[ski]) + atr * sk_close[ski] * 0.05
+                    self.bkp_ovsti = ski
+                    self.bkp_ovi = None
+                elif self.tbl == 'ttl' and sk_ckl[ski][0] > 0:
+                    self.bkp_ovstp = min(sk_low[ski - 1], sk_low[ski]) - atr * sk_close[ski] * 0.05
+                    self.bkp_ovsti = ski
+                    self.bkp_ovi = None
 
-        # -------------------------------------
-        if self.bkp_ovi:
-            if self.tbl == 'bbl' and sk_ckl[ski][0] < 0:
-                self.bkp_ovstp = max(sk_high[ski - 1], sk_high[ski]) + atr * sk_close[ski] * 0.05
-                self.bkp_ovsti = ski
-                self.bkp_ovi = None
-            elif self.tbl == 'ttl' and sk_ckl[ski][0] > 0:
-                self.bkp_ovstp = min(sk_low[ski - 1], sk_low[ski]) - atr * sk_close[ski] * 0.05
-                self.bkp_ovsti = ski
-                self.bkp_ovi = None
+            if self.extp_ovi:
+                if self.tbl == 'bbl'  and sk_ckl[ski][0] < 0:
+                    self.reb_enstp = max(sk_high[ski-1], sk_high[ski]) + atr * sk_close[ski] *0.05
+                    self.reb_ensti = ski
+                    self.extp_ovi = None
+                elif self.tbl == 'ttl'  and sk_ckl[ski][0] > 0:
+                    self.reb_enstp = min(sk_low[ski-1], sk_low[ski]) - atr * sk_close[ski] *0.05
+                    self.reb_ensti = ski
+                    self.extp_ovi = None
 
-        if self.extp_ovi:
-            if self.tbl == 'bbl'  and sk_ckl[ski][0] < 0:
-                self.reb_enstp = max(sk_high[ski-1], sk_high[ski]) + atr * sk_close[ski] *0.05
-                self.reb_ensti = ski
-                self.extp_ovi = None
-            elif self.tbl == 'ttl'  and sk_ckl[ski][0] > 0:
-                self.reb_enstp = min(sk_low[ski-1], sk_low[ski]) - atr * sk_close[ski] *0.05
-                self.reb_ensti = ski
-                self.extp_ovi = None
+            if self.extp_rhi:
+                if self.tbl == 'bbl' and sk_ckl[ski][0] < 0:
+                    self.extp_rhstp = max(sk_high[ski - 1], sk_high[ski]) + atr * sk_close[ski] * 0.05
+                    self.extp_rhsti = ski
+                    self.extp_rhi = None
 
-        if self.extp_rhi:
-            if self.tbl == 'bbl' and sk_ckl[ski][0] < 0:
-                self.extp_rhstp = max(sk_high[ski - 1], sk_high[ski]) + atr * sk_close[ski] * 0.05
-                self.extp_rhsti = ski
-                self.extp_rhi = None
+                elif self.tbl == 'ttl' and sk_ckl[ski][0] > 0:
+                    self.extp_rhstp = min(sk_low[ski - 1], sk_low[ski]) - atr * sk_close[ski] * 0.05
+                    self.extp_rhsti = ski
+                    self.extp_rhi = None
 
-            elif self.tbl == 'ttl' and sk_ckl[ski][0] > 0:
-                self.extp_rhstp = min(sk_low[ski - 1], sk_low[ski]) - atr * sk_close[ski] * 0.05
-                self.extp_rhsti = ski
-                self.extp_rhi = None
+            if self.rsta % 3 == 0:
+                self.crsp = self.extp          # 未突破 or 突破后回归到趋势线内的， 阻力线为趋势线
+            elif self.rsta % 3 == 1 or self.rsta % 3 == 2:
+                if ski - self.bki <= 0:        # 突破后短期内阻力线为趋势线
+                    self.crsp = self.extp
+                elif 0 < ski - self.bki <= 300: # 突破后中期内阻力线为突破线
+                    self.crsp = self.bkp
+                else:                          # 突破很久后阻力线失效
+                    self.crsp = None
 
-        if self.rsta % 3 == 0:
-            self.crsp = self.extp          # 未突破 or 突破后回归到趋势线内的， 阻力线为趋势线
-        elif self.rsta % 3 == 1 or self.rsta % 3 == 2:
-            if ski - self.bki <= 0:        # 突破后短期内阻力线为趋势线
-                self.crsp = self.extp
-            elif 0 < ski - self.bki <= 300: # 突破后中期内阻力线为突破线
-                self.crsp = self.bkp
-            else:                          # 突破很久后阻力线失效
-                self.crsp = None
-
-        if self.crsp:
-            if self.tbl == 'bbl':
-                self.rspdet = ( self.crsp - sk_close[ski] ) / atr /sk_close[ski]
-            elif self.tbl == 'ttl':
-                self.rspdet = -( self.crsp - sk_close[ski] ) / atr /sk_close[ski]
+            if self.crsp:
+                if self.tbl == 'bbl':
+                    self.rspdet = ( self.crsp - sk_close[ski] ) / atr /sk_close[ski]
+                elif self.tbl == 'ttl':
+                    self.rspdet = -( self.crsp - sk_close[ski] ) / atr /sk_close[ski]
+                else:
+                    self.rspdet = None
             else:
                 self.rspdet = None
-        else:
-            self.rspdet = None
 
-        self.uptsadls(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
+        # ----------------------更新sadl
+        if 1:
+            self.uptsadls(sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski)
         #----------------------更新fibo
         if 0:
             if not self.fib0 and self.bk_enstp and self.bk_ensti and self.initi< self.bk_ensti:
@@ -2039,7 +2044,7 @@ class Skatline(object):
             self.phdmtn = setting['phd']['mtn']
 
         except:
-            self.det = 0.2
+            self.det = 0.3
             self.rdet = 0.05
             self.mdet = 0.1
 
@@ -3141,9 +3146,14 @@ class Intsgnbs(object):
             pret_rdl = ttls_dic.values()[-2]['rdl']
             pret_mdl = ttls_dic.values()[-2]['mdl']
         if len(pdls_dic) > 0:
-            crtpsl = pdls_dic.values()[-1]
+            crtpdl = pdls_dic.values()[-1]
         if len(pdls_dic) > 1:
-            prepsl = pdls_dic.values()[-2]
+            prepdl = pdls_dic.values()[-2]
+        if len(pals_dic) > 0:
+            crtpal = pals_dic.values()[-1]
+        if len(pals_dic) > 1:
+            prepal = pals_dic.values()[-2]
+
 
         if 'sal' in kopset and (kopset['sal'] ==1 or kopset['sal'] ==3)  and crtsal:
             skatetl.sgnskatl(crtsal, i, eti, mosi, mosn)
@@ -5961,24 +5971,24 @@ class Grst_Factor(object):
         else:
             presal = None
 
-        #-------生产 pal & pdl
+        #------- pal & pdl
         if self.faset['psl'] and self.trdphd.sta > 1: # 步进或反转
             if self.trdphd.crtphd.dirn > 0:
                 if self.trdphd.cbp and len(self.trdphd.upstps)>0:
-                    pdlna = self.fid + '_pa_' + str(self.trdphd.crtphd.rsti) +'_'+ str(self.trdphd.stpn)
-                    newpl = getpline('psl', pdlna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
+                    pslna = self.fid + '_pa_' + str(self.trdphd.crtphd.rsti) +'_'+ str(self.trdphd.stpn)
+                    newpl = getpline('psl', pslna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
-                        self.phdlines[pdlna] = newpl
-                        self.palines[pdlna] = newpl
+                        self.phdlines[pslna] = newpl
+                        self.palines[pslna] = newpl
             elif self.trdphd.crtphd.dirn < 0:
                 if self.trdphd.ctp and len(self.trdphd.dwstps) > 0:
-                    pdlna = self.fid + '_pd_' + str(self.trdphd.crtphd.rsti) + '_' + str(self.trdphd.stpn)
-                    newpl = getpline('psl', pdlna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
+                    pslna = self.fid + '_pd_' + str(self.trdphd.crtphd.rsti) + '_' + str(self.trdphd.stpn)
+                    newpl = getpline('psl', pslna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
-                        self.phdlines[pdlna] = newpl
-                        self.pdlines[pdlna] = newpl
+                        self.phdlines[pslna] = newpl
+                        self.pdlines[pslna] = newpl
 
         # 更新最新的3组psl
         pals = self.palines.values()

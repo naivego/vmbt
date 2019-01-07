@@ -608,6 +608,7 @@ class Trpline(object):
     def uptskista(self, sk_open, sk_high, sk_low, sk_close, sk_atr, sk_ckl, ski): # 更新趋势线与当前sk的位置状态
         self.exti = ski
         self.extp = self.extendp(ski)
+        self.crsp = self.extp
         atr = sk_atr[ski]
 
         if 0:

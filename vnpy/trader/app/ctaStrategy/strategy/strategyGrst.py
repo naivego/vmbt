@@ -185,7 +185,7 @@ class GrstStrategy(CtaTemplate):
         self.sk_dwl = self.Terst.sk_dwl
         self.sk_atr = self.Terst.sk_atr
         self.sk_ckl = self.Terst.sk_ckl
-
+        self.trdphd = self.Terst.trdphd
         self.crtski = self.Terst.skbgi
         self.crtidtm = self.sk_time[self.crtski]
 
@@ -193,7 +193,7 @@ class GrstStrategy(CtaTemplate):
         self.Teda.crtidx = self.sk_time[self.Teda.crtnum]
         if len(self.tedaet)>0:    # self.tedaet = ['ka','ma','su']
             self.ctaEngine.intedsgn.skatl['te'] = Skatline(self.tedast, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume,
-                                                           self.sk_atr, self.sk_ckl, self.setting['sklset'])
+                                                           self.sk_atr, self.sk_ckl, self.trdphd, self.setting['sklset'])
             self.skatetl = self.ctaEngine.intedsgn.skatl['te']
 
     # ------------------------------------------------------------------------------------------
@@ -384,7 +384,7 @@ class GrstStrategy(CtaTemplate):
         # maextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         # suextfas = ['drsp', 'sal', 'brdl', 'trdl', 'alp1', 'dlp1'] # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl', 'alp1', 'dlp1']  # ['drsp', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
 
-        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1', 'brdl', 'trdl', 'psl']
+        kaextfas = ['fbsp', 'dbsp', 'rtp', 'drsp', 'alp1', 'dlp1', 'brdl', 'trdl', 'psl', 'rtl']
         maextfas = ['sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
         suextfas = ['sal', 'brdl', 'trdl']
 
@@ -439,7 +439,7 @@ if __name__ == '__main__':
     TS_Config['Rt_Dir'] = r'D:\Apollo\vmbt'  # os.getcwd()
     TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
-    TS_Config['Time_Param'] = ['2016-01-05', '2017-06-15']
+    TS_Config['Time_Param'] = ['2017-01-05', '2017-06-15']
     TS_Config['SlipT'] = 0
     TS_Config['OrdTyp'] = {'open': 'Lmt', 'close': 'Lmt'}  # ['Mkt', 'Lmt', 'Stp']
     TS_Config['MiniT'] = 'M5'
@@ -492,16 +492,16 @@ if __name__ == '__main__':
     # 0--不开仓 1--在最新信号源上开仓 2--在次新信号源上开仓  3--在最新和次新信号源上开仓
     setting['tdkopset'] = {
         'ka': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 1, 'ssd': 0, 'phd': 1},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 1, 'rtl': 0, 'ssd': 0, 'phd': 1},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'rtl': 0, 'ssd': 0, 'phd': 0}
         },
         'ma': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'rtl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'rtl': 0, 'ssd': 0, 'phd': 0}
         },
         'su': {
-            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0},
-            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'ssd': 0, 'phd': 0}
+            'sekop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'rtl': 0, 'ssd': 0, 'phd': 0},
+            'etkop': {'sal': 0, 'rdl': 0, 'mdl': 0, 'psl': 0, 'rtl': 0, 'ssd': 0, 'phd': 0}
         }
     }
 
@@ -512,6 +512,7 @@ if __name__ == '__main__':
             'rdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'mdl': {'bek1': 1, 'bek3': 1, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'psl': {'bek1': 0, 'bek3': 0, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
+            'rtl': {'bek1': 0, 'bek3': 0, 'bek0': 0, 'bek2': 1, 'bek4': 1, 'rek1': 0, 'rek3': 1, 'rek2': 1},
             'ssd': {'rsk1': 1},
             'phd': {'psk2': 1, 'bsk1': 0, 'bsk3': 1, 'bsk5': 1}
 

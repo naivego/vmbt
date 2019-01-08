@@ -212,13 +212,14 @@ class Trdphd(object):
         self.stpn = 0 # 当前所处的台阶数目
         self.upti = 0
         self.sta  = 0 # 前沿变更状态：前沿递进1，前沿步进2，前沿反转3
-
+        self.sta2 = 0  # 次级趋势状态：unchg - 0，步进 +-2
     #-----------------------------------------------------
     def update(self, i):
         if self.upti>=i:
             return
         self.upti = i
         self.sta = 0
+        self.sta2 = 0
         avgski = self.sk_atr[i - 1] * self.sk_close[i - 1]
 
         # ------------------------先更新当前sk触及原前沿的状态
@@ -331,6 +332,8 @@ class Trdphd(object):
                     if len(self.plevs) == 3: # 主趋势即将步进
                         self.crtphd.lbsp = min(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
+                    if len(self.plevs) == 4:  # 次级趋势向上步进
+                        self.sta2 = 2
                     self.plevs.remove(faphd)
                     # 标记交易信号
 
@@ -341,6 +344,8 @@ class Trdphd(object):
                     if len(self.plevs) == 3: # 主趋势即将步进
                         self.crtphd.lbsp = max(self.sk_open[faphd.bi], self.sk_close[faphd.bi-1])
 
+                    if len(self.plevs) == 4:  # 次级趋势向下步进
+                        self.sta2 = -2
                     self.plevs.remove(faphd)
                     # 标记交易信号
                 else:  # 趋势突破只可以从末级向第一级逐级传导
@@ -388,10 +393,14 @@ class Trpline(object):
         self.rsta = 0     # sk 与该趋势线的关系状态 0：未被突破，  >0:被突破 -1：失效
         self.crsp = None  # 预计当前对sk阻挡的价格（如果 失效则为None ）
         self.rspdet = None  # sk收盘价与趋势阻挡价差相对于atr的倍数
+
+        self.mfi  = None  # sk 在tdl内侧的最远点
         self.mpti = None  # sk尖端偏离tdl最远的位置
         self.mptv = None  # sk尖端偏离tdl最远的价格
         self.bkmpti = None  # 突破tdl后的sk尖端偏离tdl最远的位置
         self.bkmptv = None  # 突破tdl后的sk尖端偏离tdl最远的价格
+
+        self.frtl = None  # 回归线
         # ----------------- fibo 信号相关
         self.sfib = None # 构造fibo得分
         self.fib0 = None
@@ -469,7 +478,7 @@ class Trpline(object):
         self.se_bkl_berhs = []  # sk从外侧触及bkl的ski列表
         self.se_bkl_rerhs = []  # sk从内侧触及bkl的ski列表
 
-        self.se_mpi = None  # 内侧极值点
+        self.se_mfi = None  # 内侧极值点
         self.se_bki = None  # 反式突破i
         self.se_bekp = None  # 反式开仓价
         self.se_besp = None  # 反式止损价
@@ -513,7 +522,7 @@ class Trpline(object):
         self.et_bkl_berhs = []  # sk从外侧触及bkl的ski列表
         self.et_bkl_rerhs = []  # sk从内侧触及bkl的ski列表
 
-        self.et_mpi = None   # 内侧极值点
+        self.et_mfi = None   # 内侧极值点
         self.et_bki  = None  # 反式突破i
         self.et_bekp = None  # 反式开仓价
         self.et_besp = None  # 反式止损价
@@ -611,7 +620,7 @@ class Trpline(object):
         self.crsp = self.extp
         atr = sk_atr[ski]
 
-        if 0:
+        if 1:
             if self.rsta % 3 == 0:
                 if self.tbl == 'bbl':
                     if sk_close[ski] < self.extp - atr * sk_close[ski] * 0.2:
@@ -661,11 +670,15 @@ class Trpline(object):
 
             #----------------------------------update
             if self.dir>0:
+                if sk_high[ski]>= sk_high[self.mfi] and self.rsta % 3 == 0:
+                    self.mfi = ski
                 diskl = sk_high[ski] - self.extp
                 if not self.mptv or diskl >=  self.mptv:
                     self.mpti = ski
                     self.mptv = diskl
             else:
+                if sk_low[ski]<= sk_low[self.mfi] and self.rsta % 3 == 0:
+                    self.mfi = ski
                 diskl = sk_low[ski] - self.extp
                 if not self.mptv or diskl <= self.mptv:
                     self.mpti = ski
@@ -693,6 +706,7 @@ class Trpline(object):
                     self.bkmirp = None
             else:
                 self.bkmirp = None
+        if 0:
             #-------------------------------
             bkprh = 0
             bkpderh = 0
@@ -1187,19 +1201,25 @@ class Trpline(object):
 
     # -----------------------------初始化偏离tdl最远的ski
     def initmaxpt(self, sk_open, sk_high, sk_low, sk_close, atr, i):
+        mfi = i
         mpti = i
         mptv = 0
         for ski in range(self.fbi, i, 1):
             if self.tbl == 'bbl':
+                if sk_high[ski]>= sk_high[mfi]:
+                    mfi = ski
                 diskl = sk_high[ski] - self.extendp(ski)
                 if diskl >= mptv :
                     mpti = ski
                     mptv = diskl
             elif self.tbl == 'ttl':
+                if sk_low[ski]<= sk_low[mfi]:
+                    mfi = ski
                 diskl = sk_low[ski] - self.extendp(ski)
                 if diskl <= mptv:
                     mpti = ski
                     mptv = diskl
+        self.mfi = mfi
         self.mpti = mpti
         self.mptv = mptv
         #---------------------反向偏离
@@ -2019,8 +2039,35 @@ def getpline(soctyp, socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
     pline.rsta = 0
     return pline
 
+def getrtline(soctyp, socna, trpb, trpd, fbi, sk_time, atr, i, eti = None):
+    # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
+    rklmt = [-0.02, 2.6]
+    tbl = socna.split('_')[-2]
+    tbl = 'bbl' if tbl == 'ra' else 'ttl'
+    if trpd.ski - trpb.ski <= 1:
+        ntrpb = deepcopy(trpd)
+    else:
+        ntrpb = trpb
+    rtline = Trpline(soctyp, ntrpb, trpd, atr, tbl)
+    if not (rklmt[0] < rtline.rk * rtline.dir < rklmt[1]):  # 斜率太小或太大
+        return None
+    rtline.socna = socna
+    rtline.fsocna = socna
+    rtline.btm = sk_time[ntrpb.ski]
+    rtline.dtm = sk_time[trpd.ski]
+    rtline.frtm = sk_time[i]
+    rtline.fbi = fbi
+    rtline.exti = trpd.ski
+    rtline.extp = trpd.skp
+    rtline.initi = i
+    rtline.et_ini = eti if eti else i
+    rtline.bkcn = 0
+    rtline.rsta = 0
+    return rtline
+
+
 class Skatline(object):
-    def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, tdkset = None):
+    def __init__(self, fid, sk_time, sk_open, sk_high, sk_low, sk_close, sk_volume, sk_atr, sk_ckl, trdphd, tdkset = None):
         self.fid = fid
         try:
             self.tdktypen = tdkset['tdktypen']
@@ -2069,6 +2116,7 @@ class Skatline(object):
         self.sk_volume = sk_volume
         self.sk_atr = sk_atr
         self.sk_ckl = sk_ckl
+        self.trdphd = trdphd
         self.sgni = None  # 最新产生信号的ski
         self.trpkops = {}
 
@@ -2218,6 +2266,32 @@ class Skatline(object):
                             tdl.se_rek3i = None
 
                 tdl.se_upti = idx
+            #------------------------------------------------check frtl tdl逆向前沿步进或同向前沿次级步进
+            atr = self.sk_atr[i - 1] * self.sk_close[i - 1]
+            if tdl.se_sta % 2 == 1:
+                if tdl.dir > 0:
+                    if (self.trdphd.crtphd.dirn>0 and self.trdphd.sta2 == -2) or (self.trdphd.crtphd.dirn<0 and self.trdphd.sta == 2):
+                        rtb = Extrp(tdl.mfi, self.sk_high[tdl.mfi], 1)
+                        rtd = Extrp(i, self.sk_high[i], 1)
+                        rtlna = tdl.fsocna + '_rd_' + str(i)
+                        newrtl = getrtline('rtl', rtlna, rtb, rtd, tdl.mfi, self.sk_time, atr, i)
+                        if newrtl:
+                            newrtl.initsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                            newrtl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                            tdl.frtl = newrtl
+                else:
+                    if (self.trdphd.crtphd.dirn<0 and self.trdphd.sta2 == 2) or (self.trdphd.crtphd.dirn>0 and self.trdphd.sta == 2):
+                        rtb = Extrp(tdl.mfi, self.sk_low[tdl.mfi], -1)
+                        rtd = Extrp(i, self.sk_low[i], -1)
+                        rtlna = tdl.fsocna + '_ra_' + str(i)
+                        newrtl = getrtline('rtl', rtlna, rtb, rtd, tdl.mfi, self.sk_time, atr, i)
+                        if newrtl:
+                            newrtl.initsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                            newrtl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+                            tdl.frtl = newrtl
+            if tdl.frtl:
+                tdl.frtl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
+
         else:
             if not tdl.et_upti:
                 ubi = tdl.et_ini
@@ -4639,6 +4713,7 @@ class Grst_Factor(object):
         self.sk_obbl = []  # mdl
         self.sk_ottl = []  # mdl
         self.sk_psl = []   # psl
+        self.sk_rtl = []  # rtl
 
         self.ak_sal = []  # sal
         self.ak_bbl = []  # rdl
@@ -4646,6 +4721,7 @@ class Grst_Factor(object):
         self.ak_obbl = []  # mdl
         self.ak_ottl = []  # mdl
         self.ak_psl = []  # psl
+        self.ak_rtl = []  # rtl
 
         self.sk_alp1 = []
         self.sk_alp2 = []
@@ -4686,9 +4762,6 @@ class Grst_Factor(object):
         self.sk_qsrpt = []
         self.sk_sgn = []
 
-
-        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_volume, self.sk_atr, self.sk_ckl, setting['sklset'])
-        self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
         # ----------------------------------------------------------------------
         if self.sk_close.size <= skbgi:
             self.crtski = 0
@@ -4725,12 +4798,14 @@ class Grst_Factor(object):
             self.sk_obbl.append(self.sk_drsp[-1])
             self.sk_ottl.append(self.sk_drsp[-1])
             self.sk_psl.append(self.sk_drsp[-1])
+            self.sk_rtl.append(self.sk_drsp[-1])
             self.ak_sal.append(0)
             self.ak_ttl.append(0)
             self.ak_bbl.append(0)
             self.ak_obbl.append(0)
             self.ak_ottl.append(0)
             self.ak_psl.append(0)
+            self.ak_rtl.append(0)
 
             self.sk_alp1.append(self.sk_drsp[-1])
             self.sk_alp2.append(self.sk_drsp[-1])
@@ -4784,12 +4859,14 @@ class Grst_Factor(object):
         self.sk_ottl.append(self.sk_drsp[-1])
         self.sk_obbl.append(self.sk_drsp[-1])
         self.sk_psl.append(self.sk_drsp[-1])
+        self.sk_rtl.append(self.sk_drsp[-1])
         self.ak_sal.append(0)
         self.ak_ttl.append(0)
         self.ak_bbl.append(0)
         self.ak_obbl.append(0)
         self.ak_ottl.append(0)
         self.ak_psl.append(0)
+        self.ak_rtl.append(0)
 
         self.sk_alp1.append(self.sk_drsp[-1])
         self.sk_alp2.append(self.sk_drsp[-1])
@@ -4864,6 +4941,9 @@ class Grst_Factor(object):
         self.bada.crtidx = self.sk_time[self.bada.crtnum]
         self.teofi = -1
         self.teofn = 1
+        self.ctaEngine.intedsgn.skatl[self.fid] = Skatline(self.fid, self.sk_time, self.sk_open, self.sk_high, self.sk_low, self.sk_close,
+                                                           self.sk_volume, self.sk_atr, self.sk_ckl, self.trdphd, setting['sklset'])
+        self.skatsel = self.ctaEngine.intedsgn.skatl[self.fid]
     # ----------------------------------------------------------
     def onbar(self, i):
         self.teofn = self.teofi + 1
@@ -5957,6 +6037,7 @@ class Grst_Factor(object):
                                                                                                                    self.sk_close[sad2.mi + 1])
                         newsal = getsaline2('sal',salna, sbi, sbp, sad2, rkp, sbi, self.sk_time, atr, i, self.teix[-1])
                         if newsal:
+                            newsal.initsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                             newsal.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                             self.sadlines[salna] = newsal
         if len(self.sadlines) > 0:
@@ -5979,6 +6060,7 @@ class Grst_Factor(object):
                     pslna = self.fid + '_pa_' + str(self.trdphd.crtphd.rsti) +'_'+ str(self.trdphd.stpn)
                     newpl = getpline('psl', pslna, self.trdphd.cbp, self.trdphd.upstps[-1], self.trdphd.cbp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
+                        newpl.initsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         self.phdlines[pslna] = newpl
                         self.palines[pslna] = newpl
@@ -5987,6 +6069,7 @@ class Grst_Factor(object):
                     pslna = self.fid + '_pd_' + str(self.trdphd.crtphd.rsti) + '_' + str(self.trdphd.stpn)
                     newpl = getpline('psl', pslna, self.trdphd.ctp, self.trdphd.dwstps[-1], self.trdphd.ctp.ski, self.sk_time, atr, i, self.teix[-1])
                     if newpl:
+                        newpl.initsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         newpl.uptsklsta(self.sk_open, self.sk_high, self.sk_low, self.sk_close, self.sk_atr, self.sk_ckl, i)
                         self.phdlines[pslna] = newpl
                         self.pdlines[pslna] = newpl
@@ -6268,6 +6351,20 @@ class Grst_Factor(object):
             self.sk_psl.append(np.nan)
             self.ak_psl.append(np.nan)
 
+        if crtpsl:
+            crtrtl = crtpsl.frtl
+        else:
+            crtrtl = None
+
+        if not crtrtl:
+            crtrtl = crtpsl
+        if crtrtl:
+            self.sk_rtl.append(crtrtl.extp)
+            self.ak_rtl.append(crtrtl.ak)
+        else:
+            self.sk_rtl.append(np.nan)
+            self.ak_rtl.append(np.nan)
+
         if self.crtbbl:
             # if str(self.sk_time[i])[:10] == '2016-06-27':
             #     print 'sta:', self.crtbbl.rsta
@@ -6422,6 +6519,7 @@ class Grst_Factor(object):
         self.quotes['bmdl' + aflg] = self.sk_obbl
         self.quotes['tmdl' + aflg] = self.sk_ottl
         self.quotes['psl' + aflg] = self.sk_psl
+        self.quotes['rtl' + aflg] = self.sk_rtl
 
         self.quotes['ak_sal' + aflg] = self.ak_sal
         self.quotes['ak_brdl' + aflg] = self.ak_bbl
@@ -6429,6 +6527,8 @@ class Grst_Factor(object):
         self.quotes['ak_bmdl' + aflg] = self.ak_obbl
         self.quotes['ak_tmdl' + aflg] = self.ak_ottl
         self.quotes['ak_psl' + aflg] = self.ak_psl
+        self.quotes['ak_rtl' + aflg] = self.ak_rtl
+
 
         self.quotes['alp1' + aflg] = self.sk_alp1
         self.quotes['alp2' + aflg] = self.sk_alp2
